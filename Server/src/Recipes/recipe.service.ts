@@ -14,13 +14,12 @@ export class RecipeService {
 
   async generate(products: GenerateRecipeDto[]): Promise<string> {
     try {
-      let itemsString = '';
-      products.forEach(
-        (item) =>
-          (itemsString = itemsString.concat(
-            `${item.sizeValueLeft} ${item.sizeUnit} of ${item.name} , `,
-          )),
-      );
+        console.log({products});
+
+        const itemsString = products
+        .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} of ${item.name}`)
+        .join(' , ');
+        
 
       const content = `i have this products: ${itemsString} can you make me a recipe from them, i can buy max three products extra if needed`;
       const response = await this.openai.chat.completions.create({

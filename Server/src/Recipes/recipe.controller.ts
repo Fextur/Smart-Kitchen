@@ -6,7 +6,7 @@ import { GenerateRecipeDto } from './recipe.dto';
 export class RecipeController {
   constructor(private readonly recipeService: RecipeService) {}
 
-  @Get()
+  @Post()
   async generate(@Body() products: GenerateRecipeDto[]) {
     return this.recipeService.generate(products);
   }

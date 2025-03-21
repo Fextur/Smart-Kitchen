@@ -7,6 +7,7 @@ import { User } from './Users/user.entity';
 import { Product } from './Products/product.entity';
 import { UserModule } from './Users/user.module';
 import 'dotenv/config';
+import { RecipeModule } from './Recipes/recipe.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import 'dotenv/config';
     }),
     ProductModule,
     UserModule,
+    RecipeModule
   ],
   controllers: [AppController],
   providers: [AppService],
