@@ -2,6 +2,11 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProductModule } from './Products/product.module';
+import { User } from './Users/user.entity';
+import { Product } from './Products/product.entity';
+import { UserModule } from './Users/user.module';
+import 'dotenv/config';
 
 @Module({
   imports: [
@@ -12,10 +17,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DATABASE,
-      entities: [],
+      entities: [User, Product],
       synchronize: true,
       autoLoadEntities: true,
     }),
+    ProductModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
