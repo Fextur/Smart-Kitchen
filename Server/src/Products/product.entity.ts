@@ -3,7 +3,6 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn,
 } from 'typeorm';
 import moment from 'moment-timezone';
 import { SizeUnit } from 'src/types';
@@ -30,11 +29,6 @@ export class Product {
 
   @Column({
     type: 'timestamptz',
-    transformer: {
-      from: (value: Date) =>
-        moment.utc(value).tz(DEFAULT_TZ).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
-      to: (value: Date) => value,
-    },
   })
   expirationDate: Date;
 
@@ -42,6 +36,5 @@ export class Product {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'user_id' })
   user: User;
 }

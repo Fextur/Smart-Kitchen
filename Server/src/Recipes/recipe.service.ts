@@ -1,37 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { Preferences } from './../types';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
-import { GenerateRecipeDto } from './recipe.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from 'src/Users/user.entity';
 
 @Injectable()
 export class RecipeService {
   private openai: OpenAI;
 
-  constructor() {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
   }
 
-  async generate(products: GenerateRecipeDto[]): Promise<string> {
+  async generate(userId: string, preferences: Preferences[]): Promise<string> {
     try {
-        console.log({products});
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['products']
+      });      
 
-        const itemsString = products
-        .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} of ${item.name}`)
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      const preferencesString = preferences.join(' , ');
+      const sensitivitiesString = user.sensitivities.join(' , ');
+
+      const productsString = user.products
+        .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} של ${item.name}`)
         .join(' , ');
-        
 
-      const content = `i have this products: ${itemsString} can you make me a recipe from them, i can buy max three products extra if needed`;
+    const content = `יש לי את הרגישויות האלו: ${sensitivitiesString} ויש לי את המצרכים הבאים: ${productsString} ,תכין לי בבקשה מתכון מהמצרכים האלה חשוב לי שהמתכון יהיה ${preferencesString}, ואני מוכן לרכוש אקסטרה 3 מצרכים לכל היותר.`
+
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'system', content: content }],
         max_tokens: 1000,
       });
 
-      return (
-        response.choices[0].message?.content?.trim() ||
-        'Error generating content'
-      );
+      const resContent = response.choices[0].message?.content?.trim();
+
+      if (!resContent) throw new Error('Failed to generate content');
+
+      return resContent;
     } catch (error) {
       console.error('OpenAI API error:', error);
       throw new Error('Failed to generate content');

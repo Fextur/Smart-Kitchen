@@ -1,16 +1,11 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { SizeUnit } from 'src/types';
+import { IsArray, IsNotEmpty, IsString } from 'class-validator';
+import { Preferences } from 'src/types';
 
 export class GenerateRecipeDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  userId: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  sizeValueLeft: number;
-
-  @IsEnum(SizeUnit)
-  @IsNotEmpty()
-  sizeUnit: SizeUnit;
+  @IsArray()
+  preferences: Preferences[];
 }

@@ -9,6 +9,9 @@ export class User {
   @Column({ type: 'text', nullable: false })
   name: string;
 
+  @Column({type: 'text',array: true,  default:[]})
+  sensitivities: string[]
+
   @OneToMany(() => Product, (product) => product.user)
   products: Product[];
 }

@@ -20,7 +20,7 @@ export class ProductService {
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException(`User with id: ${userId} not found`);
     }
 
     const product = this.productRepository.create({
@@ -35,15 +35,16 @@ export class ProductService {
     return this.productRepository.find();
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ): Promise<Product> {
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+      throw new NotFoundException(`Product with id:${id} not found`);
     }
 
-    if (updateProductDto.sizeValueLeft) {
-      product.sizeValueLeft = updateProductDto.sizeValueLeft;
-    }
+    product.sizeValueLeft = updateProductDto.sizeValueLeft;
 
     return this.productRepository.save(product);
   }
