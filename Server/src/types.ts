@@ -3,16 +3,16 @@ export enum SizeUnit {
   KILOGRAM = 'קילוגרם',
   LITER = 'ליטר',
   MILLILITER = 'מיליליטר',
-  PIECE = 'חתיכות',
+  UNIT = 'יחידות',
 }
 
 export enum Preferences {
-  DIETARY='דיאטטי',
-  VEGETARIAN ='צמחוני',
-  VEGAN='טבעוני',
-  HIGH_PROTEIN='ערך חלבון גבוהה',
-  SPICY='חריף',
-  SWEET='מתוק',
-  SALTY='מלוח',
-  SOUR='חמוץ',
+  DIETARY = 'דיאטטי',
+  VEGETARIAN = 'צמחוני',
+  VEGAN = 'טבעוני',
+  HIGH_PROTEIN = 'ערך חלבון גבוהה',
+  SPICY = 'חריף',
+  SWEET = 'מתוק',
+  SALTY = 'מלוח',
+  SOUR = 'חמוץ',
 }

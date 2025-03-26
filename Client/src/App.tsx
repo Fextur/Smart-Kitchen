@@ -1,9 +1,22 @@
-import './App.css'
+import "./App.css";
+import ReceiptScanner from "./components/ReceiptScanner";
 
 const App: React.FC = () => {
   return (
-    <h1>App</h1>
-  )
-}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+      }}
+    >
+      <h1>SmartKitchen</h1>
+      <p>Scan your receipts to manage your kitchen inventory</p>
+      <ReceiptScanner />
+    </div>
+  );
+};
 
-export default App
+export default App;

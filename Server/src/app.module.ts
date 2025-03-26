@@ -8,6 +8,8 @@ import { Product } from './Products/product.entity';
 import { UserModule } from './Users/user.module';
 import 'dotenv/config';
 import { RecipeModule } from './Recipes/recipe.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { ReceiptScannerModule } from './ReceiptScanner/receiptScanner.module';
 
 @Module({
   imports: [
@@ -22,9 +24,15 @@ import { RecipeModule } from './Recipes/recipe.module';
       synchronize: true,
       autoLoadEntities: true,
     }),
+    MulterModule.register({
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+    }),
     ProductModule,
     UserModule,
-    RecipeModule
+    RecipeModule,
+    ReceiptScannerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
