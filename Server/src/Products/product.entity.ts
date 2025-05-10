@@ -1,9 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import moment from 'moment-timezone';
 import { SizeUnit } from 'src/types';
 import { DEFAULT_TZ } from 'src/constants';
@@ -29,6 +24,7 @@ export class Product {
 
   @Column({
     type: 'timestamptz',
+    nullable: true,
   })
   expirationDate: Date;
 
