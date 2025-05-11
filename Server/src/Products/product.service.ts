@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './product.entity';
-import { CreateProductDto, UpdateProductDto } from './product.dto';
+import { CreateProductsDto, UpdateProductDto } from './product.dto';
 import { User } from 'src/Users/user.entity';
 
 @Injectable()
@@ -15,20 +15,21 @@ export class ProductService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { userId, ...productData } = createProductDto;
+  async create(createProductsDto: CreateProductsDto): Promise<Product[]> {
+    const { userId, products } = createProductsDto;
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException(`User with id: ${userId} not found`);
     }
 
-    const product = this.productRepository.create({
-      ...productData,
+    const createdProducts = products.map((product) => this.productRepository.create({
+      ...product,
+      sizeValueLeft: product.sizeValueLeft ?? product.sizeValue,
       user,
-    });
+    }));
 
-    return this.productRepository.save(product);
+    return this.productRepository.save(createdProducts);
   }
 
   async findAll(): Promise<Product[]> {

@@ -8,6 +8,8 @@ export interface ParsedProduct {
   name: string;
   sizeValue: number;
   sizeUnit: SizeUnit;
+  expirationDate: Date | null;
+
 }
 
 export interface ReceiptScanOptions {
@@ -128,7 +130,8 @@ export class ReceiptScannerService {
         {
           "name": "חטיף פרינגלס אוריגינל",
           "sizeValue": 149,
-          "sizeUnit": "גרם"
+          "sizeUnit": "גרם",
+          "expirationDate" null
         }
 
       EXAMPLE 2:
@@ -138,7 +141,8 @@ export class ReceiptScannerService {
         {
           "name": "הוטפופ חמאה",
           "sizeValue": 500,
-          "sizeUnit": "גרם"
+          "sizeUnit": "גרם",
+          "expirationDate" null
         }
 
       3. PRODUCT LINE CONSOLIDATION GUIDELINES:
@@ -158,7 +162,9 @@ export class ReceiptScannerService {
           {
             "name": "מלא שם המוצר בעברית",
             "sizeValue": 900,
-            "sizeUnit": "גרם/ליטר/קילוגרם"
+            "sizeUnit": "גרם/ליטר/קילוגרם",
+            "expirationDate" null
+
           }
         ]
       }
