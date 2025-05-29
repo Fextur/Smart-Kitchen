@@ -4,8 +4,8 @@ import {
   createRouter,
   Navigate,
 } from "@tanstack/react-router";
-import AppLayout from "./layouts/AppLayout";
-import Home from "./pages/Home";
+import AppLayout from "@/layouts/AppLayout";
+import Home from "@/pages/Home";
 
 const rootRoute = createRootRoute({
   component: AppLayout,
@@ -13,14 +13,14 @@ const rootRoute = createRootRoute({
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: "/home",
   component: Home,
 });
 
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
-  component: () => <Navigate to="/" />,
+  component: () => <Navigate to="/home" />,
 });
 
 const routeTree = rootRoute.addChildren([homeRoute, notFoundRoute]);
