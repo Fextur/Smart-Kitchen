@@ -77,6 +77,21 @@ export class UserService {
     }
   }
 
+  async findByEmail(email: string): Promise<Omit<User, 'password'> | null> {
+    try {
+      const user = await this.userRepository.findOneBy({ email });
+      if (!user) {
+        return null;
+      }
+      
+      const { password: _, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to fetch user');
+    }
+  }
+
   async login(loginUserDto: LoginUserDto): Promise<Omit<User, 'password'>> {
     const { userName, password } = loginUserDto;
 
