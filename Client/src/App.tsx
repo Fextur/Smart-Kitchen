@@ -1,11 +1,12 @@
+import { RouterProvider } from "@tanstack/react-router";
 import "./App.css";
-import Home from "./pages/Home";
 import QueryProvider from "./providers/QueryProvider";
+import { router } from "./routes";
 
 const App: React.FC = () => {
   return (
     <QueryProvider>
-      <Home />;
+      <RouterProvider router={router} />
     </QueryProvider>
   );
 };
