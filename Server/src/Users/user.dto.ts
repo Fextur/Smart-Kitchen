@@ -1,0 +1,61 @@
+import {
+  IsArray,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  userName: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @IsArray()
+  @IsOptional()
+  sensitivities?: string[];
+}
+
+export class UpdateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  userName?: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsArray()
+  @IsOptional()
+  sensitivities?: string[];
+}
+
+export class LoginUserDto {
+  @IsString()
+  @IsNotEmpty()
+  userName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+}

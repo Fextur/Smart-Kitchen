@@ -1,9 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import moment from 'moment-timezone';
 import { SizeUnit } from 'src/types';
-import { DEFAULT_TZ } from 'src/constants';
 import { User } from 'src/Users/user.entity';
-import { IsOptional } from 'class-validator';
 
 @Entity('products')
 export class Product {
