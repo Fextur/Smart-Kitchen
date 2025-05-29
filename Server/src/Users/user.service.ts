@@ -1,0 +1,102 @@
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { User } from './user.entity';
+import { CreateUserDto, LoginUserDto, UpdateUserDto } from './user.dto';
+import { UnauthorizedException } from '@nestjs/common';
+
+@Injectable()
+export class UserService {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+    try {
+      const { name, userName, email, password } = createUserDto;
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const user = this.userRepository.create({
+        name,
+        userName,
+        email,
+        password: hashedPassword,
+      });
+
+      const savedUser = await this.userRepository.save(user);
+
+      const { password: _, ...userWithoutPassword } = savedUser;
+      return userWithoutPassword;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create user');
+    }
+  }
+
+  async update(updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
+    try {
+      const { id, name, userName, email, sensitivities } = updateUserDto;
+
+      const user = await this.userRepository.findOneBy({ id });
+      if (!user) {
+        throw new NotFoundException(`User with id ${id} not found`);
+      }
+
+      if (name !== undefined) user.name = name;
+      if (userName !== undefined) user.userName = userName;
+      if (email !== undefined) user.email = email;
+      if (sensitivities !== undefined) user.sensitivities = sensitivities;
+
+      const updatedUser = await this.userRepository.save(user);
+
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      return userWithoutPassword;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to update user');
+    }
+  }
+
+  async findById(id: string): Promise<Omit<User, 'password'>> {
+    try {
+      const user = await this.userRepository.findOneBy({ id });
+      if (!user) {
+        throw new NotFoundException(`User with id ${id} not found`);
+      }
+      const { password: _, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to fetch user');
+    }
+  }
+
+  async login(loginUserDto: LoginUserDto): Promise<Omit<User, 'password'>> {
+    const { userName, password } = loginUserDto;
+
+    try {
+      const user = await this.userRepository.findOneBy({ userName });
+
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const passwordMatches = await bcrypt.compare(password, user.password);
+      if (!passwordMatches) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      throw new InternalServerErrorException('Login failed');
+    }
+  }
+}
