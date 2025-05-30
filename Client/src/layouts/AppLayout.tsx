@@ -1,14 +1,11 @@
 import { FC, useState } from "react";
-import { Outlet, useLocation } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
 import { AppBar, Toolbar, Box, Typography } from "@mui/material";
-import HomeFooter from "@/layouts/Footer/HomeFooter";
 
 const AppLayout: FC = () => {
-  const location = useLocation();
   const [refreshKey, _setRefreshKey] = useState(0);
 
   const headerHeight = 10;
-  const footerHeight = location.pathname === "/home" ? 15 : 0;
 
   return (
     <Box
@@ -49,17 +46,11 @@ const AppLayout: FC = () => {
         sx={{
           flex: 1,
           bgcolor: "background.default",
-          height: `calc(100vh - ${headerHeight}vh - ${footerHeight}vh)`,
+          height: `calc(100vh - ${headerHeight}vh)`,
         }}
       >
         <Outlet key={refreshKey} />
       </Box>
-
-      {location.pathname === "/home" && (
-        <Box sx={{ height: `${footerHeight}vh` }}>
-          <HomeFooter />
-        </Box>
-      )}
     </Box>
   );
 };

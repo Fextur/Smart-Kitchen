@@ -1,23 +1,28 @@
 import { FC, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, IconButton } from "@mui/material";
+import { Trash2 } from "lucide-react";
 import { KitchenItem, SizeUnit } from "@/types";
 import { AmountEditDialog } from "./AmountEditDialog";
 import { DateEditDialog } from "./DateEditDialog";
 import { formatDate, isExpiringSoon } from "@/utils/dateUtils";
+import { DeleteConfirmDialog } from "@/components/KitchenItemList/KitchenItemCard/DeleteConfirmDialog";
 
 interface KitchenItemCardProps {
   item: KitchenItem;
   onEdit?: (updatedItem: KitchenItem) => void;
+  onDelete?: (itemId: string) => void;
   isEditing?: boolean;
 }
 
 export const KitchenItemCard: FC<KitchenItemCardProps> = ({
   item,
   onEdit,
+  onDelete,
   isEditing = false,
 }) => {
   const [showAmountDialog, setShowAmountDialog] = useState(false);
   const [showDateDialog, setShowDateDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleAmountSave = (size: number, unit: SizeUnit) => {
     if (onEdit) {
@@ -37,6 +42,19 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
         expirationDate,
         latestUpdateDate: new Date().toISOString().split("T")[0],
       });
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(item.id);
+    }
+    setShowDeleteDialog(false);
+  };
+
+  const handleAmountDelete = () => {
+    if (onDelete) {
+      onDelete(item.id);
     }
   };
 
@@ -72,7 +90,6 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
               cursor: isEditing ? "pointer" : "default",
               pr: isEditing ? 0.5 : 0,
               pl: isEditing ? 0.5 : 0,
-
               borderRadius: 1,
               bgcolor: "transparent",
               border: isEditing ? "1px dashed" : "none",
@@ -143,20 +160,36 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
             </Box>
           )}
 
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              flexDirection: "column",
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              עודכן לאחרונה:
-            </Typography>
-            <Typography variant="caption">
-              {formatDate(item.latestUpdateDate)}
-            </Typography>
-          </Box>
+          {!isEditing ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                flexDirection: "column",
+              }}
+            >
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                עודכן לאחרונה:
+              </Typography>
+              <Typography variant="caption">
+                {formatDate(item.latestUpdateDate)}
+              </Typography>
+            </Box>
+          ) : (
+            <IconButton
+              onClick={() => setShowDeleteDialog(true)}
+              size="small"
+              sx={{
+                color: "error.main",
+                "&:hover": {
+                  bgcolor: "error.light",
+                  color: "white",
+                },
+              }}
+            >
+              <Trash2 size={16} />
+            </IconButton>
+          )}
         </Box>
       </Box>
 
@@ -166,6 +199,8 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
         currentSize={item.size}
         currentUnit={item.measureUnit}
         onSave={handleAmountSave}
+        onDelete={onDelete ? handleAmountDelete : undefined}
+        itemName={item.name}
       />
 
       <DateEditDialog
@@ -173,6 +208,13 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
         onClose={() => setShowDateDialog(false)}
         currentDate={item.expirationDate ?? ""}
         onSave={handleDateSave}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+        itemName={item.name}
       />
     </>
   );
