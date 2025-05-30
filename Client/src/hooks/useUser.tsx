@@ -6,9 +6,6 @@ import api from "../axios/axios";
 import { API_ROUTES } from "../axios/apiRoutes";
 import { atom, useAtom } from "jotai";
 
-export const DEFAULT_USER_IMAGE =
-  "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
-
 export const userAtom = atom<User | null>(null);
 
 export const useUser = () => {
