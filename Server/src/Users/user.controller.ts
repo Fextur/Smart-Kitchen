@@ -7,6 +7,7 @@ import {
   UpdateUserDto,
 } from './user.dto';
 import { User } from './user.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Controller('users')
 export class UserController {
@@ -29,6 +30,13 @@ export class UserController {
   @Get(':id')
   async findById(@Param('id') id: string): Promise<Omit<User, 'password'>> {
     return this.userService.findById(id);
+  }
+
+  @Get(':userId/inventory')
+  async getInventoryByUserId(
+    @Param('userId') userId: string,
+  ): Promise<Inventory> {
+    return this.userService.getInventoryByUserId(userId);
   }
 
   @Post('login')

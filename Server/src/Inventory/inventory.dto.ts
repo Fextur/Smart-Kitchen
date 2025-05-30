@@ -2,7 +2,7 @@ import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateInventoryDto {
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   name: string;
 
   @IsString()

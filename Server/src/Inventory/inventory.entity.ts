@@ -7,10 +7,10 @@ export class Inventory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'text', nullable: false })
+  @Column({ type: 'text', nullable: true })
   name: string;
 
-  @Column({ type: 'text', nullable: false })
+  @Column({ type: 'text', nullable: true })
   description: string;
 
   @OneToMany(() => User, (user) => user.inventory)

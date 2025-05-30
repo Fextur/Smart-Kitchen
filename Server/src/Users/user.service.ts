@@ -31,11 +31,18 @@ export class UserService {
       const { name, userName, email, password } = createUserDto;
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      const inventory = this.inventoryRepository.create({
+        name: `המטבח של ${name}`,
+      });
+
+      const savedInventory = await this.inventoryRepository.save(inventory);
+
       const user = this.userRepository.create({
         name,
         userName,
         email,
         password: hashedPassword,
+        inventory: savedInventory,
       });
 
       const savedUser = await this.userRepository.save(user);
@@ -84,6 +91,25 @@ export class UserService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Failed to fetch user');
     }
+  }
+
+  async getInventoryByUserId(userId: string): Promise<Inventory> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    if (!user.inventory) {
+      throw new NotFoundException(
+        `User with id ${userId} is not assigned to any inventory`,
+      );
+    }
+
+    return user.inventory;
   }
 
   async findByEmail(email: string): Promise<Omit<User, 'password'> | null> {
