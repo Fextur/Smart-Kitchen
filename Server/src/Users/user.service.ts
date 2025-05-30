@@ -7,14 +7,23 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
-import { CreateUserDto, LoginUserDto, UpdateUserDto } from './user.dto';
+import {
+  CreateUserDto,
+  JoinInventoryDto,
+  LoginUserDto,
+  UpdateUserDto,
+} from './user.dto';
 import { UnauthorizedException } from '@nestjs/common';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+
+    @InjectRepository(Inventory)
+    private inventoryRepository: Repository<Inventory>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
@@ -98,5 +107,28 @@ export class UserService {
       if (error instanceof UnauthorizedException) throw error;
       throw new InternalServerErrorException('Login failed');
     }
+  }
+
+  async joinToInventory(joinDto: JoinInventoryDto): Promise<User> {
+    const { userId, inventoryId } = joinDto;
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    const inventory = await this.inventoryRepository.findOneBy({
+      id: inventoryId,
+    });
+    if (!inventory) {
+      throw new NotFoundException(`Inventory with id ${inventoryId} not found`);
+    }
+
+    user.inventory = inventory;
+
+    return this.userRepository.save(user);
   }
 }
