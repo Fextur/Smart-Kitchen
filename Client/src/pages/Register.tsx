@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
-import { TextField, Button, Typography, Paper } from "@mui/material";
+import { TextField, Button, Typography } from "@mui/material";
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useRegister } from "../hooks/useRegister";
@@ -35,9 +35,14 @@ const Register = () => {
   });
 
   return (
-    <Paper
-      elevation={3}
-      sx={{ padding: 2, maxWidth: 400, margin: "auto", mt: 8 }}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        padding: 20,
+      }}
     >
       <Typography
         variant="h5"
@@ -47,12 +52,14 @@ const Register = () => {
           alignItems: "center",
           gap: 1,
           direction: "rtl",
+          color: "black",
         }}
       >
         <UserPlus size={24} />
         הרשמה
       </Typography>
       <form
+        style={{ width: "80vw" }}
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit();
@@ -79,7 +86,7 @@ const Register = () => {
               onChange={(e) => field.handleChange(e.target.value)}
               error={!!field.state.meta.errors?.length || !!emailError}
               helperText={field.state.meta.errors?.[0] || emailError || ""}
-              sx={{ mt: 2 }}
+              sx={{ mt: 2, direction: "rtl" }}
             />
           )}
         </form.Field>
@@ -182,16 +189,17 @@ const Register = () => {
         )}
 
         <Button
+          loading={isRegistering}
           type="submit"
           variant="contained"
           fullWidth
-          sx={{ mt: 2, background: "#E49A61" }}
+          sx={{ mt: 4, background: "#E49A61" }}
           disabled={isRegistering}
         >
-          {isRegistering ? "נירשם..." : "הירשם"}
+          הירשם
         </Button>
       </form>
-    </Paper>
+    </div>
   );
 };
 

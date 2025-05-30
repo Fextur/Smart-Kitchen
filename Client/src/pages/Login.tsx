@@ -1,4 +1,4 @@
-import { TextField, Button, Typography, Paper } from "@mui/material";
+import { TextField, Button, Typography } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
@@ -33,15 +33,13 @@ const Login = () => {
   };
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        padding: 4,
-        maxWidth: 400,
-        margin: "auto",
-        mt: 8,
+    <div
+      style={{
         display: "flex",
+        alignItems: "center",
         justifyContent: "center",
+        // height: "100%",
+        width: "100vw",
       }}
     >
       <form
@@ -110,13 +108,13 @@ const Login = () => {
           disabled={isLoggingIn}
           sx={{ m: 1, mt: 2, background: "#E49A61" }}
         >
-          {isLoggingIn ? "ניכנס..." : "היכנס"}
+         היכנס
         </Button>
         <GoogleLogin
-          width={100}
           onSuccess={handleSuccessLogin}
           onError={() => setIsGoogleErrorShown(true)}
         />
+
         {isGoogleErrorShown && (
           <Typography fontSize={15} color="error">
             שגיאה בהתחברות עם גוגל
@@ -131,7 +129,7 @@ const Login = () => {
           עוד אין לך חשבון קיים? הירשם כאן
         </Button>
       </form>
-    </Paper>
+    </div>
   );
 };
 

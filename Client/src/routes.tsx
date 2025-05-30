@@ -6,8 +6,9 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import AppLayout from "./layouts/AppLayout";
-import Home from "./pages/Home";
+
+import AppLayout from "@/layouts/AppLayout";
+import Home from "@/pages/Home";
 import Login from "./pages/Login";
 import { useEffect } from "react";
 import Register from "./pages/Register";
@@ -41,7 +42,7 @@ const rootRoute = createRootRoute({
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: "/home",
   component: Home,
 });
 
@@ -60,7 +61,7 @@ const registerRoute = createRoute({
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
-  component: () => <Navigate to="/" />,
+  component: () => <Navigate to="/home" />,
 });
 
 const routeTree = rootRoute.addChildren([
