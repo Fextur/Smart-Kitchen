@@ -11,10 +11,10 @@ import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home";
 import Login from "./pages/Login";
 import { useEffect } from "react";
-
+import RecipeGenerator from "./pages/RecipeGenerator";
 
 const ProtectedLayout = () => {
-  const  user  = null;
+  const user = null;
   const routerState = useRouterState();
   const navigate = useNavigate();
 
@@ -47,13 +47,24 @@ const loginRoute = createRoute({
   component: Login,
 });
 
+const recipeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/recipe",
+  component: RecipeGenerator,
+});
+
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
   component: () => <Navigate to="/home" />,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, loginRoute, notFoundRoute]);
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  loginRoute,
+  recipeRoute,
+  notFoundRoute,
+]);
 
 export const router = createRouter({
   routeTree,
