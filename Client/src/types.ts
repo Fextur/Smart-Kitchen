@@ -6,6 +6,14 @@ export enum SizeUnit {
   UNIT = "יחידות",
 }
 
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+  userName: string;
+  sensitivities: string[];
+};
+
 export type KitchenItem = {
   id: string;
   name: string;
