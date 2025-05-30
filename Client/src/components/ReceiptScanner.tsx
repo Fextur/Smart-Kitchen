@@ -2,11 +2,8 @@ import { useState, ChangeEvent } from "react";
 import axios from "axios";
 import { Button, IconButton, MenuItem, TextField } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { SizeUnit } from "../types";
-import {
-  DesktopDatePicker,
-  LocalizationProvider,
-} from "@mui/x-date-pickers";
+import { SizeUnit } from "@/types";
+import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 interface ParsedProduct {
@@ -102,7 +99,7 @@ const ReceiptScanner = () => {
   const createProducts = async () => {
     await axios.post(`${import.meta.env.VITE_API_URL}/products`, {
       products: products,
-      userId: "5f6d36a1-e883-4e27-9f3a-c6c5e8a7b2d9", //TODO:change 
+      userId: "5f6d36a1-e883-4e27-9f3a-c6c5e8a7b2d9", //TODO:change
     });
   };
 

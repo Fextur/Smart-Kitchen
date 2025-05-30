@@ -1,84 +1,66 @@
-import {
-  Link,
-  Outlet,
-  useLocation,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
-import { AppBar, Toolbar, IconButton } from "@mui/material";
-import {
-  ArrowLeft,
-  CirclePlus,
-  Home,
-  LogIn,
-  MessageCircle,
-} from "lucide-react";
-import { useState } from "react";
+import { FC, useState } from "react";
+import { Outlet, useLocation } from "@tanstack/react-router";
+import { AppBar, Toolbar, Box, Typography } from "@mui/material";
+import HomeFooter from "@/layouts/Footer/HomeFooter";
 
-const AppLayout = () => {
-  const navigate = useNavigate();
-  const router = useRouter();
+const AppLayout: FC = () => {
   const location = useLocation();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const closeMenu = () => setAnchorEl(null);
+  const [refreshKey, _setRefreshKey] = useState(0);
+
+  const headerHeight = 10;
+  const footerHeight = location.pathname === "/home" ? 15 : 0;
+
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         display: "flex",
         flexDirection: "column",
         height: "100vh",
         width: "100vw",
+        bgcolor: "background.default",
       }}
     >
-      <AppBar
-        position="static"
-        sx={{
-          height: "10vh",
-          display: "flex",
-          justifyContent: "center",
-          backgroundColor: "black",
-          alignContent: "center",
-        }}
-      >
-        <Toolbar
+      <Box sx={{ p: 2, height: `${headerHeight}vh` }}>
+        <AppBar
+          position="static"
           sx={{
-            width: "100%",
+            height: "10vh",
             display: "flex",
-            justifyContent: "space-between",
-            gap: 2,
-            "&.MuiToolbar-root": { padding: 0 },
-          }}
-        ></Toolbar>
-      </AppBar>
-      {location.pathname !== "/login" && location.pathname !== "/" && (
-        <IconButton
-          onClick={() => {
-            router.history.go(-1);
-          }}
-          sx={{
-            position: "absolute",
-            top: "11vh",
-            left: "16px",
-            backgroundColor: "rgba(0,0,0,0.7)",
-            color: "white",
-            borderRadius: "50%",
-            padding: "8px",
-            "&:hover": { backgroundColor: "rgba(0,0,0,0.9)" },
+            justifyContent: "center",
+            bgcolor: "background.paper",
+            color: "text.primary",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            borderRadius: "32px",
           }}
         >
-          <ArrowLeft size={24} />
-        </IconButton>
-      )}
-      <div
-        style={{
-          overflow: "hidden",
-          padding: "16px 26px",
+          <Toolbar
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="h3">מטבחכם</Typography>
+          </Toolbar>
+        </AppBar>
+      </Box>
+
+      <Box
+        sx={{
+          flex: 1,
+          bgcolor: "background.default",
+          height: `calc(100vh - ${headerHeight}vh - ${footerHeight}vh)`,
         }}
       >
         <Outlet key={refreshKey} />
-      </div>
-    </div>
+      </Box>
+
+      {location.pathname === "/home" && (
+        <Box sx={{ height: `${footerHeight}vh` }}>
+          <HomeFooter />
+        </Box>
+      )}
+    </Box>
   );
 };
 

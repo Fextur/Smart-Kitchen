@@ -6,8 +6,9 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import AppLayout from "./layouts/AppLayout";
-import Home from "./pages/Home";
+
+import AppLayout from "@/layouts/AppLayout";
+import Home from "@/pages/Home";
 import Login from "./pages/Login";
 import { useEffect } from "react";
 
@@ -30,14 +31,13 @@ const ProtectedLayout = () => {
   return <AppLayout />;
 };
 
-
 const rootRoute = createRootRoute({
   component: ProtectedLayout,
 });
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: "/home",
   component: Home,
 });
 
@@ -50,7 +50,7 @@ const loginRoute = createRoute({
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
-  component: () => <Navigate to="/" />,
+  component: () => <Navigate to="/home" />,
 });
 
 const routeTree = rootRoute.addChildren([homeRoute, loginRoute, notFoundRoute]);
