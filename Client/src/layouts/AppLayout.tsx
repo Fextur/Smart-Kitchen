@@ -7,8 +7,7 @@ const AppLayout: FC = () => {
   const location = useLocation();
   const [refreshKey, _setRefreshKey] = useState(0);
 
-  const headerHeight =
-    location.pathname !== "/login" && location.pathname !== "/" ? 10 : 0;
+  const headerHeight = 10;
   const footerHeight = location.pathname === "/home" ? 15 : 0;
 
   return (
@@ -21,32 +20,30 @@ const AppLayout: FC = () => {
         bgcolor: "background.default",
       }}
     >
-      {location.pathname !== "/login" && location.pathname !== "/" && (
-        <Box sx={{ p: 2, height: `${headerHeight}vh` }}>
-          <AppBar
-            position="static"
+      <Box sx={{ p: 2, height: `${headerHeight}vh` }}>
+        <AppBar
+          position="static"
+          sx={{
+            height: "10vh",
+            display: "flex",
+            justifyContent: "center",
+            bgcolor: "background.paper",
+            color: "text.primary",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            borderRadius: "32px",
+          }}
+        >
+          <Toolbar
             sx={{
-              height: "10vh",
               display: "flex",
               justifyContent: "center",
-              bgcolor: "background.paper",
-              color: "text.primary",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              borderRadius: "32px",
+              alignItems: "center",
             }}
           >
-            <Toolbar
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Typography variant="h3">מטבחכם</Typography>
-            </Toolbar>
-          </AppBar>
-        </Box>
-      )}
+            <Typography variant="h3">מטבחכם</Typography>
+          </Toolbar>
+        </AppBar>
+      </Box>
 
       <Box
         sx={{
