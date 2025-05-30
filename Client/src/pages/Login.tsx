@@ -1,4 +1,4 @@
-import { TextField, Button, Typography } from "@mui/material";
+import { TextField, Button, Typography, Paper } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
@@ -13,7 +13,7 @@ const Login = () => {
 
   const form = useForm({
     defaultValues: {
-      username: "",
+      userName: "",
       password: "",
     },
     onSubmit: async ({ value }) => {
@@ -33,7 +33,17 @@ const Login = () => {
   };
 
   return (
-    <div>
+    <Paper
+      elevation={3}
+      sx={{
+        padding: 4,
+        maxWidth: 400,
+        margin: "auto",
+        mt: 8,
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
       <form
         style={{
           display: "flex",
@@ -47,7 +57,7 @@ const Login = () => {
         }}
       >
         <form.Field
-          name="username"
+          name="userName"
           validators={{
             onChange: ({ value }) =>
               !value ? "חובה להזין שם משתמש" : undefined,
@@ -112,11 +122,16 @@ const Login = () => {
             שגיאה בהתחברות עם גוגל
           </Typography>
         )}
-        <Button fullWidth variant="text" sx={{ m: 1, color: "#E49A61" }}>
+        <Button
+          fullWidth
+          variant="text"
+          sx={{ m: 1, color: "#E49A61" }}
+          onClick={() => navigate({ to: "/register" })}
+        >
           עוד אין לך חשבון קיים? הירשם כאן
         </Button>
       </form>
-    </div>
+    </Paper>
   );
 };
 

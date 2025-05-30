@@ -9,5 +9,7 @@ export enum SizeUnit {
 export type User = {
   id: string;
   email: string;
-  username: string;
+  name: string;
+  userName: string;
+  sensitivities: string[];
 };

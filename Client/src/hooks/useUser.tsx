@@ -14,10 +14,10 @@ export const userAtom = atom<User | null>(null);
 export const useUser = () => {
   const [user, setUser] = useAtom(userAtom);
 
-  const login = async (username: User["username"], password: string) => {
+  const login = async (userName: User["userName"], password: string) => {
     try {
       const { data } = await api.post<User>(`${API_ROUTES.users}/login`, {
-        username,
+        userName,
         password,
       });
 
@@ -48,15 +48,14 @@ export const useUser = () => {
 
   const loginMutation = useMutation({
     mutationFn: ({
-      username,
+      userName,
       password,
     }: {
-      username: User["username"];
+      userName: User["userName"];
       password: string;
-    }) => login(username, password),
+    }) => login(userName, password),
     onSuccess: (user) => {
       if (user) {
-        console.log(user);
         setUser(user);
       }
     },
@@ -88,6 +87,7 @@ export const useUser = () => {
 
   return {
     user,
+    setUser,
     loginGoogle: googleLoginMutation.mutate,
     login: loginMutation.mutate,
     logout,

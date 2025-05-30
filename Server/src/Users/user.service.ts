@@ -20,7 +20,6 @@ export class UserService {
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
     try {
       const { name, userName, email, password } = createUserDto;
-
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = this.userRepository.create({
@@ -35,6 +34,7 @@ export class UserService {
       const { password: _, ...userWithoutPassword } = savedUser;
       return userWithoutPassword;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException('Failed to create user');
     }
   }
@@ -83,7 +83,7 @@ export class UserService {
       if (!user) {
         return null;
       }
-      
+
       const { password: _, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (error) {
