@@ -11,10 +11,16 @@ import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home";
 import Login from "./pages/Login";
 import { useEffect } from "react";
+import Register from "./pages/Register";
+import { atom } from "jotai";
+import { User } from "./types";
+import { useUser } from "./hooks/useUser";
 import RecipeGenerator from "./pages/RecipeGenerator";
 
+export const userAtom = atom<User | null>(null);
+
 const ProtectedLayout = () => {
-  const user = null;
+  const { user } = useUser();
   const routerState = useRouterState();
   const navigate = useNavigate();
 
@@ -53,6 +59,12 @@ const recipeRoute = createRoute({
   component: RecipeGenerator,
 });
 
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/register",
+  component: Register,
+});
+
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -63,6 +75,7 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
   recipeRoute,
+  registerRoute,
   notFoundRoute,
 ]);
 
