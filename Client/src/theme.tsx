@@ -81,7 +81,7 @@ export const theme = createTheme({
       textTransform: "none",
     },
   },
-  spacing: 8, // Base spacing unit
+  spacing: 8,
   shape: {
     borderRadius: 12,
   },

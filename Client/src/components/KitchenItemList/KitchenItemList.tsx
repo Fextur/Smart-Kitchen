@@ -1,94 +1,139 @@
-import { useState, useRef, FC } from "react";
+import { useState, useRef, FC, useMemo, useCallback } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ChevronDown, ChevronUp, Edit3 } from "lucide-react";
-import { KitchenItem } from "@/types";
+import { ChevronDown, ChevronUp, Edit3, Plus } from "lucide-react";
+import { KitchenItem, SizeUnit } from "@/types";
 import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
+import { AddNewItemDialog } from "@/components/KitchenItemList/KitchenItemCard/AddNewItemDialog";
 
+const createAddNewItem = (): KitchenItem => ({
+  id: "add-new",
+  name: "",
+  size: 0,
+  measureUnit: SizeUnit.UNIT,
+  latestUpdateDate: "",
+});
 interface KitchenItemListProps {
   items: KitchenItem[];
   onEditItem?: (updatedItem: KitchenItem) => void;
+  onAddNewItem?: (item: Omit<KitchenItem, "id" | "latestUpdateDate">) => void;
   title?: string;
+  isEditing?: boolean;
+  showAddNewRow?: boolean;
   initialCollapsed?: boolean;
 }
 
 export const KitchenItemList: FC<KitchenItemListProps> = ({
   items,
   onEditItem,
+  onAddNewItem,
   title,
+  isEditing = false,
+  showAddNewRow = false,
+  initialCollapsed = false,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
+  const [showEditMode, setShowEditMode] = useState(isEditing);
+  const [showAddNewDialog, setShowAddNewDialog] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
-  const [isEditing, setIsEditing] = useState(false);
+
+  const displayItems = useMemo(() => {
+    if (showAddNewRow && !isCollapsed) {
+      return [...items, createAddNewItem()];
+    }
+    return items;
+  }, [items, showAddNewRow, isCollapsed]);
 
   const rowVirtualizer = useVirtualizer({
-    count: isCollapsed ? 0 : items.length,
+    count: isCollapsed ? 0 : displayItems.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 65,
+    estimateSize: () => 80,
     overscan: 5,
   });
 
-  const toggleCollapsed = () => {
-    setIsCollapsed(!isCollapsed);
-  };
+  const toggleCollapsed = useCallback(() => {
+    setIsCollapsed((prev) => !prev);
+  }, []);
 
-  const toggleEditMode = (e: React.MouseEvent) => {
+  const toggleEditMode = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsEditing(!isEditing);
-  };
+    setShowEditMode((prev) => !prev);
+  }, []);
+
+  const handleAddNewClick = useCallback(() => {
+    setShowAddNewDialog(true);
+  }, []);
+
+  const handleAddNewSave = useCallback(
+    (newItem: Omit<KitchenItem, "id" | "latestUpdateDate">) => {
+      if (onAddNewItem) {
+        onAddNewItem(newItem);
+      }
+      setShowAddNewDialog(false);
+    },
+    [onAddNewItem]
+  );
+
+  const handleCloseAddNewDialog = useCallback(() => {
+    setShowAddNewDialog(false);
+  }, []);
 
   return (
     <Box
       sx={{
-        // bgcolor: "background.paper",
         borderRadius: 2,
-        // boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
         overflow: "hidden",
         direction: "rtl",
         minHeight: 120,
       }}
     >
-      <Box
-        onClick={toggleCollapsed}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          p: 2,
-          cursor: "pointer",
-          borderBottom: "1px solid",
-          borderColor: "grey.100",
-          "&:hover": {
-            bgcolor: "grey.50",
-          },
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {title}
-          </Typography>
-        </Box>
+      {title && (
+        <Box
+          onClick={toggleCollapsed}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 2,
+            cursor: "pointer",
+            borderBottom: "1px solid",
+            borderColor: "grey.100",
+            "&:hover": {
+              bgcolor: "grey.50",
+            },
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              {title}
+            </Typography>
+          </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {onEditItem !== undefined && !isCollapsed && (
-            <IconButton
-              size="small"
-              onClick={toggleEditMode}
-              sx={{
-                bgcolor: "transparent",
-                borderRadius: 1,
-                color: "primary.main",
-              }}
-            >
-              <Edit3 size={16} />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {!isEditing && onEditItem && !isCollapsed && (
+              <IconButton
+                size="small"
+                onClick={toggleEditMode}
+                sx={{
+                  bgcolor: "transparent",
+                  borderRadius: 1,
+                  color: "primary.main",
+                }}
+              >
+                <Edit3 size={16} />
+              </IconButton>
+            )}
+
+            <IconButton size="small" sx={{ color: "text.secondary" }}>
+              {isCollapsed ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronUp size={16} />
+              )}
             </IconButton>
-          )}
-
-          <IconButton size="small" sx={{ color: "text.secondary" }}>
-            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-          </IconButton>
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {!isCollapsed && (
         <Box
@@ -96,8 +141,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
           sx={{
             overflow: "auto",
             maxHeight: 400,
-            minHeight: 75,
-            // Custom scrollbar styles
+            minHeight: 100,
             "&::-webkit-scrollbar": {
               width: 8,
             },
@@ -121,10 +165,68 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
               height: `${rowVirtualizer.getTotalSize()}px`,
               width: "100%",
               position: "relative",
+              pb: 1,
             }}
           >
             {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-              const item = items[virtualItem.index];
+              const item = displayItems[virtualItem.index];
+
+              if (item.id === "add-new") {
+                return (
+                  <Box
+                    key={virtualItem.key}
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                  >
+                    <Box
+                      onClick={handleAddNewClick}
+                      sx={{
+                        bgcolor: "background.paper",
+                        my: 1.5,
+                        px: 2,
+                        border: "2px dashed",
+                        borderColor: "primary.main",
+                        direction: "rtl",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 60,
+                        borderRadius: "50px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        "&:hover": {
+                          bgcolor: "primary.light",
+                          color: "white",
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          color: "primary.main",
+                          "&:hover": {
+                            color: "white",
+                          },
+                        }}
+                      >
+                        <Plus size={20} />
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          הוסף פריט חדש
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                );
+              }
+
               return (
                 <Box
                   key={virtualItem.key}
@@ -140,7 +242,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
                   <KitchenItemCard
                     item={item}
                     onEdit={onEditItem}
-                    isEditing={isEditing}
+                    isEditing={isEditing || showEditMode}
                   />
                 </Box>
               );
@@ -149,7 +251,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
         </Box>
       )}
 
-      {isCollapsed && (
+      {isCollapsed && title && (
         <Box
           onClick={toggleCollapsed}
           sx={{
@@ -166,6 +268,12 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
           </Typography>
         </Box>
       )}
+
+      <AddNewItemDialog
+        isOpen={showAddNewDialog}
+        onClose={handleCloseAddNewDialog}
+        onSave={handleAddNewSave}
+      />
     </Box>
   );
 };
