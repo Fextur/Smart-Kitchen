@@ -7,14 +7,23 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
-import { CreateUserDto, LoginUserDto, UpdateUserDto } from './user.dto';
+import {
+  CreateUserDto,
+  JoinInventoryDto,
+  LoginUserDto,
+  UpdateUserDto,
+} from './user.dto';
 import { UnauthorizedException } from '@nestjs/common';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+
+    @InjectRepository(Inventory)
+    private inventoryRepository: Repository<Inventory>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
@@ -22,11 +31,18 @@ export class UserService {
       const { name, userName, email, password } = createUserDto;
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      const inventory = this.inventoryRepository.create({
+        name: `המטבח של ${name}`,
+      });
+
+      const savedInventory = await this.inventoryRepository.save(inventory);
+
       const user = this.userRepository.create({
         name,
         userName,
         email,
         password: hashedPassword,
+        inventory: savedInventory,
       });
 
       const savedUser = await this.userRepository.save(user);
@@ -77,6 +93,25 @@ export class UserService {
     }
   }
 
+  async getInventoryByUserId(userId: string): Promise<Inventory> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    if (!user.inventory) {
+      throw new NotFoundException(
+        `User with id ${userId} is not assigned to any inventory`,
+      );
+    }
+
+    return user.inventory;
+  }
+
   async findByEmail(email: string): Promise<Omit<User, 'password'> | null> {
     try {
       const user = await this.userRepository.findOneBy({ email });
@@ -113,5 +148,28 @@ export class UserService {
       if (error instanceof UnauthorizedException) throw error;
       throw new InternalServerErrorException('Login failed');
     }
+  }
+
+  async joinToInventory(joinDto: JoinInventoryDto): Promise<User> {
+    const { userId, inventoryId } = joinDto;
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    const inventory = await this.inventoryRepository.findOneBy({
+      id: inventoryId,
+    });
+    if (!inventory) {
+      throw new NotFoundException(`Inventory with id ${inventoryId} not found`);
+    }
+
+    user.inventory = inventory;
+
+    return this.userRepository.save(user);
   }
 }

@@ -22,8 +22,8 @@ export class RecipeService {
     try {
       const user = await this.userRepository.findOne({
         where: { id: userId },
-        relations: ['products']
-      });      
+        relations: ['products'],
+      });
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -32,11 +32,11 @@ export class RecipeService {
       const preferencesString = preferences.join(' , ');
       const sensitivitiesString = user.sensitivities.join(' , ');
 
-      const productsString = user.products
+      const productsString = user.inventory.products
         .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} של ${item.name}`)
         .join(' , ');
 
-    const content = `יש לי את הרגישויות האלו: ${sensitivitiesString} ויש לי את המצרכים הבאים: ${productsString} ,תכין לי בבקשה מתכון מהמצרכים האלה חשוב לי שהמתכון יהיה ${preferencesString}, ואני מוכן לרכוש אקסטרה 3 מצרכים לכל היותר.`
+      const content = `יש לי את הרגישויות האלו: ${sensitivitiesString} ויש לי את המצרכים הבאים: ${productsString} ,תכין לי בבקשה מתכון מהמצרכים האלה חשוב לי שהמתכון יהיה ${preferencesString}, ואני מוכן לרכוש אקסטרה 3 מצרכים לכל היותר.`;
 
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',

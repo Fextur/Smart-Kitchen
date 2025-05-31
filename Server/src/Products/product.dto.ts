@@ -20,7 +20,7 @@ export class ProductDto {
   @IsNumber()
   @IsNotEmpty()
   sizeValueLeft: number;
- 
+
   @IsEnum(SizeUnit)
   @IsNotEmpty()
   sizeUnit: SizeUnit;
@@ -36,7 +36,7 @@ export class CreateProductsDto {
 
   @IsNumber()
   @IsNotEmpty()
-  userId: string;
+  inventoryId: string;
 }
 
 export class UpdateProductDto {

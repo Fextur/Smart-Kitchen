@@ -1,5 +1,5 @@
-import { Product } from 'src/Products/product.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Inventory } from 'src/Inventory/inventory.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -21,6 +21,8 @@ export class User {
   @Column({ type: 'text', array: true, default: [] })
   sensitivities: string[];
 
-  @OneToMany(() => Product, (product) => product.user)
-  products: Product[];
+  @ManyToOne(() => Inventory, (inventory) => inventory.users, {
+    onDelete: 'CASCADE',
+  })
+  inventory: Inventory;
 }
