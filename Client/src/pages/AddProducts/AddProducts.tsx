@@ -47,8 +47,8 @@ const AddProducts: FC = () => {
     setItems((prevItems) => [...prevItems, item]);
   };
 
-  const handleAccept = (itemsToSave: KitchenItem[]) => {
-    updateItemsMutation.mutate(itemsToSave, {
+  const handleAccept = () => {
+    updateItemsMutation.mutate(items, {
       onSuccess: () => {
         navigate({ to: "/" });
       },
@@ -125,10 +125,10 @@ const AddProducts: FC = () => {
         />
       </Box>
       <ConfirmFooter
-        items={items}
         onAccept={handleAccept}
         onCancel={handleCancel}
         isLoading={false}
+        isDisabled={items.length === 0}
       />
     </Box>
   );

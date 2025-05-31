@@ -58,7 +58,7 @@ export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       icon={<Plus size={24} />}
-      color="#f97316"
+      color="#E49A61"
       title="הוסף פריט חדש"
     >
       <Box sx={{ direction: "rtl" }}>

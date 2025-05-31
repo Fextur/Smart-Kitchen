@@ -43,7 +43,7 @@ export const AddProductsDialog: FC<AddProductsDialogProps> = ({
         isOpen={isOpen && !showImageSelection}
         onClose={onClose}
         icon={<Plus size={24} />}
-        color="#f97316"
+        color="#E49A61"
         title="הוסף מוצרים"
       >
         <Box sx={{ direction: "rtl" }}>
@@ -87,7 +87,9 @@ export const AddProductsDialog: FC<AddProductsDialogProps> = ({
               }}
             >
               <Edit size={20} />
-              <Typography variant="body1">הוסף ידנית</Typography>
+              <Typography variant="body1" color="white">
+                הוסף ידנית
+              </Typography>
             </Button>
           </Box>
         </Box>

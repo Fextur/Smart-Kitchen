@@ -95,7 +95,7 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
         isOpen={isOpen}
         onClose={() => {}}
         icon={<ScanLine size={24} />}
-        color="#f97316"
+        color="#E49A61"
         title="סורק קבלה..."
       >
         <Box sx={{ textAlign: "center", direction: "rtl" }}>
@@ -125,7 +125,7 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
         isOpen={isOpen && !showCamera}
         onClose={onClose}
         icon={<ScanLine size={24} />}
-        color="#f97316"
+        color="#E49A61"
         title="סרוק קבלה"
       >
         <Box sx={{ direction: "rtl" }}>

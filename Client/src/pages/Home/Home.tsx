@@ -9,7 +9,8 @@ import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
 
 const Home: FC = () => {
-  const { items, isLoading, updateItemsMutation } = useKitchenItems();
+  const { items, isLoading, updateItemsMutation, categorizedItems } =
+    useKitchenItems();
   const { user } = useUser();
 
   const greeting = useMemo(() => {
@@ -24,20 +25,6 @@ const Home: FC = () => {
       return "לילה טוב";
     }
   }, []);
-
-  const categorizedItems = useMemo(() => {
-    const expiringSoon = items.filter(
-      (item) => item.expirationDate && isExpiringSoon(item.expirationDate)
-    );
-
-    const empty = items
-      .filter((item) => item.size === 0)
-      .map((item) => ({ ...item, expirationDate: undefined }));
-
-    const inKitchen = items.filter((item) => item.size !== 0);
-
-    return { expiringSoon, empty, inKitchen };
-  }, [items]);
 
   const handleEditItem = useCallback(
     (item: KitchenItem) => {
@@ -117,7 +104,7 @@ const Home: FC = () => {
               px: 2,
             }}
           >
-            {categorizedItems.expiringSoon.length > 0 && (
+            {categorizedItems && categorizedItems.expiringSoon.length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <KitchenItemList
                   items={categorizedItems.expiringSoon}
@@ -126,13 +113,13 @@ const Home: FC = () => {
               </Box>
             )}
 
-            {categorizedItems.empty.length > 0 && (
+            {categorizedItems && categorizedItems.empty.length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <KitchenItemList items={categorizedItems.empty} title="נגמרו" />
               </Box>
             )}
 
-            {categorizedItems.inKitchen.length > 0 && (
+            {categorizedItems && categorizedItems.inKitchen.length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <KitchenItemList
                   items={categorizedItems.inKitchen}
