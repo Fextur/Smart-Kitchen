@@ -5,6 +5,7 @@ import { KitchenItem } from "@/types";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
+import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
 
 interface AddProductsLocationState {
   items?: KitchenItem[];
@@ -75,7 +76,7 @@ const AddProducts: FC = () => {
       <Box
         sx={{
           p: 2,
-          bgcolor: "background.paper",
+          // bgcolor: "background.paper",
           borderBottom: "1px solid",
           borderColor: "grey.100",
           direction: "rtl",
@@ -116,12 +117,18 @@ const AddProducts: FC = () => {
         }}
       >
         <KitchenItemList
-          items={items}
+          itemsCount={items.length}
           title="פריטים להוספה"
-          isEditing={true}
-          onEditItem={handleUpdateItem}
+          isEditing
           onAddNewItem={handleAddNewItem}
-          showAddNewRow={true}
+          maxHeight="100%"
+          renderRow={(itemIndex, isEditing) => (
+            <KitchenItemCard
+              item={items[itemIndex]}
+              onEdit={handleUpdateItem}
+              isEditing={isEditing}
+            />
+          )}
         />
       </Box>
       <ConfirmFooter

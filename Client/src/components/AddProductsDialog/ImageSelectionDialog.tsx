@@ -3,18 +3,20 @@ import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import { Camera, Image, ScanLine } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
-import { CameraCaptureDialog } from "./CameraCaptureDialog";
 import { useCameraCapture } from "@/hooks/useCameraCapture";
 import { useReceiptScanner } from "@/hooks/useReceiptScanner";
+import { CameraCaptureDialog } from "@/components/AddProductsDialog/CameraCaptureDialog";
 
 interface ImageSelectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onFinish?: () => void;
 }
 
 export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
   isOpen,
   onClose,
+  onFinish,
 }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +56,9 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
   };
 
   const handleCameraCapture = async (file: File) => {
+    // Close the camera dialog but keep this dialog open for scanning
     setShowCamera(false);
+    // Process the file - the scanning dialog will show
     await processFile(file);
   };
 
@@ -65,7 +69,13 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
 
   const processFile = async (file: File) => {
     try {
+      // Don't call onFinish here - wait until after scanning is complete
       const result = await scanReceiptMutation.mutateAsync(file);
+
+      // Now call onFinish and navigate
+      if (onFinish) {
+        onFinish();
+      }
 
       (navigate as any)({
         to: "/add-products",
@@ -78,6 +88,12 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
       onClose();
     } catch (error) {
       console.error("Scanning failed:", error);
+
+      // Call onFinish even on error
+      if (onFinish) {
+        onFinish();
+      }
+
       (navigate as any)({
         to: "/add-products",
         state: {
@@ -89,10 +105,11 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
     }
   };
 
+  // Show scanning dialog when scanning - make sure it's always visible during scanning
   if (isScanning) {
     return (
       <Dialog
-        isOpen={isOpen}
+        isOpen={true} // Force dialog to be open during scanning
         onClose={() => {}}
         icon={<ScanLine size={24} />}
         color="#E49A61"

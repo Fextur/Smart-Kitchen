@@ -1,14 +1,6 @@
 import { FC, useState } from "react";
 import { Plus } from "lucide-react";
-import {
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  Button,
-  Box,
-  InputLabel,
-} from "@mui/material";
+import { TextField, Button, Box } from "@mui/material";
 import { SizeUnit, KitchenItem } from "@/types";
 import { Dialog } from "@/components/Dialog";
 import { QuantityInput } from "@/components/KitchenItemList/KitchenItemCard/QuantityInput";
@@ -17,12 +9,14 @@ interface AddNewItemDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: Omit<KitchenItem, "id" | "latestUpdateDate">) => void;
+  showExperationDate?: boolean;
 }
 
 export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
   isOpen,
   onClose,
   onSave,
+  showExperationDate = true,
 }) => {
   const [name, setName] = useState("");
   const [size, setSize] = useState<number>(1);
@@ -86,27 +80,29 @@ export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
           setUnit={setUnit}
         />
 
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            label="תאריך תפוגה (אופציונלי)"
-            type="date"
-            value={expirationDate}
-            onChange={(e) => setExpirationDate(e.target.value)}
-            fullWidth
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-            sx={{
-              "& input": {
-                fontSize: 16,
-                fontWeight: 500,
-                p: 1.75,
-              },
-            }}
-          />
-        </Box>
+        {showExperationDate && (
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              label="תאריך תפוגה (אופציונלי)"
+              type="date"
+              value={expirationDate}
+              onChange={(e) => setExpirationDate(e.target.value)}
+              fullWidth
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              sx={{
+                "& input": {
+                  fontSize: 16,
+                  fontWeight: 500,
+                  p: 1.75,
+                },
+              }}
+            />
+          </Box>
+        )}
 
         <Box sx={{ display: "flex", gap: 1.5 }}>
           <Button

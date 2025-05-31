@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KitchenItem, SizeUnit } from "../types";
+import { KitchenItem, SizeUnit } from "@/types";
 import { useMemo } from "react";
 import { isExpiringSoon } from "@/utils/dateUtils";
 
@@ -13,7 +13,7 @@ export const useKitchenItems = () => {
       const stubItems: KitchenItem[] = [
         {
           id: "1",
-          name: "במבה",
+          name: "קולה",
           size: 1,
           measureUnit: SizeUnit.UNIT,
           expirationDate: "2024-06-15",
@@ -21,7 +21,7 @@ export const useKitchenItems = () => {
         },
         {
           id: "2",
-          name: "קולה",
+          name: "במבה",
           size: 0,
           measureUnit: SizeUnit.UNIT,
           expirationDate: "2024-07-01",
@@ -70,7 +70,7 @@ export const useKitchenItems = () => {
         {
           id: "8",
           name: "בצל",
-          size: 2,
+          size: 0,
           measureUnit: SizeUnit.KILOGRAM,
           expirationDate: "2024-07-15",
           latestUpdateDate: "2024-05-19",

@@ -1,8 +1,8 @@
 import { FC, useState } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { Plus, CookingPot, ScrollText } from "lucide-react";
-import { AddProductsDialog } from "@/pages/Home/AddProductsDialog/AddProductsDialog";
 import { useNavigate } from "@tanstack/react-router";
+import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
 
 const HomeFooter: FC = () => {
   const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);

@@ -22,3 +22,7 @@ export type KitchenItem = {
   expirationDate?: string;
   latestUpdateDate: string;
 };
+
+export type ShoppingListItem = Omit<KitchenItem, "expirationDate"> & {
+  isChecked: boolean;
+};

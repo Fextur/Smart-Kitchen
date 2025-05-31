@@ -27,7 +27,6 @@ export const QuantityInput: FC<QuantityInputProps> = ({
   unit,
   setUnit,
 }) => {
-  console.log("units", sizeUnitsArray);
   return (
     <Box sx={{ display: "flex", gap: 1.5, mb: 3 }}>
       <TextField
@@ -71,7 +70,7 @@ export const QuantityInput: FC<QuantityInputProps> = ({
           }}
         >
           {sizeUnitsArray.map((unit) => (
-            <MenuItem value={unit.label} key={unit.label}>
+            <MenuItem value={unit.value} key={unit.label}>
               {unit.value}
             </MenuItem>
           ))}

@@ -3,10 +3,10 @@ import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
 import Loader from "@/components/Loader";
-import { isExpiringSoon } from "@/utils/dateUtils";
 import HomeFooter from "@/pages/Home/HomeFooter";
 import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
+import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
 
 const Home: FC = () => {
   const { items, isLoading, updateItemsMutation, categorizedItems } =
@@ -107,24 +107,46 @@ const Home: FC = () => {
             {categorizedItems && categorizedItems.expiringSoon.length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <KitchenItemList
-                  items={categorizedItems.expiringSoon}
+                  itemsCount={categorizedItems.expiringSoon.length}
                   title="עומד להתקלקל"
+                  renderRow={(itemIndex, isEditing) => (
+                    <KitchenItemCard
+                      item={categorizedItems.expiringSoon[itemIndex]}
+                      isEditing={isEditing}
+                    />
+                  )}
                 />
               </Box>
             )}
 
             {categorizedItems && categorizedItems.empty.length > 0 && (
               <Box sx={{ mb: 2 }}>
-                <KitchenItemList items={categorizedItems.empty} title="נגמרו" />
+                <KitchenItemList
+                  itemsCount={categorizedItems.empty.length}
+                  title="נגמרו"
+                  renderRow={(itemIndex, isEditing) => (
+                    <KitchenItemCard
+                      item={categorizedItems.empty[itemIndex]}
+                      isEditing={isEditing}
+                    />
+                  )}
+                />
               </Box>
             )}
 
             {categorizedItems && categorizedItems.inKitchen.length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <KitchenItemList
-                  items={categorizedItems.inKitchen}
+                  isEditToggable
+                  itemsCount={categorizedItems.inKitchen.length}
                   title="במטבח"
-                  onEditItem={handleEditItem}
+                  renderRow={(itemIndex, isEditing) => (
+                    <KitchenItemCard
+                      item={categorizedItems.inKitchen[itemIndex]}
+                      onEdit={handleEditItem}
+                      isEditing={isEditing}
+                    />
+                  )}
                 />
               </Box>
             )}

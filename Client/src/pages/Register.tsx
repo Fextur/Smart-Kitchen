@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { TextField, Button, Typography } from "@mui/material";
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
-import { useRegister } from "../hooks/useRegister";
+import { useRegister } from "@/hooks/useRegister";
 
 const Register = () => {
   const [userNameError, setUsernameError] = useState("");
