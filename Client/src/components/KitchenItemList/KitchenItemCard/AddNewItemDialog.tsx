@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { SizeUnit, KitchenItem } from "@/types";
 import { Dialog } from "@/components/Dialog";
+import { QuantityInput } from "@/components/KitchenItemList/KitchenItemCard/QuantityInput";
 
 interface AddNewItemDialogProps {
   isOpen: boolean;
@@ -78,58 +79,12 @@ export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
           />
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1.5, mb: 3 }}>
-          <TextField
-            label="כמות"
-            type="number"
-            value={size}
-            onChange={(e) => setSize(parseFloat(e.target.value) || 0)}
-            inputProps={{
-              min: 0,
-              step: 0.1,
-            }}
-            slotProps={{
-              htmlInput: {
-                inputMode: "numeric",
-                pattern: "[0-9]*",
-                step: "0.1",
-              },
-            }}
-            sx={{
-              flex: 1,
-              "& input": {
-                textAlign: "center",
-                fontSize: 16,
-                fontWeight: 500,
-                p: 1.75,
-              },
-            }}
-            placeholder="1"
-          />
-
-          <FormControl sx={{ minWidth: 120 }}>
-            <InputLabel>יחידה</InputLabel>
-            <Select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value as SizeUnit)}
-              label="יחידה"
-              sx={{
-                "& .MuiSelect-select": {
-                  textAlign: "right",
-                  fontSize: 16,
-                  fontWeight: 500,
-                  p: 1.75,
-                },
-              }}
-            >
-              <MenuItem value={SizeUnit.UNIT}>יח׳</MenuItem>
-              <MenuItem value={SizeUnit.GRAM}>גרם</MenuItem>
-              <MenuItem value={SizeUnit.KILOGRAM}>קילוגרם</MenuItem>
-              <MenuItem value={SizeUnit.LITER}>ליטר</MenuItem>
-              <MenuItem value={SizeUnit.MILLILITER}>מיליליטר</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+        <QuantityInput
+          size={size}
+          setSize={setSize}
+          unit={unit}
+          setUnit={setUnit}
+        />
 
         <Box sx={{ mb: 3 }}>
           <TextField

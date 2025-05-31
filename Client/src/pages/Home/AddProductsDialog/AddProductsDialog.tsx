@@ -32,12 +32,7 @@ export const AddProductsDialog: FC<AddProductsDialogProps> = ({
     });
   };
 
-  const handleImageSelectionClose = () => {
-    setShowImageSelection(false);
-    onClose();
-  };
-
-  const handleScanComplete = () => {
+  const handleClose = () => {
     setShowImageSelection(false);
     onClose();
   };
@@ -98,11 +93,7 @@ export const AddProductsDialog: FC<AddProductsDialogProps> = ({
         </Box>
       </Dialog>
 
-      <ImageSelectionDialog
-        isOpen={showImageSelection}
-        onClose={handleImageSelectionClose}
-        onScanComplete={handleScanComplete}
-      />
+      <ImageSelectionDialog isOpen={showImageSelection} onClose={handleClose} />
     </>
   );
 };

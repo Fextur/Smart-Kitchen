@@ -10,13 +10,11 @@ import { useReceiptScanner } from "@/hooks/useReceiptScanner";
 interface ImageSelectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onScanComplete: () => void;
 }
 
 export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
   isOpen,
   onClose,
-  onScanComplete,
 }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +75,7 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
         },
       });
 
-      onScanComplete();
+      onClose();
     } catch (error) {
       console.error("Scanning failed:", error);
       (navigate as any)({
@@ -87,7 +85,7 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
           isFromScan: false,
         },
       });
-      onScanComplete();
+      onClose();
     }
   };
 

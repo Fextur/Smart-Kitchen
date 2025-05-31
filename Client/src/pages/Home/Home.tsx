@@ -46,18 +46,6 @@ const Home: FC = () => {
     [updateItemsMutation]
   );
 
-  const handleDeleteItem = useCallback(
-    (itemId: string) => {
-      updateItemsMutation.mutate([
-        {
-          id: itemId,
-          size: 0,
-        } as KitchenItem,
-      ]);
-    },
-    [updateItemsMutation]
-  );
-
   if (isLoading) {
     return (
       <Box
@@ -150,7 +138,6 @@ const Home: FC = () => {
                   items={categorizedItems.inKitchen}
                   title="במטבח"
                   onEditItem={handleEditItem}
-                  onDeleteItem={handleDeleteItem}
                 />
               </Box>
             )}

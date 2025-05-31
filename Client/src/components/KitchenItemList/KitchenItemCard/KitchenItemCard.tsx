@@ -10,14 +10,12 @@ import { DeleteConfirmDialog } from "@/components/KitchenItemList/KitchenItemCar
 interface KitchenItemCardProps {
   item: KitchenItem;
   onEdit?: (updatedItem: KitchenItem) => void;
-  onDelete?: (itemId: string) => void;
   isEditing?: boolean;
 }
 
 export const KitchenItemCard: FC<KitchenItemCardProps> = ({
   item,
   onEdit,
-  onDelete,
   isEditing = false,
 }) => {
   const [showAmountDialog, setShowAmountDialog] = useState(false);
@@ -42,19 +40,6 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
         expirationDate,
         latestUpdateDate: new Date().toISOString().split("T")[0],
       });
-    }
-  };
-
-  const handleDelete = () => {
-    if (onDelete) {
-      onDelete(item.id);
-    }
-    setShowDeleteDialog(false);
-  };
-
-  const handleAmountDelete = () => {
-    if (onDelete) {
-      onDelete(item.id);
     }
   };
 
@@ -199,7 +184,6 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
         currentSize={item.size}
         currentUnit={item.measureUnit}
         onSave={handleAmountSave}
-        onDelete={onDelete ? handleAmountDelete : undefined}
         itemName={item.name}
       />
 
@@ -213,7 +197,7 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
       <DeleteConfirmDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onConfirm={handleDelete}
+        onConfirm={() => handleAmountSave(0, item.measureUnit)}
         itemName={item.name}
       />
     </>

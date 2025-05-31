@@ -2,14 +2,20 @@ import { useState, useRef, FC, useMemo, useCallback } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronUp, Edit3, Plus } from "lucide-react";
-import { KitchenItem } from "@/types";
+import { KitchenItem, SizeUnit } from "@/types";
 import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
 import { AddNewItemDialog } from "@/components/KitchenItemList/KitchenItemCard/AddNewItemDialog";
 
+const createAddNewItem = (): KitchenItem => ({
+  id: "add-new",
+  name: "",
+  size: 0,
+  measureUnit: SizeUnit.UNIT,
+  latestUpdateDate: "",
+});
 interface KitchenItemListProps {
   items: KitchenItem[];
   onEditItem?: (updatedItem: KitchenItem) => void;
-  onDeleteItem?: (itemId: string) => void;
   onAddNewItem?: (item: Omit<KitchenItem, "id" | "latestUpdateDate">) => void;
   title?: string;
   isEditing?: boolean;
@@ -17,18 +23,9 @@ interface KitchenItemListProps {
   initialCollapsed?: boolean;
 }
 
-const createAddNewItem = (): KitchenItem => ({
-  id: "add-new",
-  name: "",
-  size: 0,
-  measureUnit: "UNIT" as any,
-  latestUpdateDate: "",
-});
-
 export const KitchenItemList: FC<KitchenItemListProps> = ({
   items,
   onEditItem,
-  onDeleteItem,
   onAddNewItem,
   title,
   isEditing = false,
@@ -245,7 +242,6 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
                   <KitchenItemCard
                     item={item}
                     onEdit={onEditItem}
-                    onDelete={onDeleteItem}
                     isEditing={isEditing || showEditMode}
                   />
                 </Box>

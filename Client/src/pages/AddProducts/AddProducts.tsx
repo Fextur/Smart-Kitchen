@@ -28,12 +28,12 @@ const AddProducts: FC = () => {
 
   const handleUpdateItem = (updatedItem: KitchenItem) => {
     setItems((prevItems) =>
-      prevItems.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+      updatedItem.size === 0
+        ? prevItems.filter((item) => item.id !== updatedItem.id)
+        : prevItems.map((item) =>
+            item.id === updatedItem.id ? updatedItem : item
+          )
     );
-  };
-
-  const handleDeleteItem = (itemId: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
   };
 
   const handleAddNewItem = (
@@ -120,7 +120,6 @@ const AddProducts: FC = () => {
           title="פריטים להוספה"
           isEditing={true}
           onEditItem={handleUpdateItem}
-          onDeleteItem={handleDeleteItem}
           onAddNewItem={handleAddNewItem}
           showAddNewRow={true}
         />
