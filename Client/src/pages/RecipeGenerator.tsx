@@ -1,4 +1,5 @@
 import Loader from "@/components/Loader";
+import RecipeSwipeView from "@/components/RecipeSwipeView";
 import { useRecipe } from "@/hooks/useRecipe";
 import { useUser } from "@/hooks/useUser";
 import { Preferences } from "@/types";
@@ -10,21 +11,18 @@ import {
   Typography,
 } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
-import { useState } from "react";
 
 const RecipeGenerator = () => {
   const { user } = useUser();
-  const { generateRecipe, recipe, isGenerating } = useRecipe();
-  const [formValue, setFormValue] = useState<any>(null);
+  const { generateRecipe, recipes, isGenerating } = useRecipe();
 
   const form = useForm({
     defaultValues: {
-      sensitivities: ["רגישות לגלוטן", "טבעוני"], //user?.sensitivities,
+      sensitivities: user?.sensitivities ?? [],
       preferences: [] as string[],
     },
     onSubmit: async ({ value }) => {
       generateRecipe(value);
-      setFormValue(value);
     },
   });
 
@@ -40,7 +38,7 @@ const RecipeGenerator = () => {
       >
         <Box sx={{ textAlign: "center", direction: "rtl" }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            מכין מתכון
+            מכין מתכונים
           </Typography>
           <Loader isLoading={isGenerating} />
         </Box>
@@ -57,24 +55,8 @@ const RecipeGenerator = () => {
         justifyContent: "center",
       }}
     >
-      {recipe ? (
-        <div
-          style={{ display: "flex", flexDirection: "column", padding: "15px" }}
-        >
-          <Typography variant="h2" sx={{ mb: 1 }}>
-            :המתכון שלך
-          </Typography>
-          <Typography sx={{ fontSize: "1.2rem", mb: 2 }}>{recipe}</Typography>
-          <div style={{ display: "flex", justifyContent: "space-around" }}>
-            <Button variant="contained">הוסף לרשימת קניות</Button>
-            <Button
-              variant="contained"
-              onClick={() => generateRecipe(formValue)}
-            >
-              תכין לי מתכון חדש
-            </Button>
-          </div>
-        </div>
+      {recipes && recipes.length > 0 ? (
+        <RecipeSwipeView recipes={recipes} />
       ) : (
         <form
           style={{ width: "80vw" }}

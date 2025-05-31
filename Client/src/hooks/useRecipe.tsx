@@ -1,14 +1,15 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Product, RecipeResponse, User } from "../types";
+import { RecipeResponse, User } from "../types";
 import api from "../axios/axios";
 import { API_ROUTES } from "../axios/apiRoutes";
 import { useState } from "react";
 import { useUser } from "./useUser";
 
 export const useRecipe = () => {
-  const [generatedRecipe, setGeneratedRecipe] = useState<string>("");
-  const [extraProducts, setExtraProducts] = useState<Product[] | undefined>([]);
+  const [generatedRecipes, setGeneratedRecipes] = useState<RecipeResponse[]>(
+    []
+  );
   const { user } = useUser();
 
   const generateRecipe = async (
@@ -17,7 +18,7 @@ export const useRecipe = () => {
   ) => {
     try {
       if (user) {
-        const { data } = await api.post<RecipeResponse>(
+        const { data } = await api.post<RecipeResponse[]>(
           `${API_ROUTES.recipe}/generate`,
           {
             userId: user.id,
@@ -49,15 +50,13 @@ export const useRecipe = () => {
     }) => generateRecipe(sensitivities, preferences),
     onSuccess: (data) => {
       if (data) {
-        setGeneratedRecipe(data.recipe);
-        setExtraProducts(data.extraProducts);
+        setGeneratedRecipes(data);
       }
     },
   });
 
   return {
-    recipe: generatedRecipe,
-    extraProducts,
+    recipes: generatedRecipes,
     generateRecipe: generatingMutation.mutate,
     isGenerating: generatingMutation.isPending,
     generateError: generatingMutation.error
