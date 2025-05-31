@@ -6,11 +6,6 @@ export const useKitchenItems = () => {
 
   const fetchKitchenItems = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const { data } = await api.get<KitchenItem[]>(API_ROUTES.kitchenItems);
-      // return data;
-
-      // Mock data for now
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       const stubItems: KitchenItem[] = [
@@ -103,23 +98,18 @@ export const useKitchenItems = () => {
     }
   };
 
-  const updateKitchenItem = async (item: KitchenItem) => {
+  const updateKitchenItem = async (items: KitchenItem[]) => {
     try {
-      // TODO: Replace with actual API call
-      // const { data } = await api.put<KitchenItem>(`${API_ROUTES.kitchenItems}/${item.id}`, item);
-      // return data;
-
-      // Mock update
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return item;
+      return items;
     } catch (error) {
       console.error(error);
       throw new Error("An unexpected error occurred");
     }
   };
 
-  const updateItemMutation = useMutation({
-    mutationFn: (item: KitchenItem) => updateKitchenItem(item),
+  const updateItemsMutation = useMutation({
+    mutationFn: (items: KitchenItem[]) => updateKitchenItem(items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
     },
@@ -133,6 +123,6 @@ export const useKitchenItems = () => {
   return {
     items: data || [],
     isLoading,
-    updateItemMutation,
+    updateItemsMutation,
   };
 };

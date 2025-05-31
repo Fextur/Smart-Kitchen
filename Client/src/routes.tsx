@@ -7,16 +7,28 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import AppLayout from "@/layouts/AppLayout";
-import Home from "@/pages/Home";
+import Home from "@/pages/Home/Home";
 import Login from "./pages/Login";
 import { useEffect } from "react";
 import Register from "./pages/Register";
 import { atom } from "jotai";
-import { User } from "./types";
+import { User, KitchenItem } from "./types";
 import { useUser } from "./hooks/useUser";
 import RecipeGenerator from "./pages/RecipeGenerator";
+import AddProducts from "@/pages/AddProducts/AddProducts";
 
 export const userAtom = atom<User | null>(null);
+
+interface AddProductsLocationState {
+  items: KitchenItem[];
+  isFromScan: boolean;
+}
+
+declare module "@tanstack/react-router" {
+  interface HistoryState {
+    addProducts?: AddProductsLocationState;
+  }
+}
 
 const ProtectedLayout = () => {
   const { user } = useUser();
@@ -42,8 +54,14 @@ const rootRoute = createRootRoute({
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/home",
+  path: "/",
   component: Home,
+});
+
+const addProductsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/add-products",
+  component: AddProducts,
 });
 
 const loginRoute = createRoute({
@@ -67,7 +85,7 @@ const registerRoute = createRoute({
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
-  component: () => <Navigate to="/home" />,
+  component: () => <Navigate to="/" />,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -75,6 +93,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   recipeRoute,
   registerRoute,
+  addProductsRoute,
   notFoundRoute,
 ]);
 
@@ -84,3 +103,5 @@ export const router = createRouter({
   defaultStaleTime: 5000,
   scrollRestoration: true,
 });
+
+export type { AddProductsLocationState };

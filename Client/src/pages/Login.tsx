@@ -38,7 +38,6 @@ const Login = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        // height: "100%",
         width: "100vw",
       }}
     >
@@ -108,7 +107,7 @@ const Login = () => {
           disabled={isLoggingIn}
           sx={{ m: 1, mt: 2, background: "#E49A61" }}
         >
-         היכנס
+          היכנס
         </Button>
         <GoogleLogin
           onSuccess={handleSuccessLogin}
