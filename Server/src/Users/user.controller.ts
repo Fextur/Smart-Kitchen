@@ -1,7 +1,13 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto, LoginUserDto, UpdateUserDto } from './user.dto';
+import {
+  CreateUserDto,
+  JoinInventoryDto,
+  LoginUserDto,
+  UpdateUserDto,
+} from './user.dto';
 import { User } from './user.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Controller('users')
 export class UserController {
@@ -26,10 +32,22 @@ export class UserController {
     return this.userService.findById(id);
   }
 
+  @Get(':userId/inventory')
+  async getInventoryByUserId(
+    @Param('userId') userId: string,
+  ): Promise<Inventory> {
+    return this.userService.getInventoryByUserId(userId);
+  }
+
   @Post('login')
   async login(
     @Body() loginUserDto: LoginUserDto,
   ): Promise<Omit<User, 'password'>> {
     return this.userService.login(loginUserDto);
+  }
+
+  @Post('join-to-inventory')
+  async joinToInventory(@Body() joinInventoryDto: JoinInventoryDto) {
+    return this.userService.joinToInventory(joinInventoryDto);
   }
 }

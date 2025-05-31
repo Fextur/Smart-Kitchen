@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { SizeUnit } from 'src/types';
-import { User } from 'src/Users/user.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Entity('products')
 export class Product {
@@ -25,9 +25,9 @@ export class Product {
   })
   expirationDate: Date;
 
-  @ManyToOne(() => User, (user) => user.products, {
+  @ManyToOne(() => Inventory, (inventory) => inventory.products, {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  user: User;
+  inventory: Inventory;
 }

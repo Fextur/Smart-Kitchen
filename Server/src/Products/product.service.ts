@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Product } from './product.entity';
 import { CreateProductsDto, UpdateProductDto } from './product.dto';
 import { User } from 'src/Users/user.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Injectable()
 export class ProductService {
@@ -11,29 +12,37 @@ export class ProductService {
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
 
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    @InjectRepository(Inventory)
+    private inventoryRepository: Repository<User>,
   ) {}
 
   async create(createProductsDto: CreateProductsDto): Promise<Product[]> {
-    const { userId, products } = createProductsDto;
+    const { inventoryId, products } = createProductsDto;
 
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException(`User with id: ${userId} not found`);
+    const inventory = await this.inventoryRepository.findOne({
+      where: { id: inventoryId },
+    });
+    if (!inventory) {
+      throw new NotFoundException(
+        `Inventory with id: ${inventoryId} not found`,
+      );
     }
 
-    const createdProducts = products.map((product) => this.productRepository.create({
-      ...product,
-      sizeValueLeft: product.sizeValueLeft ?? product.sizeValue,
-      user,
-    }));
+    const createdProducts = products.map((product) =>
+      this.productRepository.create({
+        ...product,
+        sizeValueLeft: product.sizeValueLeft ?? product.sizeValue,
+        inventory,
+      }),
+    );
 
     return this.productRepository.save(createdProducts);
   }
 
-  async findAll(): Promise<Product[]> {
-    return this.productRepository.find();
+  async findByInventoryId(inventoryId: string): Promise<Product[]> {
+    return this.productRepository.find({
+      where: { inventory: { id: inventoryId } },
+    });
   }
 
   async update(

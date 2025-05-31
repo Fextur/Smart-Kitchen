@@ -36,7 +36,7 @@ export class RecipeService {
       const preferencesString = preferences.join(' , ');
       const sensitivitiesString = sensitivities.join(' , ');
 
-      const productsString = user.products
+      const productsString = user.inventory.products
         .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} של ${item.name}`)
         .join(' , ');
 

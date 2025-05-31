@@ -10,6 +10,7 @@ import 'dotenv/config';
 import { RecipeModule } from './Recipes/recipe.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { ReceiptScannerModule } from './ReceiptScanner/receiptScanner.module';
+import { InventoryModule } from './Inventory/inventory.module';
 import { AuthModule } from './Auth/auth.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { AuthModule } from './Auth/auth.module';
     }),
     ProductModule,
     UserModule,
+    InventoryModule,
     RecipeModule,
     ReceiptScannerModule,
     AuthModule,

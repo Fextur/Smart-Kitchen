@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductsDto, UpdateProductDto } from './product.dto';
+import { Product } from './product.entity';
 
 @Controller('products')
 export class ProductController {
@@ -11,9 +12,11 @@ export class ProductController {
     return this.productService.create(createProductsDto);
   }
 
-  @Get()
-  async findAll() {
-    return this.productService.findAll();
+  @Get('by-inventory/:inventoryId')
+  async getByInventoryId(
+    @Param('inventoryId') inventoryId: string,
+  ): Promise<Product[]> {
+    return this.productService.findByInventoryId(inventoryId);
   }
 
   @Patch(':id')
