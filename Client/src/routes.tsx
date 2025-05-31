@@ -6,7 +6,6 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-
 import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home";
 import Login from "./pages/Login";

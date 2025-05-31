@@ -18,25 +18,29 @@ export class RecipeService {
     });
   }
 
-  async generate(userId: string, preferences: Preferences[]): Promise<string> {
+  async generate(
+    userId: string,
+    sensitivities: User['sensitivities'],
+    preferences: Preferences[],
+  ): Promise<string> {
     try {
       const user = await this.userRepository.findOne({
         where: { id: userId },
-        relations: ['products']
-      });      
+        relations: ['products'],
+      });
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
       const preferencesString = preferences.join(' , ');
-      const sensitivitiesString = user.sensitivities.join(' , ');
+      const sensitivitiesString = sensitivities.join(' , ');
 
       const productsString = user.products
         .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} של ${item.name}`)
         .join(' , ');
 
-    const content = `יש לי את הרגישויות האלו: ${sensitivitiesString} ויש לי את המצרכים הבאים: ${productsString} ,תכין לי בבקשה מתכון מהמצרכים האלה חשוב לי שהמתכון יהיה ${preferencesString}, ואני מוכן לרכוש אקסטרה 3 מצרכים לכל היותר.`
+      const content = `יש לי את הרגישויות האלו: ${sensitivitiesString} ויש לי את המצרכים הבאים: ${productsString} ,תכין לי בבקשה מתכון מהמצרכים האלה חשוב לי שהמתכון יהיה ${preferencesString}, ואני מוכן לרכוש אקסטרה 3 מצרכים לכל היותר.`;
 
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',

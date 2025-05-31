@@ -1,8 +1,11 @@
 import { FC } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { Plus, CookingPot, ScrollText } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 const HomeFooter: FC = () => {
+  const navigate = useNavigate();
+
   return (
     <Box
       sx={{
@@ -26,6 +29,7 @@ const HomeFooter: FC = () => {
           p: 1,
           borderRadius: 1.5,
         }}
+        onClick={() => navigate({ to: "/recipe" })}
       >
         <CookingPot size={32} color="#E49A61" />
       </IconButton>
