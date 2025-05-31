@@ -96,7 +96,6 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
             justifyContent: "space-between",
             p: 2,
             cursor: "pointer",
-            borderBottom: "1px solid",
             borderColor: "grey.100",
             "&:hover": {
               bgcolor: "grey.50",

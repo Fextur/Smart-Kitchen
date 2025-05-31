@@ -14,10 +14,38 @@ const AppLayout: FC = () => {
         flexDirection: "column",
         height: "100vh",
         width: "100vw",
-        bgcolor: "background.default",
+        backgroundColor: "#f8f9fa", // Your theme's background.default
+        position: "relative",
+        overflow: "hidden", // This will clip the logo at the edges
       }}
     >
-      <Box sx={{ p: 2, height: `${headerHeight}vh` }}>
+      {/* Background logo overlay */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: "url('/logo.png')",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "left 85%", // Just moved up a bit from bottom
+          backgroundSize: "80%", // Bigger size so it clips off screen
+          opacity: 0.15,
+          zIndex: 0,
+          pointerEvents: "none",
+          transform: "translateX(-20%)", // Move it more to the left to clip it
+        }}
+      />
+
+      <Box
+        sx={{
+          p: 2,
+          height: `${headerHeight}vh`,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
         <AppBar
           position="static"
           sx={{
@@ -45,8 +73,10 @@ const AppLayout: FC = () => {
       <Box
         sx={{
           flex: 1,
-          bgcolor: "background.default",
+          backgroundColor: "transparent",
           height: `calc(100vh - ${headerHeight}vh)`,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <Outlet key={refreshKey} />

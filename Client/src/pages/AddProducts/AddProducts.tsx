@@ -68,7 +68,7 @@ const AddProducts: FC = () => {
         height: "75vh",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "background.default",
+        bgcolor: "transparent",
         pb: "10vh",
       }}
     >

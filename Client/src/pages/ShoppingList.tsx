@@ -6,24 +6,9 @@ import Loader from "@/components/Loader";
 import { isExpiringSoon } from "@/utils/dateUtils";
 import HomeFooter from "@/pages/Home/HomeFooter";
 import { KitchenItem } from "@/types";
-import { useUser } from "@/hooks/useUser";
 
-const Home: FC = () => {
+const ShoppingList: FC = () => {
   const { items, isLoading, updateItemsMutation } = useKitchenItems();
-  const { user } = useUser();
-
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour > 4 && hour < 12) {
-      return "בוקר טוב";
-    } else if (hour >= 12 && hour < 17) {
-      return "צהריים טובים";
-    } else if (hour >= 17 && hour < 21) {
-      return "ערב טוב";
-    } else {
-      return "לילה טוב";
-    }
-  }, []);
 
   const categorizedItems = useMemo(() => {
     const expiringSoon = items.filter(
@@ -86,9 +71,7 @@ const Home: FC = () => {
             bgcolor: "background.default",
           }}
         >
-          <Typography variant="h1">
-            {greeting}, {user?.name || "משתמש"}!
-          </Typography>
+          <Typography variant="h1">רשימת קניות</Typography>
         </Box>
 
         {items.length === 0 ? (
@@ -150,4 +133,4 @@ const Home: FC = () => {
   );
 };
 
-export default Home;
+export default ShoppingList;

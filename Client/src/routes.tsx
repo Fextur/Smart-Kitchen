@@ -16,6 +16,7 @@ import { atom } from "jotai";
 import { User, KitchenItem } from "./types";
 import { useUser } from "./hooks/useUser";
 import AddProducts from "@/pages/AddProducts/AddProducts";
+import ShoppingList from "@/pages/ShoppingList";
 
 export const userAtom = atom<User | null>(null);
 
@@ -76,6 +77,12 @@ const registerRoute = createRoute({
   component: Register,
 });
 
+const shoppingListRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/shopping-list",
+  component: ShoppingList,
+});
+
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -87,6 +94,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   addProductsRoute,
+  shoppingListRoute,
   notFoundRoute,
 ]);
 
