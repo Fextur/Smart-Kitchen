@@ -165,8 +165,6 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
             }}
           >
             {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-              // const item = displayItems[virtualItem.index];
-
               if (virtualItem.index === itemsCount) {
                 return (
                   <Box

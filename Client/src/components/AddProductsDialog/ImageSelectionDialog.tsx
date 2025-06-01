@@ -56,9 +56,7 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
   };
 
   const handleCameraCapture = async (file: File) => {
-    // Close the camera dialog but keep this dialog open for scanning
     setShowCamera(false);
-    // Process the file - the scanning dialog will show
     await processFile(file);
   };
 
@@ -69,10 +67,8 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
 
   const processFile = async (file: File) => {
     try {
-      // Don't call onFinish here - wait until after scanning is complete
       const result = await scanReceiptMutation.mutateAsync(file);
 
-      // Now call onFinish and navigate
       if (onFinish) {
         onFinish();
       }
@@ -89,7 +85,6 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
     } catch (error) {
       console.error("Scanning failed:", error);
 
-      // Call onFinish even on error
       if (onFinish) {
         onFinish();
       }
@@ -105,11 +100,10 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
     }
   };
 
-  // Show scanning dialog when scanning - make sure it's always visible during scanning
   if (isScanning) {
     return (
       <Dialog
-        isOpen={true} // Force dialog to be open during scanning
+        isOpen={true}
         onClose={() => {}}
         icon={<ScanLine size={24} />}
         color="#E49A61"

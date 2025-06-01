@@ -14,12 +14,11 @@ const AppLayout: FC = () => {
         flexDirection: "column",
         height: "100vh",
         width: "100vw",
-        backgroundColor: "#f8f9fa", // Your theme's background.default
+        backgroundColor: "#f8f9fa",
         position: "relative",
-        overflow: "hidden", // This will clip the logo at the edges
+        overflow: "hidden",
       }}
     >
-      {/* Background logo overlay */}
       <Box
         sx={{
           position: "absolute",
@@ -29,12 +28,12 @@ const AppLayout: FC = () => {
           bottom: 0,
           backgroundImage: "url('/logo.png')",
           backgroundRepeat: "no-repeat",
-          backgroundPosition: "left 85%", // Just moved up a bit from bottom
-          backgroundSize: "80%", // Bigger size so it clips off screen
+          backgroundPosition: "left 85%",
+          backgroundSize: "80%",
           opacity: 0.15,
           zIndex: 0,
           pointerEvents: "none",
-          transform: "translateX(-20%)", // Move it more to the left to clip it
+          transform: "translateX(-20%)",
         }}
       />
 

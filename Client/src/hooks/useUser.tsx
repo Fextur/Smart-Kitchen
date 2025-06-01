@@ -83,7 +83,7 @@ export const useUser = () => {
   };
 
   return {
-    user: { name: "הומו" },
+    user,
     setUser,
     loginGoogle: googleLoginMutation.mutate,
     login: loginMutation.mutate,
