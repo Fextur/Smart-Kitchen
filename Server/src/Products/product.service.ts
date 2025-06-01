@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './product.entity';
@@ -57,5 +61,17 @@ export class ProductService {
     product.sizeValueLeft = updateProductDto.sizeValueLeft;
 
     return this.productRepository.save(product);
+  }
+
+  async delete(id: string): Promise<void> {
+    try {
+      const result = await this.productRepository.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException(`product with id ${id} not found`);
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to delete product');
+    }
   }
 }

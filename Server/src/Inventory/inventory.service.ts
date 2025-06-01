@@ -95,11 +95,11 @@ export class InventoryService {
     try {
       const result = await this.inventoryRepository.delete(id);
       if (result.affected === 0) {
-        throw new NotFoundException(`Inventory item with id ${id} not found`);
+        throw new NotFoundException(`Inventory with id ${id} not found`);
       }
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Failed to delete inventory item');
+      throw new InternalServerErrorException('Failed to delete inventory');
     }
   }
 }
