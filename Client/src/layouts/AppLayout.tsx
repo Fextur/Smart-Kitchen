@@ -14,10 +14,37 @@ const AppLayout: FC = () => {
         flexDirection: "column",
         height: "100vh",
         width: "100vw",
-        bgcolor: "background.default",
+        backgroundColor: "#f8f9fa",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <Box sx={{ p: 2, height: `${headerHeight}vh` }}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: "url('/logo.png')",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "left 85%",
+          backgroundSize: "80%",
+          opacity: 0.15,
+          zIndex: 0,
+          pointerEvents: "none",
+          transform: "translateX(-20%)",
+        }}
+      />
+
+      <Box
+        sx={{
+          p: 2,
+          height: `${headerHeight}vh`,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
         <AppBar
           position="static"
           sx={{
@@ -45,8 +72,10 @@ const AppLayout: FC = () => {
       <Box
         sx={{
           flex: 1,
-          bgcolor: "background.default",
+          backgroundColor: "transparent",
           height: `calc(100vh - ${headerHeight}vh)`,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <Outlet key={refreshKey} />

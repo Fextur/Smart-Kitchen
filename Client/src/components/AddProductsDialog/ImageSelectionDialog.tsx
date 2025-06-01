@@ -3,18 +3,20 @@ import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import { Camera, Image, ScanLine } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
-import { CameraCaptureDialog } from "./CameraCaptureDialog";
 import { useCameraCapture } from "@/hooks/useCameraCapture";
 import { useReceiptScanner } from "@/hooks/useReceiptScanner";
+import { CameraCaptureDialog } from "@/components/AddProductsDialog/CameraCaptureDialog";
 
 interface ImageSelectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onFinish?: () => void;
 }
 
 export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
   isOpen,
   onClose,
+  onFinish,
 }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +69,10 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
     try {
       const result = await scanReceiptMutation.mutateAsync(file);
 
+      if (onFinish) {
+        onFinish();
+      }
+
       (navigate as any)({
         to: "/add-products",
         state: {
@@ -78,6 +84,11 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
       onClose();
     } catch (error) {
       console.error("Scanning failed:", error);
+
+      if (onFinish) {
+        onFinish();
+      }
+
       (navigate as any)({
         to: "/add-products",
         state: {
@@ -92,10 +103,10 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
   if (isScanning) {
     return (
       <Dialog
-        isOpen={isOpen}
+        isOpen={true}
         onClose={() => {}}
         icon={<ScanLine size={24} />}
-        color="#f97316"
+        color="#E49A61"
         title="סורק קבלה..."
       >
         <Box sx={{ textAlign: "center", direction: "rtl" }}>
@@ -125,7 +136,7 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
         isOpen={isOpen && !showCamera}
         onClose={onClose}
         icon={<ScanLine size={24} />}
-        color="#f97316"
+        color="#E49A61"
         title="סרוק קבלה"
       >
         <Box sx={{ direction: "rtl" }}>

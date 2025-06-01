@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KitchenItem, SizeUnit } from "../types";
+import { KitchenItem, SizeUnit } from "@/types";
+import { useMemo } from "react";
+import { isExpiringSoon } from "@/utils/dateUtils";
 
 export const useKitchenItems = () => {
   const queryClient = useQueryClient();
@@ -11,7 +13,7 @@ export const useKitchenItems = () => {
       const stubItems: KitchenItem[] = [
         {
           id: "1",
-          name: "במבה",
+          name: "קולה",
           size: 1,
           measureUnit: SizeUnit.UNIT,
           expirationDate: "2024-06-15",
@@ -19,8 +21,8 @@ export const useKitchenItems = () => {
         },
         {
           id: "2",
-          name: "קולה",
-          size: 2,
+          name: "במבה",
+          size: 0,
           measureUnit: SizeUnit.UNIT,
           expirationDate: "2024-07-01",
           latestUpdateDate: "2024-05-20",
@@ -68,7 +70,7 @@ export const useKitchenItems = () => {
         {
           id: "8",
           name: "בצל",
-          size: 2,
+          size: 0,
           measureUnit: SizeUnit.KILOGRAM,
           expirationDate: "2024-07-15",
           latestUpdateDate: "2024-05-19",
@@ -120,9 +122,25 @@ export const useKitchenItems = () => {
     queryFn: fetchKitchenItems,
   });
 
+  const categorizedItems = useMemo(() => {
+    if (!data) return null;
+    const expiringSoon = data.filter(
+      (item) => item.expirationDate && isExpiringSoon(item.expirationDate)
+    );
+
+    const empty = data
+      .filter((item) => item.size === 0)
+      .map((item) => ({ ...item, expirationDate: undefined } as KitchenItem));
+
+    const inKitchen = data.filter((item) => item.size !== 0);
+
+    return { expiringSoon, empty, inKitchen };
+  }, [data]);
+
   return {
     items: data || [],
     isLoading,
     updateItemsMutation,
+    categorizedItems,
   };
 };

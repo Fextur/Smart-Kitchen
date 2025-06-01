@@ -1,11 +1,12 @@
 import { FC, useState } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { Plus, CookingPot, ScrollText } from "lucide-react";
-import { AddProductsDialog } from "@/pages/Home/AddProductsDialog/AddProductsDialog";
+import { useNavigate } from "@tanstack/react-router";
+import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
 
 const HomeFooter: FC = () => {
   const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);
-
+  const navigate = useNavigate();
   return (
     <>
       <Box
@@ -31,7 +32,7 @@ const HomeFooter: FC = () => {
             borderRadius: 1.5,
           }}
         >
-          <CookingPot size={32} color="#f97316" />
+          <CookingPot size={32} color="#E49A61" />
         </IconButton>
 
         <Fab
@@ -56,8 +57,9 @@ const HomeFooter: FC = () => {
             p: 1,
             borderRadius: 1.5,
           }}
+          onClick={() => navigate({ to: "/shopping-list" })}
         >
-          <ScrollText size={32} color="#f97316" />
+          <ScrollText size={32} color="#E49A61" />
         </IconButton>
       </Box>
 

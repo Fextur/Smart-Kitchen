@@ -3,16 +3,18 @@ import { Box, Button, Typography } from "@mui/material";
 import { Plus, ScanLine, Edit } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
-import { ImageSelectionDialog } from "@/pages/Home/AddProductsDialog/ImageSelectionDialog";
+import { ImageSelectionDialog } from "@/components/AddProductsDialog/ImageSelectionDialog";
 
 interface AddProductsDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onFinish?: () => void;
 }
 
 export const AddProductsDialog: FC<AddProductsDialogProps> = ({
   isOpen,
   onClose,
+  onFinish,
 }) => {
   const navigate = useNavigate();
   const [showImageSelection, setShowImageSelection] = useState(false);
@@ -23,6 +25,9 @@ export const AddProductsDialog: FC<AddProductsDialogProps> = ({
 
   const handleManualEntry = () => {
     onClose();
+    if (onFinish) {
+      onFinish();
+    }
     (navigate as any)({
       to: "/add-products",
       state: {
@@ -43,7 +48,7 @@ export const AddProductsDialog: FC<AddProductsDialogProps> = ({
         isOpen={isOpen && !showImageSelection}
         onClose={onClose}
         icon={<Plus size={24} />}
-        color="#f97316"
+        color="#E49A61"
         title="הוסף מוצרים"
       >
         <Box sx={{ direction: "rtl" }}>
@@ -87,13 +92,19 @@ export const AddProductsDialog: FC<AddProductsDialogProps> = ({
               }}
             >
               <Edit size={20} />
-              <Typography variant="body1">הוסף ידנית</Typography>
+              <Typography variant="body1" color="white">
+                הוסף ידנית
+              </Typography>
             </Button>
           </Box>
         </Box>
       </Dialog>
 
-      <ImageSelectionDialog isOpen={showImageSelection} onClose={handleClose} />
+      <ImageSelectionDialog
+        isOpen={showImageSelection}
+        onClose={handleClose}
+        onFinish={onFinish}
+      />
     </>
   );
 };

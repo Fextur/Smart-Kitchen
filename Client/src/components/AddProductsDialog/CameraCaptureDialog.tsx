@@ -128,7 +128,7 @@ export const CameraCaptureDialog: FC<CameraCaptureDialogProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       icon={<Camera size={24} />}
-      color="#f97316"
+      color="#E49A61"
       title="צלם קבלה"
     >
       <Box
@@ -186,7 +186,7 @@ export const CameraCaptureDialog: FC<CameraCaptureDialogProps> = ({
                   variant="contained"
                   size="small"
                   sx={{
-                    bgcolor: "#f97316",
+                    bgcolor: "#E49A61",
                     "&:hover": { bgcolor: "#ea580c" },
                   }}
                 >

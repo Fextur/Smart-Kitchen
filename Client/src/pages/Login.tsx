@@ -2,7 +2,7 @@ import { TextField, Button, Typography } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { useUser } from "../hooks/useUser";
+import { useUser } from "@/hooks/useUser";
 import { useNavigate } from "@tanstack/react-router";
 
 const Login = () => {

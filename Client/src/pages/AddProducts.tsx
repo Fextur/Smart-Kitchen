@@ -5,6 +5,7 @@ import { KitchenItem } from "@/types";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
+import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
 
 interface AddProductsLocationState {
   items?: KitchenItem[];
@@ -47,8 +48,8 @@ const AddProducts: FC = () => {
     setItems((prevItems) => [...prevItems, item]);
   };
 
-  const handleAccept = (itemsToSave: KitchenItem[]) => {
-    updateItemsMutation.mutate(itemsToSave, {
+  const handleAccept = () => {
+    updateItemsMutation.mutate(items, {
       onSuccess: () => {
         navigate({ to: "/" });
       },
@@ -68,14 +69,14 @@ const AddProducts: FC = () => {
         height: "75vh",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "background.default",
+        bgcolor: "transparent",
         pb: "10vh",
       }}
     >
       <Box
         sx={{
           p: 2,
-          bgcolor: "background.paper",
+          // bgcolor: "background.paper",
           borderBottom: "1px solid",
           borderColor: "grey.100",
           direction: "rtl",
@@ -116,19 +117,25 @@ const AddProducts: FC = () => {
         }}
       >
         <KitchenItemList
-          items={items}
+          itemsCount={items.length}
           title="פריטים להוספה"
-          isEditing={true}
-          onEditItem={handleUpdateItem}
+          isEditing
           onAddNewItem={handleAddNewItem}
-          showAddNewRow={true}
+          maxHeight="100%"
+          renderRow={(itemIndex, isEditing) => (
+            <KitchenItemCard
+              item={items[itemIndex]}
+              onEdit={handleUpdateItem}
+              isEditing={isEditing}
+            />
+          )}
         />
       </Box>
       <ConfirmFooter
-        items={items}
         onAccept={handleAccept}
         onCancel={handleCancel}
         isLoading={false}
+        isDisabled={items.length === 0}
       />
     </Box>
   );
