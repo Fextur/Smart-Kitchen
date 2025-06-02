@@ -52,7 +52,7 @@ export class ProductService {
 
     for (const productDto of products) {
       const updatedProduct = await this.productRepository.save(productDto);
-      updatedProducts.push(updatedProduct);
+      updatedProducts.push({ ...updatedProduct, latestUpdateDate: new Date() });
     }
 
     return updatedProducts;

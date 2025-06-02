@@ -24,7 +24,6 @@ export class Product {
 
   @Column({
     type: 'timestamptz',
-    nullable: true,
   })
   latestUpdateDate: Date;
 

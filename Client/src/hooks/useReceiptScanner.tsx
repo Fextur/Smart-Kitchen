@@ -10,7 +10,7 @@ interface ScanReceiptResponse {
 interface ParsedProduct {
   name: string;
   size: number;
-  sizeUnit: string;
+  measureUnit: SizeUnit;
   expirationDate: Date | null;
 }
 
@@ -19,7 +19,7 @@ const convertParsedProductToKitchenItem = (
   index: number
 ): KitchenItem => {
   let measureUnit: SizeUnit;
-  switch (product.sizeUnit.toLowerCase()) {
+  switch (product.measureUnit.toLowerCase()) {
     case "גרם":
     case "gram":
       measureUnit = SizeUnit.GRAM;
