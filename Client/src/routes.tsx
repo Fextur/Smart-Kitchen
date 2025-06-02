@@ -6,12 +6,12 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-
 import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home/Home";
 import Login from "@/pages/Login";
 import { useEffect } from "react";
 import Register from "@/pages/Register";
+import RecipeGenerator from "./pages/RecipeGenerator";
 import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
 import AddProducts from "@/pages/AddProducts";
@@ -68,6 +68,12 @@ const loginRoute = createRoute({
   component: Login,
 });
 
+const recipeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/recipe",
+  component: RecipeGenerator,
+});
+
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
@@ -89,6 +95,7 @@ const notFoundRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
+  recipeRoute,
   registerRoute,
   addProductsRoute,
   shoppingListRoute,

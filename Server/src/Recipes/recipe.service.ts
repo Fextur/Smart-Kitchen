@@ -4,6 +4,8 @@ import OpenAI from 'openai';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/Users/user.entity';
+import { GenerateResDto } from './recipe.dto';
+import { cleanOpenAIResponse } from 'src/utils';
 
 @Injectable()
 export class RecipeService {
@@ -18,11 +20,15 @@ export class RecipeService {
     });
   }
 
-  async generate(userId: string, preferences: Preferences[]): Promise<string> {
+  async generate(
+    userId: string,
+    sensitivities: User['sensitivities'],
+    preferences: Preferences[],
+  ): Promise<GenerateResDto[]> {
     try {
       const user = await this.userRepository.findOne({
         where: { id: userId },
-        relations: ['products'],
+        relations: ['inventory', 'inventory.products'],
       });
 
       if (!user) {
@@ -30,25 +36,62 @@ export class RecipeService {
       }
 
       const preferencesString = preferences.join(' , ');
-      const sensitivitiesString = user.sensitivities.join(' , ');
+      const sensitivitiesString = sensitivities.join(' , ');
 
       const productsString = user.inventory.products
         .map((item) => `${item.measureUnit} של ${item.name}`)
         .join(' , ');
 
-      const content = `יש לי את הרגישויות האלו: ${sensitivitiesString} ויש לי את המצרכים הבאים: ${productsString} ,תכין לי בבקשה מתכון מהמצרכים האלה חשוב לי שהמתכון יהיה ${preferencesString}, ואני מוכן לרכוש אקסטרה 3 מצרכים לכל היותר.`;
+      const content = `
+        יש לי את הרגישויות הבאות: ${sensitivitiesString}.
+        יש לי את המצרכים הבאים: ${productsString}.
+        אני רוצה שתכין לי JSON של כמה מתכונים שמותאמים להעדפות שלי: ${preferencesString}.
+        אפשר להוסיף עד 3 מוצרים נוספים שאינם במלאי שלי, אבל חשוב שתחזיר אותם במבנה הבא:
 
+        [
+          {
+            "name": "שם המוצר בעברית",
+            "size": מספר שלם (למשל 900),
+            "measureUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
+            "expirationDate": null
+          },
+          ...
+        ]
+        
+        תחזיר את התוצאה בפורמט הבא:
+        {
+        recipes = [
+          {
+            recipe = כאן תכתוב את המתכון בפורמט טקסט קריא, עם פסקאות ברורות, שורות מופרדות, וכותרות במידת הצורך. 
+                  השתמש בשורות חדשות (\n) ותבליטים כדי שהמתכון יהיה נוח לקריאה.
+             extraProducts = כאן תכתוב את רשימת המוצרים בפורמט
+            לדוגמא: 
+            extraProducts = [
+              {
+                "name": "שם המוצר בעברית",
+                "size": מספר שלם,
+                "measureUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
+                "expirationDate": null
+              }
+            ]
+          }
+        ]
+        }
+        `;
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'system', content: content }],
         max_tokens: 1000,
       });
 
-      const resContent = response.choices[0].message?.content?.trim();
+      const resContentRaw = response.choices[0].message?.content?.trim();
 
-      if (!resContent) throw new Error('Failed to generate content');
+      if (!resContentRaw) throw new Error('Failed to generate content');
 
-      return resContent;
+      const resContent = cleanOpenAIResponse(resContentRaw);
+      const recipesArray: GenerateResDto[] = JSON.parse(resContent).recipes;
+
+      return recipesArray;
     } catch (error) {
       console.error('OpenAI API error:', error);
       throw new Error('Failed to generate content');

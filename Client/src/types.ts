@@ -14,6 +14,11 @@ export type User = {
   sensitivities: string[];
 };
 
+export type RecipeResponse = {
+  recipe: string;
+  extraProducts?: KitchenItem[];
+};
+
 export type Kitchen = {
   id: string;
   description?: string;
@@ -35,8 +40,19 @@ export type KitchenItem = {
   size: number;
   measureUnit: SizeUnit;
   expirationDate?: string;
-  latestUpdateDate: string;
+  latestUpdateDate?: string;
 };
+
+export enum Preferences {
+  DIETARY = "דיאטטי",
+  VEGETARIAN = "צמחוני",
+  VEGAN = "טבעוני",
+  HIGH_PROTEIN = "ערך חלבון גבוהה",
+  SPICY = "חריף",
+  SWEET = "מתוק",
+  SALTY = "מלוח",
+  SOUR = "חמוץ",
+}
 
 export type ShoppingListItem = Omit<KitchenItem, "expirationDate"> & {
   isChecked: boolean;
