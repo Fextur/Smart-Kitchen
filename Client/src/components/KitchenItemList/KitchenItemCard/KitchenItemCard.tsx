@@ -157,7 +157,7 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
                 עודכן לאחרונה:
               </Typography>
               <Typography variant="caption">
-                {formatDate(item.latestUpdateDate)}
+                {formatDate(item.latestUpdateDate ?? "")}
               </Typography>
             </Box>
           ) : (
