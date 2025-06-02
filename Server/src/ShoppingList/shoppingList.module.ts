@@ -6,10 +6,7 @@ import { ShoppingListController } from './shoppingList.controller';
 import { ProductModule } from 'src/Products/product.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ShoppingList]),
-    ProductModule, // <-- Import ProductModule to make ProductRepository available
-  ],
+  imports: [TypeOrmModule.forFeature([ShoppingList]), ProductModule],
   providers: [ShoppingListService],
   controllers: [ShoppingListController],
 })

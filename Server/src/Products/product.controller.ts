@@ -37,8 +37,6 @@ export class ProductController {
 
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<void> {
-    console.log({ id });
-
     return this.productService.delete(id);
   }
 }

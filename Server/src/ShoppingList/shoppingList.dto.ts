@@ -6,6 +6,5 @@ export class CreateShoppingListDto {
   inventoryId: string;
 
   @IsArray()
-  @IsNotEmpty()
   products: ProductDto[];
 }
