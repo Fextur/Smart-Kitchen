@@ -32,7 +32,11 @@ const HomeFooter: FC = () => {
             borderRadius: 1.5,
           }}
         >
-          <CookingPot size={32} color="#E49A61" />
+          <CookingPot
+            size={32}
+            color="#E49A61"
+            onClick={() => navigate({ to: "/recipe" })}
+          />
         </IconButton>
 
         <Fab

@@ -14,7 +14,7 @@ import { useForm } from "@tanstack/react-form";
 
 const RecipeGenerator = () => {
   const { user } = useUser();
-  const { generateRecipe, recipes, isGenerating } = useRecipe();
+  const { generateRecipe, recipes } = useRecipe();
 
   const form = useForm({
     defaultValues: {
@@ -25,26 +25,6 @@ const RecipeGenerator = () => {
       generateRecipe(value);
     },
   });
-
-  if (isGenerating) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-        }}
-      >
-        <Box sx={{ textAlign: "center", direction: "rtl" }}>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            מכין מתכונים
-          </Typography>
-          <Loader isLoading={isGenerating} />
-        </Box>
-      </Box>
-    );
-  }
 
   return (
     <div

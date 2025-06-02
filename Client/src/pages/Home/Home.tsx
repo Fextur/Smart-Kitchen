@@ -2,7 +2,6 @@ import { FC, useMemo, useCallback } from "react";
 import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
-import Loader from "@/components/Loader";
 import HomeFooter from "@/pages/Home/HomeFooter";
 import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
@@ -47,7 +46,6 @@ const Home: FC = () => {
           <Typography variant="body2" sx={{ mb: 2 }}>
             טוען פריטים...
           </Typography>
-          <Loader isLoading={isLoading} />
         </Box>
       </Box>
     );

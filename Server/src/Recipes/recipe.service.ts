@@ -39,7 +39,7 @@ export class RecipeService {
       const sensitivitiesString = sensitivities.join(' , ');
 
       const productsString = user.inventory.products
-        .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} של ${item.name}`)
+        .map((item) => `${item.measureUnit} של ${item.name}`)
         .join(' , ');
 
       const content = `
@@ -51,8 +51,8 @@ export class RecipeService {
         [
           {
             "name": "שם המוצר בעברית",
-            "sizeValue": מספר שלם (למשל 900),
-            "sizeUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
+            "size": מספר שלם (למשל 900),
+            "measureUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
             "expirationDate": null
           },
           ...
@@ -69,8 +69,8 @@ export class RecipeService {
             extraProducts = [
               {
                 "name": "שם המוצר בעברית",
-                "sizeValue": מספר שלם,
-                "sizeUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
+                "size": מספר שלם,
+                "measureUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
                 "expirationDate": null
               }
             ]

@@ -61,7 +61,6 @@ const ShoppingList: FC = () => {
           <Typography variant="body2" sx={{ mb: 2 }}>
             טוען פריטים...
           </Typography>
-          <Loader isLoading={isLoading} />
         </Box>
       </Box>
     );

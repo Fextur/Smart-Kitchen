@@ -55,7 +55,7 @@ const RecipeSwipeView = ({ recipes }: { recipes: RecipeResponse[] }) => {
       ) : (
         current.extraProducts?.map((extra, idx) => (
           <Typography key={idx} sx={{ whiteSpace: "nowrap", direction: "rtl" }}>
-            • {extra.name} - {extra.sizeValue} {extra.sizeUnit}
+            • {extra.name} - {extra.size} {extra.measureUnit}
           </Typography>
         ))
       )}
