@@ -1,28 +1,13 @@
-import { FC, ReactNode, useEffect, useState } from "react";
+import { FC, ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface MobileWrapperProps {
   children: ReactNode;
 }
 
 export const MobileWrapper: FC<MobileWrapperProps> = ({ children }) => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkDevice = () => {
-      const mobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        ) || window.innerWidth < 768;
-
-      setIsMobile(mobile);
-    };
-
-    checkDevice();
-    window.addEventListener("resize", checkDevice);
-
-    return () => window.removeEventListener("resize", checkDevice);
-  }, []);
+  const isMobile = useIsMobile();
 
   if (isMobile) {
     return <>{children}</>;

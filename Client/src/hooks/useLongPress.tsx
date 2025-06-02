@@ -92,7 +92,6 @@ export const useLongPress = ({
     clearLongPressTimer();
   }, [longPressDuration, onShortPress, clearLongPressTimer]);
 
-  // Mouse event handlers
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();

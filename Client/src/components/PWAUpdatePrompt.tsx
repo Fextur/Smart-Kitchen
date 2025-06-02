@@ -43,7 +43,7 @@ export const PWAUpdatePrompt: FC = () => {
     <Snackbar
       open={open}
       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      sx={{ mb: 8 }} // To appear above your bottom navigation
+      sx={{ mb: 8 }}
     >
       <Box
         sx={{
