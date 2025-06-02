@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './product.entity';
-import { CreateProductsDto, UpdateProductDto } from './product.dto';
+import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { User } from 'src/Users/user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
 
@@ -35,7 +35,7 @@ export class ProductService {
     const createdProducts = products.map((product) =>
       this.productRepository.create({
         ...product,
-        sizeValueLeft: product.sizeValueLeft ?? product.sizeValue,
+        latestUpdateDate: new Date(),
         inventory,
       }),
     );
@@ -49,18 +49,17 @@ export class ProductService {
     });
   }
 
-  async update(
-    id: string,
-    updateProductDto: UpdateProductDto,
-  ): Promise<Product> {
-    const product = await this.productRepository.findOne({ where: { id } });
-    if (!product) {
-      throw new NotFoundException(`Product with id:${id} not found`);
+  async updateBulk(updateProductsDto: UpdateProductsDto): Promise<Product[]> {
+    const { products } = updateProductsDto;
+
+    const updatedProducts: Product[] = [];
+
+    for (const productDto of products) {
+      const updatedProduct = await this.productRepository.save(productDto);
+      updatedProducts.push({ ...updatedProduct, latestUpdateDate: new Date() });
     }
 
-    product.sizeValueLeft = updateProductDto.sizeValueLeft;
-
-    return this.productRepository.save(product);
+    return updatedProducts;
   }
 
   async delete(id: string): Promise<void> {

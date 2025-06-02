@@ -8,7 +8,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
-import { CreateProductsDto, UpdateProductDto } from './product.dto';
+import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { Product } from './product.entity';
 
 @Controller('products')
@@ -27,12 +27,9 @@ export class ProductController {
     return this.productService.findByInventoryId(inventoryId);
   }
 
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateProductDto: UpdateProductDto,
-  ) {
-    return this.productService.update(id, updateProductDto);
+  @Post('updateBulk')
+  async update(@Body() updateProductsDto: UpdateProductsDto) {
+    return this.productService.updateBulk(updateProductsDto);
   }
 
   @Delete(':id')

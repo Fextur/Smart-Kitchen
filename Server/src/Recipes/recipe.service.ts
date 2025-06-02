@@ -33,7 +33,7 @@ export class RecipeService {
       const sensitivitiesString = user.sensitivities.join(' , ');
 
       const productsString = user.inventory.products
-        .map((item) => `${item.sizeValueLeft} ${item.sizeUnit} של ${item.name}`)
+        .map((item) => `${item.measureUnit} של ${item.name}`)
         .join(' , ');
 
       const content = `יש לי את הרגישויות האלו: ${sensitivitiesString} ויש לי את המצרכים הבאים: ${productsString} ,תכין לי בבקשה מתכון מהמצרכים האלה חשוב לי שהמתכון יהיה ${preferencesString}, ואני מוכן לרכוש אקסטרה 3 מצרכים לכל היותר.`;
