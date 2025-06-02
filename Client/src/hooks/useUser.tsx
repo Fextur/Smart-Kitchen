@@ -1,22 +1,27 @@
 import { useMutation } from "@tanstack/react-query";
 import { CredentialResponse } from "@react-oauth/google";
 import { AxiosError } from "axios";
-import { User } from "@/types";
+import { User, UserWithKitchen } from "@/types";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
 import { atom, useAtom } from "jotai";
+import { useKitchen } from "./useKitchen";
 
 export const userAtom = atom<User | null>(null);
 
 export const useUser = () => {
   const [user, setUser] = useAtom(userAtom);
+  const { setKitchen } = useKitchen();
 
   const login = async (userName: User["userName"], password: string) => {
     try {
-      const { data } = await api.post<User>(`${API_ROUTES.users}/login`, {
-        userName,
-        password,
-      });
+      const { data } = await api.post<UserWithKitchen>(
+        `${API_ROUTES.users}/login`,
+        {
+          userName,
+          password,
+        }
+      );
 
       return data;
     } catch (error: unknown) {
@@ -53,7 +58,9 @@ export const useUser = () => {
     }) => login(userName, password),
     onSuccess: (user) => {
       if (user) {
-        setUser(user);
+        const { inventory, ...userWithoutInventory } = user;
+        setUser(userWithoutInventory);
+        setKitchen(inventory);
       }
     },
   });

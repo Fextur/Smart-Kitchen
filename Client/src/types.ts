@@ -14,6 +14,21 @@ export type User = {
   sensitivities: string[];
 };
 
+export type Kitchen = {
+  id: string;
+  description?: string;
+  name?: string;
+};
+
+export type UserWithKitchen = {
+  id: string;
+  email: string;
+  name: string;
+  userName: string;
+  sensitivities: string[];
+  inventory: Kitchen;
+};
+
 export type KitchenItem = {
   id: string;
   name: string;
