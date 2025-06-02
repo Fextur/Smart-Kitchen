@@ -1,4 +1,3 @@
-import Loader from "@/components/Loader";
 import RecipeSwipeView from "@/components/RecipeSwipeView";
 import { useRecipe } from "@/hooks/useRecipe";
 import { useUser } from "@/hooks/useUser";
@@ -7,12 +6,15 @@ import {
   Autocomplete,
   Box,
   Button,
+  IconButton,
   TextField,
-  Typography,
 } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
+import { useRouter } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 
 const RecipeGenerator = () => {
+  const router = useRouter();
   const { user } = useUser();
   const { generateRecipe, recipes } = useRecipe();
 
@@ -87,6 +89,33 @@ const RecipeGenerator = () => {
           </Button>
         </form>
       )}
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderTop: "1px solid",
+          borderColor: "grey.100",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 10,
+          zIndex: 1000,
+          height: "10vh",
+          boxSizing: "border-box",
+        }}
+      >
+        <IconButton
+          sx={{
+            p: 1,
+            borderRadius: 1.5,
+          }}
+          onClick={() => router.history.go(-1)}
+        >
+          <ArrowRight size={32} />
+        </IconButton>
+      </Box>
     </div>
   );
 };
