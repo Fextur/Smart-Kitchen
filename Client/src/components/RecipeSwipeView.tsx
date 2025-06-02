@@ -8,9 +8,13 @@ const RecipeSwipeView = ({ recipes }: { recipes: RecipeResponse[] }) => {
 
   const handlers = useSwipeable({
     onSwipedLeft: () =>
-      setCurrentIndex((i) => (i === recipes.length - 1 ? 0 : i + 1)),
+      setCurrentIndex((prevIndex) =>
+        prevIndex === recipes.length - 1 ? 0 : prevIndex + 1
+      ),
     onSwipedRight: () =>
-      setCurrentIndex((i) => (i === 0 ? recipes.length - 1 : i - 1)),
+      setCurrentIndex((prevIndex) =>
+        prevIndex === 0 ? recipes.length - 1 : prevIndex - 1
+      ),
     trackMouse: true,
   });
 

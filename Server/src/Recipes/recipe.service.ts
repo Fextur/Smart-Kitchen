@@ -85,14 +85,12 @@ export class RecipeService {
       });
 
       const resContentRaw = response.choices[0].message?.content?.trim();
-      console.log(JSON.stringify(resContentRaw));
 
       if (!resContentRaw) throw new Error('Failed to generate content');
 
       const resContent = cleanOpenAIResponse(resContentRaw);
-
       const recipesArray: GenerateResDto[] = JSON.parse(resContent).recipes;
-      console.log({ recipesArray });
+
       return recipesArray;
     } catch (error) {
       console.error('OpenAI API error:', error);
