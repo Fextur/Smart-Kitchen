@@ -45,3 +45,7 @@ export enum Preferences {
   SALTY = "מלוח",
   SOUR = "חמוץ",
 }
+
+export type ShoppingListItem = Omit<KitchenItem, "expirationDate"> & {
+  isChecked: boolean;
+};

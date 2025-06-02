@@ -1,25 +1,27 @@
 import { FC } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
-import { ArrowRight, Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { KitchenItem } from "@/types";
 
 interface ConfirmFooterProps {
-  items: KitchenItem[];
-  onAccept?: (items: KitchenItem[]) => void;
+  onAccept?: () => void;
   onCancel?: () => void;
   onBack?: () => void;
   isLoading?: boolean;
+  isContinue?: boolean;
+  isDisabled?: boolean;
 }
 
 const ConfirmFooter: FC<ConfirmFooterProps> = ({
-  items,
   onAccept,
   onCancel,
   onBack,
   isLoading = false,
+  isContinue = false,
+  isDisabled = false,
 }) => {
   const handleAccept = () => {
-    if (onAccept) onAccept(items);
+    if (onAccept) onAccept();
   };
 
   return (
@@ -58,20 +60,20 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
           <ArrowRight size={32} />
         </IconButton>
       ) : (
-        <div style={{ padding: 1, width: 32 }}></div>
+        <div style={{ width: 48 }}></div>
       )}
 
       {onAccept ? (
         <Fab
           onClick={handleAccept}
-          disabled={items.length === 0 || isLoading}
+          disabled={isDisabled || isLoading}
           sx={{
             bgcolor: "primary.main",
             color: "white",
             width: 80,
             height: 80,
             transform: "translateY(-8px)",
-            boxShadow: "0 6px 16px rgba(76, 175, 80, 0.4)",
+            boxShadow: "0 6px 16px rgba(249, 115, 22, 0.4)",
             "&:hover": {
               bgcolor: "primary.dark",
             },
@@ -82,10 +84,10 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
             },
           }}
         >
-          <Check size={40} />
+          {isContinue ? <ArrowLeft size={40} /> : <Check size={40} />}
         </Fab>
       ) : (
-        <div style={{ padding: 1, width: 80 }}></div>
+        <div style={{ width: 80 }}></div>
       )}
 
       {onCancel ? (
@@ -105,7 +107,7 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
           <X size={32} />
         </IconButton>
       ) : (
-        <div style={{ padding: 1, width: 32 }}></div>
+        <div style={{ width: 48 }}></div>
       )}
     </Box>
   );

@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { User } from "../types";
-import api from "../axios/axios";
-import { API_ROUTES } from "../axios/apiRoutes";
-import { useUser } from "./useUser";
+import { User } from "@/types";
+import api from "@/axios/axios";
+import { API_ROUTES } from "@/axios/apiRoutes";
+import { useUser } from "@/hooks/useUser";
 
 export const useRegister = () => {
   const { setUser } = useUser();

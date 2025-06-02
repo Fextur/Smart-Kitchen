@@ -2,10 +2,10 @@ import { FC, useState } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { Trash2 } from "lucide-react";
 import { KitchenItem, SizeUnit } from "@/types";
-import { AmountEditDialog } from "./AmountEditDialog";
-import { DateEditDialog } from "./DateEditDialog";
+import { DateEditDialog } from "@/components/KitchenItemList/KitchenItemCard//DateEditDialog";
 import { formatDate, isExpiringSoon } from "@/utils/dateUtils";
 import { DeleteConfirmDialog } from "@/components/KitchenItemList/KitchenItemCard/DeleteConfirmDialog";
+import { AmountEditDialog } from "@/components/KitchenItemList/KitchenItemCard/AmountEditDialog";
 
 interface KitchenItemCardProps {
   item: KitchenItem;

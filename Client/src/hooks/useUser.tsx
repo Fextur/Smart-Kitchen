@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { CredentialResponse } from "@react-oauth/google";
 import { AxiosError } from "axios";
-import { User } from "../types";
-import api from "../axios/axios";
-import { API_ROUTES } from "../axios/apiRoutes";
+import { User } from "@/types";
+import api from "@/axios/axios";
+import { API_ROUTES } from "@/axios/apiRoutes";
 import { atom, useAtom } from "jotai";
 
 export const userAtom = atom<User | null>(null);

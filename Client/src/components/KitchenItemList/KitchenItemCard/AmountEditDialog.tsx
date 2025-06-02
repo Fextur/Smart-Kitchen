@@ -1,13 +1,6 @@
 import { FC, useState } from "react";
 import { Edit3 } from "lucide-react";
-import {
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  Button,
-  Box,
-} from "@mui/material";
+import { Button, Box } from "@mui/material";
 import { SizeUnit } from "@/types";
 import { Dialog } from "@/components/Dialog";
 import { DeleteConfirmDialog } from "@/components/KitchenItemList/KitchenItemCard/DeleteConfirmDialog";

@@ -1,53 +1,46 @@
-import { useState, useRef, FC, useMemo, useCallback } from "react";
+import { useState, useRef, FC, useCallback, ReactNode } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronUp, Edit3, Plus } from "lucide-react";
-import { KitchenItem, SizeUnit } from "@/types";
-import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
-import { AddNewItemDialog } from "@/components/KitchenItemList/KitchenItemCard/AddNewItemDialog";
+import { KitchenItem, ShoppingListItem } from "@/types";
+import { AddNewItemDialog } from "@/components/KitchenItemList/AddNewItemDialog";
 
-const createAddNewItem = (): KitchenItem => ({
-  id: "add-new",
-  name: "",
-  size: 0,
-  measureUnit: SizeUnit.UNIT,
-  latestUpdateDate: "",
-});
 interface KitchenItemListProps {
-  items: KitchenItem[];
-  onEditItem?: (updatedItem: KitchenItem) => void;
-  onAddNewItem?: (item: Omit<KitchenItem, "id" | "latestUpdateDate">) => void;
+  itemsCount: number;
+  onAddNewItem?: (
+    item:
+      | Omit<KitchenItem, "id" | "latestUpdateDate">
+      | Omit<ShoppingListItem, "id" | "latestUpdateDate">
+  ) => void;
   title?: string;
+  isEditToggable?: boolean;
   isEditing?: boolean;
-  showAddNewRow?: boolean;
   initialCollapsed?: boolean;
+  renderRow: (itemIndex: number, isEditing?: boolean) => ReactNode;
+  maxHeight?: string;
+  showExperationDateOnNewItem?: boolean;
 }
 
 export const KitchenItemList: FC<KitchenItemListProps> = ({
-  items,
-  onEditItem,
+  itemsCount,
   onAddNewItem,
   title,
+  isEditToggable = false,
   isEditing = false,
-  showAddNewRow = false,
   initialCollapsed = false,
+  renderRow,
+  maxHeight = "400px",
+  showExperationDateOnNewItem = true,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
   const [showEditMode, setShowEditMode] = useState(isEditing);
   const [showAddNewDialog, setShowAddNewDialog] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const displayItems = useMemo(() => {
-    if (showAddNewRow && !isCollapsed) {
-      return [...items, createAddNewItem()];
-    }
-    return items;
-  }, [items, showAddNewRow, isCollapsed]);
-
   const rowVirtualizer = useVirtualizer({
-    count: isCollapsed ? 0 : displayItems.length,
+    count: isCollapsed ? 0 : itemsCount + (onAddNewItem ? 1 : 0),
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 80,
+    estimateSize: () => 70,
     overscan: 5,
   });
 
@@ -65,7 +58,11 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
   }, []);
 
   const handleAddNewSave = useCallback(
-    (newItem: Omit<KitchenItem, "id" | "latestUpdateDate">) => {
+    (
+      newItem:
+        | Omit<KitchenItem, "id" | "latestUpdateDate">
+        | Omit<ShoppingListItem, "id" | "latestUpdateDate">
+    ) => {
       if (onAddNewItem) {
         onAddNewItem(newItem);
       }
@@ -96,7 +93,6 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
             justifyContent: "space-between",
             p: 2,
             cursor: "pointer",
-            borderBottom: "1px solid",
             borderColor: "grey.100",
             "&:hover": {
               bgcolor: "grey.50",
@@ -110,7 +106,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {!isEditing && onEditItem && !isCollapsed && (
+            {!isEditing && isEditToggable && !isCollapsed && (
               <IconButton
                 size="small"
                 onClick={toggleEditMode}
@@ -140,7 +136,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
           ref={parentRef}
           sx={{
             overflow: "auto",
-            maxHeight: 400,
+            maxHeight: maxHeight,
             minHeight: 100,
             "&::-webkit-scrollbar": {
               width: 8,
@@ -169,9 +165,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
             }}
           >
             {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-              const item = displayItems[virtualItem.index];
-
-              if (item.id === "add-new") {
+              if (virtualItem.index === itemsCount) {
                 return (
                   <Box
                     key={virtualItem.key}
@@ -239,11 +233,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                 >
-                  <KitchenItemCard
-                    item={item}
-                    onEdit={onEditItem}
-                    isEditing={isEditing || showEditMode}
-                  />
+                  {renderRow(virtualItem.index, isEditing || showEditMode)}
                 </Box>
               );
             })}
@@ -264,7 +254,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
           }}
         >
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {items.length} פריטים
+            {itemsCount} פריטים
           </Typography>
         </Box>
       )}
@@ -273,6 +263,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
         isOpen={showAddNewDialog}
         onClose={handleCloseAddNewDialog}
         onSave={handleAddNewSave}
+        showExperationDate={showExperationDateOnNewItem}
       />
     </Box>
   );

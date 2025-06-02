@@ -8,14 +8,15 @@ import {
 } from "@tanstack/react-router";
 import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home/Home";
-import Login from "./pages/Login";
+import Login from "@/pages/Login";
 import { useEffect } from "react";
-import Register from "./pages/Register";
+import Register from "@/pages/Register";
 import { atom } from "jotai";
 import { User, KitchenItem } from "./types";
 import { useUser } from "./hooks/useUser";
 import RecipeGenerator from "./pages/RecipeGenerator";
-import AddProducts from "@/pages/AddProducts/AddProducts";
+import ShoppingList from "@/pages/ShoppingList/ShoppingList";
+import AddProducts from "./pages/AddProducts";
 
 export const userAtom = atom<User | null>(null);
 
@@ -82,6 +83,12 @@ const registerRoute = createRoute({
   component: Register,
 });
 
+const shoppingListRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/shopping-list",
+  component: ShoppingList,
+});
+
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -94,6 +101,7 @@ const routeTree = rootRoute.addChildren([
   recipeRoute,
   registerRoute,
   addProductsRoute,
+  shoppingListRoute,
   notFoundRoute,
 ]);
 
