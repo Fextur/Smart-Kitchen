@@ -13,7 +13,7 @@ const AppLayout: FC = () => {
         display: "flex",
         flexDirection: "column",
         height: "100vh",
-        width: "100vw",
+        width: "100%",
         backgroundColor: "#f8f9fa",
         position: "relative",
         overflow: "hidden",

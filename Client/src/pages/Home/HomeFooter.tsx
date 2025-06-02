@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { Plus, CookingPot, ScrollText } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
@@ -6,7 +6,20 @@ import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDia
 
 const HomeFooter: FC = () => {
   const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkDevice = () => {
+      const desktop = window.innerWidth >= 768;
+      setIsDesktop(desktop);
+    };
+
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
+
   return (
     <>
       <Box
@@ -17,13 +30,14 @@ const HomeFooter: FC = () => {
           display: "flex",
           justifyContent: "space-around",
           alignItems: "center",
-          position: "fixed",
+          position: isDesktop ? "absolute" : "fixed",
           bottom: 0,
           left: 0,
           right: 0,
           zIndex: 1000,
           height: "10vh",
           boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <IconButton

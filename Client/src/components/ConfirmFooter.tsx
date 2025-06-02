@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 
@@ -19,6 +19,19 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
   isContinue = false,
   isDisabled = false,
 }) => {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      const desktop = window.innerWidth >= 768;
+      setIsDesktop(desktop);
+    };
+
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
+
   const handleAccept = () => {
     if (onAccept) onAccept();
   };
@@ -32,7 +45,7 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
         display: "flex",
         justifyContent: "space-around",
         alignItems: "center",
-        position: "fixed",
+        position: isDesktop ? "absolute" : "fixed",
         bottom: 0,
         left: 0,
         right: 0,
@@ -40,6 +53,7 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
         height: "10vh",
         boxSizing: "border-box",
         direction: "rtl",
+        width: "100%",
       }}
     >
       {onBack ? (

@@ -38,7 +38,7 @@ const Login = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        width: "100vw",
+        width: "100%",
       }}
     >
       <form
@@ -46,7 +46,7 @@ const Login = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          width: "60vw",
+          width: "60%",
         }}
         onSubmit={(e) => {
           e.preventDefault();
