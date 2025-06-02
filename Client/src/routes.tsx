@@ -12,13 +12,10 @@ import Home from "@/pages/Home/Home";
 import Login from "@/pages/Login";
 import { useEffect } from "react";
 import Register from "@/pages/Register";
-import { atom } from "jotai";
-import { User, KitchenItem } from "@/types";
+import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
 import AddProducts from "@/pages/AddProducts";
 import ShoppingList from "@/pages/ShoppingList/ShoppingList";
-
-export const userAtom = atom<User | null>(null);
 
 interface AddProductsLocationState {
   items: KitchenItem[];
