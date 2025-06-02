@@ -25,6 +25,34 @@ export const useKitchenItems = () => {
     }
   };
 
+  const createKitchenItems = async (items: KitchenItem[]) => {
+    try {
+      if (kitchen?.id) {
+        const itemsWithoutIds = items.map(({ id, ...rest }) => rest);
+
+        const { data } = await api.post<KitchenItem[]>(
+          `${API_ROUTES.products}/`,
+          {
+            products: itemsWithoutIds,
+            inventoryId: kitchen.id,
+          }
+        );
+
+        return data;
+      }
+    } catch (error) {
+      console.error(error);
+      throw new Error("An unexpected error occurred");
+    }
+  };
+
+  const createItemsMutation = useMutation({
+    mutationFn: (items: KitchenItem[]) => createKitchenItems(items),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+    },
+  });
+
   const updateKitchenItem = async (items: KitchenItem[]) => {
     try {
       const { data } = await api.post<KitchenItem[]>(
@@ -71,6 +99,7 @@ export const useKitchenItems = () => {
   return {
     items: data || [],
     isLoading,
+    createItemsMutation,
     updateItemsMutation,
     categorizedItems,
   };
