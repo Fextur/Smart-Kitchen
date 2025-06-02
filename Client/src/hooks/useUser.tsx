@@ -4,10 +4,9 @@ import { AxiosError } from "axios";
 import { User, UserWithKitchen } from "@/types";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
-import { atom, useAtom } from "jotai";
+import { useAtom } from "jotai";
+import { userAtom } from "@/atoms";
 import { useKitchen } from "./useKitchen";
-
-export const userAtom = atom<User | null>(null);
 
 export const useUser = () => {
   const [user, setUser] = useAtom(userAtom);
