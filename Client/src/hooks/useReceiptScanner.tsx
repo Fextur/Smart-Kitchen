@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { KitchenItem, SizeUnit } from "@/types";
+import api from "@/axios/axios";
 
 interface ScanReceiptResponse {
   items: KitchenItem[];
@@ -8,7 +9,7 @@ interface ScanReceiptResponse {
 
 interface ParsedProduct {
   name: string;
-  sizeValue: number;
+  size: number;
   sizeUnit: string;
   expirationDate: Date | null;
 }
@@ -45,7 +46,7 @@ const convertParsedProductToKitchenItem = (
   return {
     id: `scanned-${index}-${Date.now()}`,
     name: product.name,
-    size: product.sizeValue,
+    size: product.size,
     measureUnit,
     expirationDate: product.expirationDate
       ? product.expirationDate.toISOString().split("T")[0]
@@ -59,7 +60,7 @@ const scanReceipt = async (file: File): Promise<ScanReceiptResponse> => {
   formData.append("receipt", file);
 
   try {
-    const response = await axios.post<ParsedProduct[]>(
+    const response = await api.post<ParsedProduct[]>(
       `${import.meta.env.VITE_API_URL}/receipt-scanner/scan`,
       formData,
       {
