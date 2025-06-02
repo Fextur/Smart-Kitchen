@@ -1,109 +1,68 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KitchenItem, SizeUnit } from "@/types";
+import { KitchenItem } from "@/types";
 import { useMemo } from "react";
 import { isExpiringSoon } from "@/utils/dateUtils";
+import api from "@/axios/axios";
+import { API_ROUTES } from "@/axios/apiRoutes";
+import { useKitchen } from "./useKitchen";
 
 export const useKitchenItems = () => {
   const queryClient = useQueryClient();
+  const { kitchen } = useKitchen();
 
   const fetchKitchenItems = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (kitchen?.id) {
+        const { data } = await api.get<KitchenItem[]>(
+          `${API_ROUTES.products}/by-inventory/${kitchen.id}`
+        );
 
-      const stubItems: KitchenItem[] = [
-        {
-          id: "1",
-          name: "קולה",
-          size: 1,
-          measureUnit: SizeUnit.UNIT,
-          expirationDate: "2024-06-15",
-          latestUpdateDate: "2024-05-20",
-        },
-        {
-          id: "2",
-          name: "במבה",
-          size: 0,
-          measureUnit: SizeUnit.UNIT,
-          expirationDate: "2024-07-01",
-          latestUpdateDate: "2024-05-20",
-        },
-        {
-          id: "3",
-          name: "חלב",
-          size: 1,
-          measureUnit: SizeUnit.LITER,
-          expirationDate: "2024-06-01",
-          latestUpdateDate: "2024-05-15",
-        },
-        {
-          id: "4",
-          name: "חזה עוף",
-          size: 500,
-          measureUnit: SizeUnit.GRAM,
-          expirationDate: "2024-06-10",
-          latestUpdateDate: "2024-05-20",
-        },
-        {
-          id: "5",
-          name: "לחם שלם",
-          size: 1,
-          measureUnit: SizeUnit.UNIT,
-          expirationDate: "2024-06-05",
-          latestUpdateDate: "2024-05-20",
-        },
-        {
-          id: "6",
-          name: "גבינה לבנה",
-          size: 250,
-          measureUnit: SizeUnit.GRAM,
-          expirationDate: "2024-06-20",
-          latestUpdateDate: "2024-05-18",
-        },
-        {
-          id: "7",
-          name: "עגבניות",
-          size: 1,
-          measureUnit: SizeUnit.KILOGRAM,
-          expirationDate: "2024-06-08",
-          latestUpdateDate: "2024-05-22",
-        },
-        {
-          id: "8",
-          name: "בצל",
-          size: 0,
-          measureUnit: SizeUnit.KILOGRAM,
-          expirationDate: "2024-07-15",
-          latestUpdateDate: "2024-05-19",
-        },
-        {
-          id: "9",
-          name: "אורז",
-          size: 1,
-          measureUnit: SizeUnit.KILOGRAM,
-          expirationDate: "2025-01-01",
-          latestUpdateDate: "2024-05-10",
-        },
-        {
-          id: "10",
-          name: "שמן זית",
-          size: 500,
-          measureUnit: SizeUnit.MILLILITER,
-          expirationDate: "2024-12-31",
-          latestUpdateDate: "2024-05-05",
-        },
-      ];
-
-      return stubItems;
+        return data;
+      }
     } catch (error) {
       console.error(error);
       throw new Error("An unexpected error occurred");
     }
   };
 
+  const createKitchenItems = async (items: KitchenItem[]) => {
+    try {
+      if (kitchen?.id) {
+        const itemsWithoutIds = items.map(({ id, ...rest }) => rest);
+
+        const { data } = await api.post<KitchenItem[]>(
+          `${API_ROUTES.products}/`,
+          {
+            products: itemsWithoutIds,
+            inventoryId: kitchen.id,
+          }
+        );
+
+        return data;
+      }
+    } catch (error) {
+      console.error(error);
+      throw new Error("An unexpected error occurred");
+    }
+  };
+
+  const createItemsMutation = useMutation({
+    mutationFn: (items: KitchenItem[]) => createKitchenItems(items),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+    },
+  });
+
   const updateKitchenItem = async (items: KitchenItem[]) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return items;
+      const { data } = await api.post<KitchenItem[]>(
+        `${API_ROUTES.products}/updateBulk`,
+        {
+          products: items,
+        }
+      );
+
+      return data;
     } catch (error) {
       console.error(error);
       throw new Error("An unexpected error occurred");
@@ -140,6 +99,7 @@ export const useKitchenItems = () => {
   return {
     items: data || [],
     isLoading,
+    createItemsMutation,
     updateItemsMutation,
     categorizedItems,
   };

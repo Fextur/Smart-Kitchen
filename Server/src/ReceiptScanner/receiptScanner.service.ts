@@ -2,14 +2,13 @@ import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { VISION_CLIENT } from '../config/vision.config';
 import OpenAI from 'openai';
-import { SizeUnit } from 'src/types';
+import { MeasureUnit } from 'src/types';
 
 export interface ParsedProduct {
   name: string;
-  sizeValue: number;
-  sizeUnit: SizeUnit;
+  size: number;
+  measureUnit: MeasureUnit;
   expirationDate: Date | null;
-
 }
 
 export interface ReceiptScanOptions {
@@ -129,8 +128,8 @@ export class ReceiptScannerService {
       → MERGE INTO ONE PRODUCT: 
         {
           "name": "חטיף פרינגלס אוריגינל",
-          "sizeValue": 149,
-          "sizeUnit": "גרם",
+          "size": 149,
+          "measureUnit": "גרם",
           "expirationDate" null
         }
 
@@ -140,8 +139,8 @@ export class ReceiptScannerService {
       → MERGE INTO ONE PRODUCT:
         {
           "name": "הוטפופ חמאה",
-          "sizeValue": 500,
-          "sizeUnit": "גרם",
+          "size": 500,
+          "measureUnit": "גרם",
           "expirationDate" null
         }
 
@@ -161,8 +160,8 @@ export class ReceiptScannerService {
         "products": [
           {
             "name": "מלא שם המוצר בעברית",
-            "sizeValue": 900,
-            "sizeUnit": "גרם/ליטר/קילוגרם",
+            "size": 900,
+            "measureUnit": "גרם/ליטר/קילוגרם",
             "expirationDate" null
 
           }
@@ -209,8 +208,8 @@ export class ReceiptScannerService {
 
       const processedProducts = parsedResponse.products.map((product) => ({
         name: product.name?.trim() || 'Unknown Product',
-        sizeValue: Number(product.sizeValue) || 0,
-        sizeUnit: this.validateSizeUnit(product.sizeUnit),
+        size: Number(product.size) || 0,
+        measureUnit: this.validateMeasureUnit(product.measureUnit),
       }));
 
       return processedProducts;
@@ -227,18 +226,18 @@ export class ReceiptScannerService {
     }
   }
 
-  private validateSizeUnit(unit: string): SizeUnit {
+  private validateMeasureUnit(unit: string): MeasureUnit {
     const unitMappings = {
-      גרם: SizeUnit.GRAM,
-      'גר׳': SizeUnit.GRAM,
-      קילוגרם: SizeUnit.KILOGRAM,
-      'ק״ג': SizeUnit.KILOGRAM,
-      ליטר: SizeUnit.LITER,
-      'ל׳': SizeUnit.LITER,
-      מיליליטר: SizeUnit.MILLILITER,
-      'מ״ל': SizeUnit.MILLILITER,
+      גרם: MeasureUnit.GRAM,
+      'גר׳': MeasureUnit.GRAM,
+      קילוגרם: MeasureUnit.KILOGRAM,
+      'ק״ג': MeasureUnit.KILOGRAM,
+      ליטר: MeasureUnit.LITER,
+      'ל׳': MeasureUnit.LITER,
+      מיליליטר: MeasureUnit.MILLILITER,
+      'מ״ל': MeasureUnit.MILLILITER,
     };
 
-    return unitMappings[unit] || SizeUnit.GRAM;
+    return unitMappings[unit] || MeasureUnit.GRAM;
   }
 }

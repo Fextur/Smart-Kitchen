@@ -1,23 +1,22 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { SizeUnit } from 'src/types';
+import { MeasureUnit } from 'src/types';
 import { Inventory } from 'src/Inventory/inventory.entity';
+import { ShoppingList } from 'src/ShoppingList/shoppingList.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity('products')
 export class Product {
-  @PrimaryGeneratedColumn('uuid', { name: 'product_id' })
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'text', nullable: false })
   name: string;
 
   @Column({ type: 'float', nullable: false })
-  sizeValue: number;
+  size: number;
 
-  @Column({ type: 'float', nullable: false })
-  sizeValueLeft: number;
-
-  @Column({ type: 'enum', enum: SizeUnit, nullable: false })
-  sizeUnit: SizeUnit;
+  @Column({ type: 'enum', enum: MeasureUnit, nullable: false })
+  measureUnit: MeasureUnit;
 
   @Column({
     type: 'timestamptz',
@@ -25,9 +24,17 @@ export class Product {
   })
   expirationDate: Date;
 
+  @Column({
+    type: 'timestamptz',
+  })
+  latestUpdateDate: Date;
+
   @ManyToOne(() => Inventory, (inventory) => inventory.products, {
-    nullable: false,
-    onDelete: 'CASCADE',
+    nullable: true,
   })
   inventory: Inventory;
+
+  @ManyToOne(() => ShoppingList, (shoppingList) => shoppingList.products)
+  @Exclude()
+  shoppingList: ShoppingList;
 }

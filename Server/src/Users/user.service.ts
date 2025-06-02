@@ -81,7 +81,10 @@ export class UserService {
 
   async findById(id: string): Promise<Omit<User, 'password'>> {
     try {
-      const user = await this.userRepository.findOneBy({ id });
+      const user = await this.userRepository.findOne({
+        where: { id },
+        relations: ['inventory'],
+      });
       if (!user) {
         throw new NotFoundException(`User with id ${id} not found`);
       }
@@ -131,8 +134,10 @@ export class UserService {
     const { userName, password } = loginUserDto;
 
     try {
-      const user = await this.userRepository.findOneBy({ userName });
-
+      const user = await this.userRepository.findOne({
+        where: { userName },
+        relations: ['inventory'],
+      });
       if (!user) {
         throw new UnauthorizedException('Invalid credentials');
       }

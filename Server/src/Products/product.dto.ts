@@ -6,7 +6,7 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
-import { SizeUnit } from 'src/types';
+import { MeasureUnit } from 'src/types';
 
 export class ProductDto {
   @IsString()
@@ -15,15 +15,11 @@ export class ProductDto {
 
   @IsNumber()
   @IsNotEmpty()
-  sizeValue: number;
+  size: number;
 
-  @IsNumber()
+  @IsEnum(MeasureUnit)
   @IsNotEmpty()
-  sizeValueLeft: number;
-
-  @IsEnum(SizeUnit)
-  @IsNotEmpty()
-  sizeUnit: SizeUnit;
+  measureUnit: MeasureUnit;
 
   @IsDate()
   expirationDate: Date;
@@ -39,8 +35,12 @@ export class CreateProductsDto {
   inventoryId: string;
 }
 
-export class UpdateProductDto {
+export class UpdateProductsDto {
+  @IsArray()
+  @IsNotEmpty()
+  products: ProductDto[];
+
   @IsNumber()
   @IsNotEmpty()
-  sizeValueLeft: number;
+  inventoryId: string;
 }

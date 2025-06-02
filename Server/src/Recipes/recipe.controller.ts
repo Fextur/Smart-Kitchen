@@ -6,9 +6,9 @@ import { GenerateRecipeDto } from './recipe.dto';
 export class RecipeController {
   constructor(private readonly recipeService: RecipeService) {}
 
-  @Post()
+  @Post('generate')
   async generate(@Body() generateRecipeDto: GenerateRecipeDto) {
-    const { userId, preferences } = generateRecipeDto;
-    return this.recipeService.generate(userId, preferences);
+    const { userId, sensitivities, preferences } = generateRecipeDto;
+    return this.recipeService.generate(userId, sensitivities, preferences);
   }
 }

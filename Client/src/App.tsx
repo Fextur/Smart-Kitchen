@@ -1,4 +1,5 @@
 import "@/App.css";
+import GlobalLoader from "@/components/GlobalLoader";
 import QueryProvider from "@/providers/QueryProvider";
 import { router } from "@/routes";
 import { theme } from "@/theme";
@@ -8,6 +9,7 @@ import { FC } from "react";
 import { MobileWrapper } from "@/components/MobileWrapper";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 
+
 const App: FC = () => {
   return (
     <QueryProvider>
@@ -15,6 +17,7 @@ const App: FC = () => {
         <MobileWrapper>
           <RouterProvider router={router} />
           <PWAUpdatePrompt />
+          <GlobalLoader />
         </MobileWrapper>
       </ThemeProvider>
     </QueryProvider>

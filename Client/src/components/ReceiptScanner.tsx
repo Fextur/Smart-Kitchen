@@ -8,8 +8,8 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 interface ParsedProduct {
   name: string;
-  sizeValue: number;
-  sizeUnit: string;
+  size: number;
+  measureUnit: SizeUnit;
   expirationDate: Date | null;
 }
 
@@ -199,10 +199,10 @@ const ReceiptScanner = () => {
                   label="יח מידה"
                   select
                   variant="standard"
-                  value={product.sizeUnit}
-                  defaultValue={product.sizeUnit}
+                  value={product.measureUnit}
+                  defaultValue={product.measureUnit}
                   style={{ gridColumn: "span 1", direction: "rtl" }}
-                  onChange={(e) => handleChange(e, index, "sizeUnit")}
+                  onChange={(e) => handleChange(e, index, "measureUnit")}
                   slotProps={{
                     inputLabel: {
                       style: {
@@ -222,9 +222,9 @@ const ReceiptScanner = () => {
                 <TextField
                   label="משקל"
                   variant="standard"
-                  value={product.sizeValue}
+                  value={product.size}
                   style={{ gridColumn: "span 1", direction: "rtl" }}
-                  onChange={(e) => handleChange(e, index, "sizeValue")}
+                  onChange={(e) => handleChange(e, index, "size")}
                   slotProps={{
                     inputLabel: {
                       style: {

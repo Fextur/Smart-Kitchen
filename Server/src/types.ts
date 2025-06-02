@@ -1,4 +1,4 @@
-export enum SizeUnit {
+export enum MeasureUnit {
   GRAM = 'גרם',
   KILOGRAM = 'קילוגרם',
   LITER = 'ליטר',

@@ -15,7 +15,7 @@ interface AddProductsLocationState {
 const AddProducts: FC = () => {
   const navigate = useNavigate();
   const routerState = useRouterState();
-  const { updateItemsMutation } = useKitchenItems();
+  const { createItemsMutation } = useKitchenItems();
 
   const locationState = routerState.location.state as
     | AddProductsLocationState
@@ -49,7 +49,7 @@ const AddProducts: FC = () => {
   };
 
   const handleAccept = () => {
-    updateItemsMutation.mutate(items, {
+    createItemsMutation.mutate(items, {
       onSuccess: () => {
         navigate({ to: "/" });
       },
