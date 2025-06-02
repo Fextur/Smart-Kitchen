@@ -1,7 +1,6 @@
 import { FC } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
-import { KitchenItem } from "@/types";
 
 interface ConfirmFooterProps {
   onAccept?: () => void;
