@@ -54,18 +54,18 @@ export class ShoppingListService {
         inventory: { id: inventoryId },
         products: [],
       });
+
+      shoppingList = await this.shoppingListRepository.save(shoppingList);
     }
 
     const createdProducts = products.map((product) =>
       this.productRepository.create({ ...product, shoppingList }),
     );
-
     await this.productRepository.save(createdProducts);
 
     shoppingList.products = shoppingList.products
       ? [...shoppingList.products, ...createdProducts]
       : [...createdProducts];
-
     return this.shoppingListRepository.save(shoppingList);
   }
 

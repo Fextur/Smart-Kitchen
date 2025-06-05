@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ShoppingListItem, SizeUnit } from "@/types";
+import { KitchenItem, ShoppingListItem, SizeUnit } from "@/types";
+import api from "@/axios/axios";
+import { API_ROUTES } from "@/axios/apiRoutes";
 
 export const useShoppingListItems = () => {
   const queryClient = useQueryClient();
@@ -67,6 +69,32 @@ export const useShoppingListItems = () => {
     },
   });
 
+  const addItemsToShoppingList = async (
+    inventoryId: string,
+    items: KitchenItem[]
+  ) => {
+    try {
+      const { data } = await api.post(API_ROUTES.shoppingList, {
+        inventoryId,
+        products: items,
+      });
+      return data;
+    } catch (error) {
+      console.error(error);
+      throw new Error("An unexpected error occurred");
+    }
+  };
+
+  const addItemsMutation = useMutation({
+    mutationFn: ({
+      inventoryId,
+      items,
+    }: {
+      inventoryId: string;
+      items: KitchenItem[];
+    }) => addItemsToShoppingList(inventoryId, items),
+  });
+
   const deleteShoppingListItem = async (itemId: ShoppingListItem["id"]) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -113,5 +141,6 @@ export const useShoppingListItems = () => {
     updateItemsMutation,
     deleteItemsMutation,
     clearItemsMutation,
+    addItemsMutation,
   };
 };

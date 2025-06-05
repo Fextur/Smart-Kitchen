@@ -17,7 +17,7 @@ export class ShoppingList {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn() // This side owns the FK column: shopping_lists.inventoryId
+  @JoinColumn()
   inventory: Inventory;
 
   @OneToMany(() => Product, (product) => product.shoppingList, {

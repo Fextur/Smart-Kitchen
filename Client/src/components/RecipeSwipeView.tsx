@@ -1,24 +1,32 @@
 import { RecipeResponse } from "@/types";
 import { Box, Typography } from "@mui/material";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useSwipeable } from "react-swipeable";
 
-const RecipeSwipeView = ({ recipes }: { recipes: RecipeResponse[] }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+interface RecipeSwipeViewProps {
+  recipes: RecipeResponse[];
+  currentRecipeIndex: number;
+  setCurrentRecipeIndex: Dispatch<SetStateAction<number>>;
+}
 
+const RecipeSwipeView = ({
+  recipes,
+  currentRecipeIndex,
+  setCurrentRecipeIndex,
+}: RecipeSwipeViewProps) => {
   const handlers = useSwipeable({
     onSwipedLeft: () =>
-      setCurrentIndex((prevIndex) =>
+      setCurrentRecipeIndex((prevIndex) =>
         prevIndex === recipes.length - 1 ? 0 : prevIndex + 1
       ),
     onSwipedRight: () =>
-      setCurrentIndex((prevIndex) =>
+      setCurrentRecipeIndex((prevIndex) =>
         prevIndex === 0 ? recipes.length - 1 : prevIndex - 1
       ),
     trackMouse: true,
   });
 
-  const current = recipes[currentIndex];
+  const current = recipes[currentRecipeIndex];
 
   return (
     <Box
@@ -61,7 +69,7 @@ const RecipeSwipeView = ({ recipes }: { recipes: RecipeResponse[] }) => {
       )}
 
       <Typography sx={{ mt: 2 }}>
-        מתכון {currentIndex + 1} מתוך {recipes.length}
+        מתכון {currentRecipeIndex + 1} מתוך {recipes.length}
       </Typography>
     </Box>
   );

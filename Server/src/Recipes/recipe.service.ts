@@ -53,7 +53,6 @@ export class RecipeService {
             "name": "שם המוצר בעברית",
             "size": מספר שלם (למשל 900),
             "measureUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
-            "expirationDate": null
           },
           ...
         ]
@@ -71,7 +70,6 @@ export class RecipeService {
                 "name": "שם המוצר בעברית",
                 "size": מספר שלם,
                 "measureUnit": "גרם" | "קילוגרם" | "ליטר" | "מיליליטר" | "יחידות",
-                "expirationDate": null
               }
             ]
           }

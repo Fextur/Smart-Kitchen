@@ -1,22 +1,33 @@
 import RecipeSwipeView from "@/components/RecipeSwipeView";
+import { useKitchen } from "@/hooks/useKitchen";
 import { useRecipe } from "@/hooks/useRecipe";
+import { useShoppingListItems } from "@/hooks/useShoppingListItems";
 import { useUser } from "@/hooks/useUser";
 import { Preferences } from "@/types";
 import {
+  Alert,
   Autocomplete,
   Box,
   Button,
   IconButton,
+  Snackbar,
   TextField,
 } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ClipboardPlus } from "lucide-react";
+import { useState } from "react";
 
 const RecipeGenerator = () => {
+  const [currentRecipeIndex, setCurrentRecipeIndex] = useState<number>(0);
+  const [isAddedToShoppingList, setIsAddedToShoppingList] =
+    useState<boolean>(false);
+
   const router = useRouter();
   const { user } = useUser();
   const { generateRecipe, recipes } = useRecipe();
+  const { kitchen } = useKitchen();
+  const { addItemsMutation } = useShoppingListItems();
 
   const form = useForm({
     defaultValues: {
@@ -28,6 +39,31 @@ const RecipeGenerator = () => {
     },
   });
 
+  const currentRecipe = recipes[currentRecipeIndex];
+  const hasExtraProducts =
+    currentRecipe?.extraProducts && currentRecipe?.extraProducts?.length > 0;
+
+  const addToShoppingList = () => {
+    const currentRecipe = recipes[currentRecipeIndex];
+    const items = currentRecipe.extraProducts?.map((item) => ({
+      ...item,
+      latestUpdateDate: new Date().toISOString(),
+    }));
+    if (kitchen && items) {
+      addItemsMutation.mutate(
+        {
+          inventoryId: kitchen.id,
+          items,
+        },
+        {
+          onSuccess: () => {
+            setIsAddedToShoppingList(true);
+          },
+        }
+      );
+    }
+  };
+
   return (
     <div
       style={{
@@ -38,7 +74,11 @@ const RecipeGenerator = () => {
       }}
     >
       {recipes && recipes.length > 0 ? (
-        <RecipeSwipeView recipes={recipes} />
+        <RecipeSwipeView
+          recipes={recipes}
+          currentRecipeIndex={currentRecipeIndex}
+          setCurrentRecipeIndex={setCurrentRecipeIndex}
+        />
       ) : (
         <form
           style={{ width: "80vw" }}
@@ -96,7 +136,7 @@ const RecipeGenerator = () => {
           borderColor: "grey.100",
           display: "flex",
           alignItems: "center",
-          justifyContent: "flex-end",
+          justifyContent: "space-around",
           position: "fixed",
           bottom: 0,
           left: 0,
@@ -107,6 +147,16 @@ const RecipeGenerator = () => {
         }}
       >
         <IconButton
+          disabled={!hasExtraProducts}
+          sx={{
+            p: 1,
+            borderRadius: 1.5,
+          }}
+          onClick={addToShoppingList}
+        >
+          <ClipboardPlus size={32} />
+        </IconButton>
+        <IconButton
           sx={{
             p: 1,
             borderRadius: 1.5,
@@ -116,6 +166,17 @@ const RecipeGenerator = () => {
           <ArrowRight size={32} />
         </IconButton>
       </Box>
+      <Snackbar
+        sx={{ margin: "10px" }}
+        autoHideDuration={4000}
+        anchorOrigin={{ horizontal: "center", vertical: "bottom" }}
+        open={isAddedToShoppingList}
+        onClose={() => setIsAddedToShoppingList(false)}
+      >
+        <Alert severity="success" sx={{ width: "100%", direction: "rtl" }}>
+          הפריטים הוספו לרשימת קניות
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
