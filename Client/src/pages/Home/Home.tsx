@@ -6,11 +6,14 @@ import HomeFooter from "@/pages/Home/HomeFooter";
 import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
 import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
+import { useRecipe } from "@/hooks/useRecipe";
+import { RecipeCard } from "@/pages/Recipe/RecipeCard";
 
 const Home: FC = () => {
   const { items, isLoading, updateItemsMutation, categorizedItems } =
     useKitchenItems();
   const { user } = useUser();
+  const { usedRecipes } = useRecipe();
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -75,6 +78,23 @@ const Home: FC = () => {
             {greeting}, {user?.name || "משתמש"}!
           </Typography>
         </Box>
+        {usedRecipes && usedRecipes.length > 0 && (
+          <Box sx={{ px: 2, pb: 2 }}>
+            <KitchenItemList
+              itemsCount={usedRecipes.length}
+              title="מתכונים קודמים"
+              renderRow={(index) => (
+                <RecipeCard
+                  recipe={usedRecipes[index]}
+                  servings={0}
+                  showPreperationTime={false}
+                  showIngredients={false}
+                />
+              )}
+              maxHeight="400px"
+            />
+          </Box>
+        )}
 
         {items.length === 0 ? (
           <Box

@@ -96,11 +96,28 @@ export const useKitchenItems = () => {
     return { expiringSoon, empty, inKitchen };
   }, [data]);
 
+  const consumeKitchenItem = async (items: KitchenItem[]) => {
+    try {
+      return items;
+    } catch (error) {
+      console.error(error);
+      throw new Error("An unexpected error occurred");
+    }
+  };
+
+  const consumeItemsMutation = useMutation({
+    mutationFn: (items: KitchenItem[]) => consumeKitchenItem(items),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+    },
+  });
+
   return {
     items: data || [],
     isLoading,
     createItemsMutation,
     updateItemsMutation,
     categorizedItems,
+    consumeItemsMutation,
   };
 };

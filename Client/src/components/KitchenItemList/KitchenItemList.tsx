@@ -19,6 +19,7 @@ interface KitchenItemListProps {
   renderRow: (itemIndex: number, isEditing?: boolean) => ReactNode;
   maxHeight?: string;
   showExperationDateOnNewItem?: boolean;
+  cardHeight?: number;
 }
 
 export const KitchenItemList: FC<KitchenItemListProps> = ({
@@ -31,6 +32,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
   renderRow,
   maxHeight = "400px",
   showExperationDateOnNewItem = true,
+  cardHeight = 70,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
   const [showEditMode, setShowEditMode] = useState(isEditing);
@@ -40,7 +42,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
   const rowVirtualizer = useVirtualizer({
     count: isCollapsed ? 0 : itemsCount + (onAddNewItem ? 1 : 0),
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 70,
+    estimateSize: () => cardHeight,
     overscan: 5,
   });
 
@@ -81,7 +83,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
         borderRadius: 2,
         overflow: "hidden",
         direction: "rtl",
-        minHeight: 120,
+        minHeight: itemsCount > 0 ? 120 : 20,
       }}
     >
       {title && (
@@ -131,13 +133,13 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
         </Box>
       )}
 
-      {!isCollapsed && (
+      {!isCollapsed && itemsCount > 0 && (
         <Box
           ref={parentRef}
           sx={{
             overflow: "auto",
             maxHeight: maxHeight,
-            minHeight: 100,
+            minHeight: itemsCount > 0 ? 100 : 0,
             "&::-webkit-scrollbar": {
               width: 8,
             },

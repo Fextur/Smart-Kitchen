@@ -1,7 +1,6 @@
 import { FC, useCallback, useMemo, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
-import Loader from "@/components/Loader";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRouter } from "@tanstack/react-router";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";

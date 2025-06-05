@@ -1,11 +1,13 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState, useEffect, useCallback } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { Plus, CookingPot, ScrollText } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
+import { ServingsDialog } from "@/components/ServingsDialog";
 
 const HomeFooter: FC = () => {
   const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);
+  const [isServingsOpen, setIsServingsOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const navigate = useNavigate();
 
@@ -19,6 +21,17 @@ const HomeFooter: FC = () => {
     window.addEventListener("resize", checkDevice);
     return () => window.removeEventListener("resize", checkDevice);
   }, []);
+
+  const handleServingsConfirm = useCallback(
+    (servings: number) => {
+      setIsServingsOpen(false);
+      (navigate as any)({
+        to: "/recipe",
+        state: { servings },
+      });
+    },
+    [navigate]
+  );
 
   return (
     <>
@@ -45,14 +58,10 @@ const HomeFooter: FC = () => {
             p: 1,
             borderRadius: 1.5,
           }}
+          onClick={() => navigate({ to: "/shopping-list" })}
         >
-          <CookingPot
-            size={32}
-            color="#E49A61"
-            onClick={() => navigate({ to: "/recipe" })}
-          />
+          <ScrollText size={32} color="#E49A61" />
         </IconButton>
-
         <Fab
           onClick={() => setIsAddProductsOpen(true)}
           sx={{
@@ -75,15 +84,20 @@ const HomeFooter: FC = () => {
             p: 1,
             borderRadius: 1.5,
           }}
-          onClick={() => navigate({ to: "/shopping-list" })}
+          onClick={() => setIsServingsOpen(true)}
         >
-          <ScrollText size={32} color="#E49A61" />
+          <CookingPot size={32} color="#E49A61" />
         </IconButton>
       </Box>
 
       <AddProductsDialog
         isOpen={isAddProductsOpen}
         onClose={() => setIsAddProductsOpen(false)}
+      />
+      <ServingsDialog
+        isOpen={isServingsOpen}
+        onClose={() => setIsServingsOpen(false)}
+        onConfirm={handleServingsConfirm}
       />
     </>
   );
