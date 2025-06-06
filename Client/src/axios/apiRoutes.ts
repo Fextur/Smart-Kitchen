@@ -3,4 +3,5 @@ export const API_ROUTES = {
   auth: `/auth`,
   recipe: "/recipe",
   products: `/products`,
+  shoppingList: `/shopping-list`,
 };

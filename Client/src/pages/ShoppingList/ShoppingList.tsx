@@ -1,7 +1,6 @@
 import { FC, useCallback, useMemo, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
-import Loader from "@/components/Loader";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRouter } from "@tanstack/react-router";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
@@ -17,14 +16,15 @@ const ShoppingList: FC = () => {
   const {
     items: shoppingListItems,
     isLoading: isShoppingListLoading,
-    updateItemsMutation: updateShoppingItemsMutation,
+    createItemsMutation: createShoppingItemsMutation,
     deleteItemsMutation: deleteShoppingItemsMutation,
     clearItemsMutation: clearShoppingListMutation,
+    transferIntoShoppingListMutation,
   } = useShoppingListItems();
   const router = useRouter();
   const [showFinishDialog, setShowFinishDialog] = useState(false);
 
-  const handleEditSuggestionItem = useCallback(
+  const handleEditItem = useCallback(
     (item: KitchenItem) => {
       updateItemsMutation.mutate([item]);
     },
@@ -38,13 +38,6 @@ const ShoppingList: FC = () => {
           !shoppingListItems.some((shoppingItem) => shoppingItem.id === item.id)
       ),
     [categorizedItems, shoppingListItems]
-  );
-
-  const handleEditShoppingItem = useCallback(
-    (item: ShoppingListItem) => {
-      updateShoppingItemsMutation.mutate([item]);
-    },
-    [updateShoppingItemsMutation]
   );
 
   if (isLoading || isShoppingListLoading) {
@@ -67,15 +60,16 @@ const ShoppingList: FC = () => {
   }
 
   const handleAddNewItem = (
-    newItem: Omit<ShoppingListItem, "id" | "latestUpdateDate">
+    newItem: Omit<ShoppingListItem, "id" | "latestUpdateDate" | "isChecked">
   ) => {
     const item: ShoppingListItem = {
       ...newItem,
       id: `temp-${Date.now()}`,
       latestUpdateDate: new Date().toISOString().split("T")[0],
+      isChecked: false,
     };
 
-    updateShoppingItemsMutation.mutate([item]);
+    createShoppingItemsMutation.mutate([item]);
   };
 
   return (
@@ -112,22 +106,20 @@ const ShoppingList: FC = () => {
               itemsCount={shoppingListItems.length}
               title="ברשימה"
               onAddNewItem={(item) => {
-                if ("isChecked" in item) {
-                  handleAddNewItem(item);
-                }
+                handleAddNewItem(item);
               }}
               showExperationDateOnNewItem={false}
               renderRow={(itemIndex) => (
                 <ShoppingListItemCard
                   item={shoppingListItems[itemIndex]}
-                  onEdit={handleEditShoppingItem}
+                  onEdit={handleEditItem}
                   onDelete={() =>
                     deleteShoppingItemsMutation.mutate(
                       shoppingListItems[itemIndex].id
                     )
                   }
                   onLongPress={() => {
-                    updateShoppingItemsMutation.mutate([
+                    updateItemsMutation.mutate([
                       {
                         ...shoppingListItems[itemIndex],
                         isChecked: !shoppingListItems[itemIndex].isChecked,
@@ -149,7 +141,9 @@ const ShoppingList: FC = () => {
               renderRow={(itemIndex) => (
                 <SuggestedShoppingListItemCard
                   item={emptyKitchenItemsMissingFromShoppingList![itemIndex]}
-                  onEdit={handleEditSuggestionItem}
+                  onEdit={(item) =>
+                    transferIntoShoppingListMutation.mutate(item)
+                  }
                 />
               )}
             />
