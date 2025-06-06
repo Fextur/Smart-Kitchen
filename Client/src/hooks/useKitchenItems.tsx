@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KitchenItem } from "@/types";
+import { KitchenItem, ShoppingListItem } from "@/types";
 import { useMemo } from "react";
 import { isExpiringSoon } from "@/utils/dateUtils";
 import api from "@/axios/axios";
@@ -70,9 +70,16 @@ export const useKitchenItems = () => {
   };
 
   const updateItemsMutation = useMutation({
-    mutationFn: (items: KitchenItem[]) => updateKitchenItem(items),
+    mutationFn: (items: (KitchenItem | ShoppingListItem)[]) =>
+      updateKitchenItem(items),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["kitchenItems"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["shoppingListItems"],
+      });
     },
   });
 

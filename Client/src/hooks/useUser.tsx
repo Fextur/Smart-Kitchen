@@ -72,7 +72,9 @@ export const useUser = () => {
     }) => googleLogin(credential),
     onSuccess: (user) => {
       if (user) {
-        setUser(user);
+        const { inventory, ...userWithoutInventory } = user;
+        setUser(userWithoutInventory);
+        setKitchen(inventory);
       }
     },
   });

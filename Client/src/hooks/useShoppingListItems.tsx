@@ -1,67 +1,51 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ShoppingListItem, SizeUnit } from "@/types";
+import { KitchenItem, ShoppingListItem } from "@/types";
+import { API_ROUTES } from "@/axios/apiRoutes";
+import api from "@/axios/axios";
+import { useKitchen } from "./useKitchen";
 
 export const useShoppingListItems = () => {
   const queryClient = useQueryClient();
+  const { kitchen } = useKitchen();
 
   const fetchShoppingListItems = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (kitchen?.id) {
+        const { data } = await api.get<ShoppingListItem[]>(
+          `${API_ROUTES.shoppingList}/${kitchen.id}`
+        );
 
-      const stubItems: ShoppingListItem[] = [
-        {
-          id: "1",
-          name: "חרטה",
-          size: 1,
-          measureUnit: SizeUnit.UNIT,
-          latestUpdateDate: "2024-05-20",
-          isChecked: false,
-        },
-        {
-          id: "2",
-          name: "במבה",
-          size: 1,
-          measureUnit: SizeUnit.UNIT,
-          latestUpdateDate: "2024-05-20",
-          isChecked: false,
-        },
-        {
-          id: "3",
-          name: "טונה",
-          size: 1,
-          measureUnit: SizeUnit.LITER,
-          latestUpdateDate: "2024-05-15",
-          isChecked: true,
-        },
-        {
-          id: "4",
-          name: "מלוואח",
-          size: 500,
-          measureUnit: SizeUnit.GRAM,
-          latestUpdateDate: "2024-05-20",
-          isChecked: false,
-        },
-      ];
-
-      return stubItems;
+        return data;
+      }
     } catch (error) {
       console.error(error);
       throw new Error("An unexpected error occurred");
     }
   };
 
-  const updateShoppingListItem = async (items: ShoppingListItem[]) => {
+  const createShoppingListItem = async (items: ShoppingListItem[]) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return items;
+      if (kitchen?.id) {
+        const itemsWithoutIds = items.map(({ id, ...rest }) => rest);
+
+        const { data } = await api.post<ShoppingListItem[]>(
+          `${API_ROUTES.shoppingList}/`,
+          {
+            products: itemsWithoutIds,
+            inventoryId: kitchen.id,
+          }
+        );
+
+        return data;
+      }
     } catch (error) {
       console.error(error);
       throw new Error("An unexpected error occurred");
     }
   };
 
-  const updateItemsMutation = useMutation({
-    mutationFn: (items: ShoppingListItem[]) => updateShoppingListItem(items),
+  const createItemsMutation = useMutation({
+    mutationFn: (items: ShoppingListItem[]) => createShoppingListItem(items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
     },
@@ -69,8 +53,7 @@ export const useShoppingListItems = () => {
 
   const deleteShoppingListItem = async (itemId: ShoppingListItem["id"]) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return itemId;
+      await api.delete(`${API_ROUTES.products}/${itemId}`);
     } catch (error) {
       console.error(error);
       throw new Error("An unexpected error occurred");
@@ -87,8 +70,9 @@ export const useShoppingListItems = () => {
 
   const clearShoppingListItems = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return true;
+      if (kitchen?.id) {
+        await api.delete(`${API_ROUTES.shoppingList}/${kitchen.id}`);
+      }
     } catch (error) {
       console.error(error);
       throw new Error("An unexpected error occurred");
@@ -102,6 +86,53 @@ export const useShoppingListItems = () => {
     },
   });
 
+  const transferIntoShoppingList = async (item: KitchenItem) => {
+    try {
+      if (kitchen?.id) {
+        await api.post(
+          `${API_ROUTES.shoppingList}/${kitchen.id}/transfer-to-shopping-list`,
+          {
+            product: item,
+          }
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw new Error("An unexpected error occurred");
+    }
+  };
+
+  const transferIntoShoppingListMutation = useMutation({
+    mutationFn: (item: KitchenItem) => transferIntoShoppingList(item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+
+      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+    },
+  });
+
+  const transferIntoInventory = async () => {
+    try {
+      if (kitchen?.id) {
+        await api.post(
+          `${API_ROUTES.shoppingList}/${kitchen.id}/transfer-to-inventory`
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw new Error("An unexpected error occurred");
+    }
+  };
+
+  const transferIntoInventoryMutation = useMutation({
+    mutationFn: () => transferIntoInventory(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+
+      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+    },
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: ["shoppingListItems"],
     queryFn: fetchShoppingListItems,
@@ -110,8 +141,9 @@ export const useShoppingListItems = () => {
   return {
     items: data || [],
     isLoading,
-    updateItemsMutation,
+    createItemsMutation,
     deleteItemsMutation,
     clearItemsMutation,
+    transferIntoShoppingListMutation,
   };
 };

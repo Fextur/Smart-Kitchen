@@ -29,10 +29,18 @@ export class Product {
   })
   latestUpdateDate: Date;
 
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    default: false,
+  })
+  isChecked: boolean;
+
   @ManyToOne(() => Inventory, (inventory) => inventory.products, {
     nullable: true,
+    onDelete: 'SET NULL',
   })
-  inventory: Inventory;
+  inventory: Inventory | null;
 
   @ManyToOne(() => ShoppingList, (shoppingList) => shoppingList.products)
   @Exclude()
