@@ -5,7 +5,7 @@ import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRouter } from "@tanstack/react-router";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
 import { SuggestedShoppingListItemCard } from "@/pages/ShoppingList/SuggestedShoppingListItemCard";
-import { KitchenItem, ShoppingListItem } from "@/types";
+import { ShoppingListItem } from "@/types";
 import { useShoppingListItems } from "@/hooks/useShoppingListItems";
 import { ShoppingListItemCard } from "@/pages/ShoppingList/ShoppingListItemCard";
 import { FinishShoppingListDialog } from "@/pages/ShoppingList/FinishShoppingListDialog";
@@ -25,8 +25,10 @@ const ShoppingList: FC = () => {
   const [showFinishDialog, setShowFinishDialog] = useState(false);
 
   const handleEditItem = useCallback(
-    (item: KitchenItem) => {
-      updateItemsMutation.mutate([item]);
+    (item: ShoppingListItem) => {
+      updateItemsMutation.mutate([
+        { ...item, wantedSize: item.size, size: undefined },
+      ] as any);
     },
     [updateItemsMutation]
   );
