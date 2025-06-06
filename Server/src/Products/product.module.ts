@@ -1,4 +1,3 @@
-// src/Products/product.module.ts (Fixed)
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductService } from './product.service';
@@ -10,7 +9,7 @@ import { ProductMatchingModule } from 'src/ProductMatching/productMatching.modul
 @Module({
   imports: [
     TypeOrmModule.forFeature([Product, Inventory]),
-    ProductMatchingModule, // Add this line
+    ProductMatchingModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

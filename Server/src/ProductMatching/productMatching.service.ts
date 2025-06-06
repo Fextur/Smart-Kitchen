@@ -32,12 +32,15 @@ export class ProductMatchingService {
   async findMatchingProducts(
     newProductNames: string[],
     inventoryId: string,
+    existingProductsList?: Product[], // Optional parameter for dynamic list
   ): Promise<ProductMatchingResult> {
-    // Get existing products for the inventory
-    const existingProducts = await this.productRepository.find({
-      where: { inventory: { id: inventoryId } },
-      select: ['id', 'name', 'measureUnit'],
-    });
+    // Use provided list or fetch from database
+    const existingProducts =
+      existingProductsList ||
+      (await this.productRepository.find({
+        where: { inventory: { id: inventoryId } },
+        select: ['id', 'name', 'measureUnit', 'size'],
+      }));
 
     if (existingProducts.length === 0) {
       // No existing products, return all as no matches
@@ -68,40 +71,40 @@ export class ProductMatchingService {
       .join(', ');
 
     const prompt = `
-      אתה מומחה בזיהוי מוצרי מזון והתאמתם.
-      
-      רשימת מוצרים קיימים במלאי:
-      ${existingProductsList}
-      
-      מוצרים חדשים לבדיקה:
-      ${newProductNames.join(', ')}
-      
-      עבור כל מוצר חדש, בדוק אם יש מוצר קיים שמתאים לו.
-      
-      כללי התאמה:
-      1. שמות דומים או זהים (לדוגמה: "בצל יבש" ו"בצל")
-      2. מוצרים מאותה קטגוריה (לדוגמה: "הוטפופ חמאה" ו"פופקורן")
-      3. שמות מקוצרים או מלאים של אותו מוצר
-      4. שמות עם מותגים שונים לאותו מוצר
-      
-      רמות ביטחון:
-      - high: התאמה ברורה (99% בטחון)
-      - medium: התאמה סבירה (70-90% בטחון)
-      - low: התאמה אפשרית (40-70% בטחון)
-      - none: אין התאמה (פחות מ-40% בטחון)
-      
-      החזר תוצאה בפורמט JSON הבא:
-      {
-        "matches": [
-          {
-            "productName": "שם המוצר החדש",
-            "matchedProductName": "שם המוצר הקיים שמתאים" או null,
-            "confidence": "high/medium/low/none",
-            "reason": "הסבר קצר למה יש או אין התאמה"
-          }
-        ]
-      }
-    `;
+    אתה מומחה בזיהוי מוצרי מזון והתאמתם.
+    
+    רשימת מוצרים קיימים במלאי:
+    ${existingProductsList}
+    
+    מוצרים חדשים לבדיקה:
+    ${newProductNames.join(', ')}
+    
+    עבור כל מוצר חדש, בדוק אם יש מוצר קיים שמתאים לו.
+    
+    כללי התאמה:
+    1. שמות דומים או זהים (לדוגמה: "בצל יבש" ו"בצל")
+    2. מוצרים מאותה קטגוריה (לדוגמה: "הוטפופ חמאה" ו"פופקורן")
+    3. שמות מקוצרים או מלאים של אותו מוצר
+    4. שמות עם מותגים שונים לאותו מוצר
+    
+    רמות ביטחון:
+    - high: התאמה ברורה (99% בטחון)
+    - medium: התאמה סבירה (70-90% בטחון)
+    - low: התאמה אפשרית (40-70% בטחון)
+    - none: אין התאמה (פחות מ-40% בטחון)
+    
+    החזר תוצאה בפורמט JSON הבא:
+    {
+      "matches": [
+        {
+          "productName": "שם המוצר החדש",
+          "matchedProductName": "שם המוצר הקיים שמתאים" או null,
+          "confidence": "high/medium/low/none",
+          "reason": "הסבר קצר למה יש או אין התאמה"
+        }
+      ]
+    }
+  `;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -134,14 +137,16 @@ export class ProductMatchingService {
         let matchedProduct: Product | null = null;
 
         if (match.matchedProductName && match.confidence !== 'none') {
-          // Find the actual product entity
+          // Find the actual product entity - be more precise in matching
           matchedProduct =
-            existingProducts.find(
-              (p) =>
-                p.name === match.matchedProductName ||
+            existingProducts.find((p) => {
+              const exactMatch = p.name === match.matchedProductName;
+              const containsMatch =
                 match.matchedProductName.includes(p.name) ||
-                p.name.includes(match.matchedProductName),
-            ) || null;
+                p.name.includes(match.matchedProductName);
+
+              return exactMatch || containsMatch;
+            }) || null;
         }
 
         return {

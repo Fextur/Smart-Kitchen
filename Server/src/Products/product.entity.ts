@@ -16,10 +16,30 @@ export class Product {
   @Column({ type: 'text', nullable: false })
   name: string;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value) || 0,
+    },
+  })
   size: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value) || 0,
+    },
+  })
   wantedSize: number;
 
   @Column({ type: 'enum', enum: MeasureUnit, nullable: false })

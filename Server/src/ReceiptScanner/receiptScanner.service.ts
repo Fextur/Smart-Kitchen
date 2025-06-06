@@ -64,8 +64,6 @@ export class ReceiptScannerService {
 
       const fullText = detections[0].description ?? '';
 
-      console.log('Detected text from receipt:', fullText);
-
       return this.parseReceiptWithAI(fullText, options.inventoryId);
     } catch (error) {
       console.error('Error processing receipt:', error);

@@ -33,6 +33,55 @@ export class ProductService {
     private productMatchingService: ProductMatchingService,
   ) {}
 
+  async mergeProductQuantities(
+    existingProduct: Product,
+    newProductSize: number,
+    newExpirationDate?: Date,
+  ): Promise<Product> {
+    try {
+      // Ensure both values are valid numbers
+      const currentSize = Number(existingProduct.size) || 0;
+      const additionalSize = Number(newProductSize) || 0;
+
+      // Validate that we have valid numbers
+      if (isNaN(currentSize)) {
+        console.warn(
+          `Invalid current size for product ${existingProduct.name}: ${existingProduct.size}`,
+        );
+      }
+
+      if (isNaN(additionalSize)) {
+        console.warn(`Invalid additional size: ${newProductSize}`);
+        throw new Error(`Invalid size value: ${newProductSize}`);
+      }
+
+      // Calculate new size
+      const newSize = currentSize + additionalSize;
+
+      // Update the product
+      existingProduct.size = newSize;
+
+      // Override expiration date if new one is provided
+      if (newExpirationDate) {
+        existingProduct.expirationDate = newExpirationDate;
+      }
+
+      // Always override the latest update date
+      existingProduct.latestUpdateDate = new Date();
+
+      // Save and return
+      const savedProduct = await this.productRepository.save(existingProduct);
+
+      return savedProduct;
+    } catch (error) {
+      console.error(`Error merging product quantities:`, error);
+      throw new InternalServerErrorException(
+        `Failed to merge product quantities: ${error.message}`,
+      );
+    }
+  }
+
+  // Also let's check the ProductService create method for potential issues
   async create(
     createProductsDto: CreateProductsDto,
   ): Promise<CreateProductsResult> {
@@ -47,16 +96,6 @@ export class ProductService {
       );
     }
 
-    // Get product names for matching
-    const productNames = products.map((p) => p.name);
-
-    // Find matching products using the matching service
-    const matchingResult =
-      await this.productMatchingService.findMatchingProducts(
-        productNames,
-        inventoryId,
-      );
-
     const createdProducts: Product[] = [];
     const updatedProducts: Product[] = [];
     const matchingResults: Array<{
@@ -66,9 +105,23 @@ export class ProductService {
       confidence?: string;
     }> = [];
 
+    // Keep track of all products (existing + newly created) for subsequent matches
+    let allProducts = await this.productRepository.find({
+      where: { inventory: { id: inventoryId } },
+      select: ['id', 'name', 'measureUnit', 'size'],
+    });
+
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
-      const match = matchingResult.matches[i];
+
+      const matchingResult =
+        await this.productMatchingService.findMatchingProducts(
+          [product.name], // Process one at a time
+          inventoryId,
+          allProducts, // Pass current product list
+        );
+
+      const match = matchingResult.matches[0];
 
       // Only merge if we have high or medium confidence match
       if (
@@ -90,8 +143,13 @@ export class ProductService {
           matchedWith: match.matchedProduct.name,
           confidence: match.confidence,
         });
+
+        // Update the product in our tracking list
+        const index = allProducts.findIndex((p) => p.id === updatedProduct.id);
+        if (index !== -1) {
+          allProducts[index] = updatedProduct;
+        }
       } else {
-        // Create new product - no good match found
         const newProduct = this.productRepository.create({
           ...product,
           latestUpdateDate: new Date(),
@@ -105,6 +163,9 @@ export class ProductService {
           productName: product.name,
           action: 'created',
         });
+
+        // Add the new product to our tracking list for subsequent matches
+        allProducts.push(savedProduct);
       }
     }
 

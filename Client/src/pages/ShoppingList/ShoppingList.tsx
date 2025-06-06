@@ -164,7 +164,6 @@ const ShoppingList: FC = () => {
           setShowFinishDialog(false);
         }}
         onFinish={() => {
-          console.log("Shopping list finished");
           clearShoppingListMutation.mutate();
         }}
       />
