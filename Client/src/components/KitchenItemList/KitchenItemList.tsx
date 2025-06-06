@@ -133,7 +133,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
         </Box>
       )}
 
-      {!isCollapsed && itemsCount > 0 && (
+      {!isCollapsed && (itemsCount > 0 || onAddNewItem !== undefined) && (
         <Box
           ref={parentRef}
           sx={{

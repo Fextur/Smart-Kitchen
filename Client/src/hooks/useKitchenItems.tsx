@@ -84,14 +84,17 @@ export const useKitchenItems = () => {
   const categorizedItems = useMemo(() => {
     if (!data) return null;
     const expiringSoon = data.filter(
-      (item) => item.expirationDate && isExpiringSoon(item.expirationDate)
+      (item) =>
+        item.expirationDate &&
+        isExpiringSoon(item.expirationDate) &&
+        item.size > 0
     );
 
     const empty = data
-      .filter((item) => item.size === 0)
+      .filter((item) => item.size <= 0)
       .map((item) => ({ ...item, expirationDate: undefined } as KitchenItem));
 
-    const inKitchen = data.filter((item) => item.size !== 0);
+    const inKitchen = data.filter((item) => item.size > 0);
 
     return { expiringSoon, empty, inKitchen };
   }, [data]);
