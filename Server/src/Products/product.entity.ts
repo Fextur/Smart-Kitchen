@@ -1,19 +1,26 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { MeasureUnit } from 'src/types';
 import { Inventory } from 'src/Inventory/inventory.entity';
-import { ShoppingList } from 'src/ShoppingList/shoppingList.entity';
-import { Exclude } from 'class-transformer';
 
 @Entity('products')
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ManyToOne(() => Inventory, (inventory) => inventory.products, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  inventory: Inventory | null;
+
   @Column({ type: 'text', nullable: false })
   name: string;
 
-  @Column({ type: 'float', nullable: false })
+  @Column({ type: 'float', nullable: true })
   size: number;
+
+  @Column({ type: 'float', nullable: true })
+  wantedSize: number;
 
   @Column({ type: 'enum', enum: MeasureUnit, nullable: false })
   measureUnit: MeasureUnit;
@@ -36,13 +43,17 @@ export class Product {
   })
   isChecked: boolean;
 
-  @ManyToOne(() => Inventory, (inventory) => inventory.products, {
+  @Column({
+    type: 'boolean',
     nullable: true,
-    onDelete: 'SET NULL',
+    default: false,
   })
-  inventory: Inventory | null;
+  isInShoppingList: boolean;
 
-  @ManyToOne(() => ShoppingList, (shoppingList) => shoppingList.products)
-  @Exclude()
-  shoppingList: ShoppingList;
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    default: false,
+  })
+  isInInventory: boolean;
 }

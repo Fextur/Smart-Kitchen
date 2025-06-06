@@ -30,7 +30,7 @@ export const MobileWrapper: FC<MobileWrapperProps> = ({ children }) => {
           flex: 1,
           maxWidth: 500,
           px: 4,
-          display: { xs: "none", lg: "block" },
+          display: "block",
         }}
       >
         <Typography
@@ -84,7 +84,7 @@ export const MobileWrapper: FC<MobileWrapperProps> = ({ children }) => {
           flex: 1,
           maxWidth: 500,
           px: 4,
-          display: { xs: "none", xl: "block" },
+          display: "block",
           textAlign: "center",
         }}
       >
