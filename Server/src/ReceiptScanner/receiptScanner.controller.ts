@@ -1,3 +1,4 @@
+// src/ReceiptScanner/receiptScanner.controller.ts (Complete Updated File)
 import {
   Controller,
   Post,
@@ -6,6 +7,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReceiptScannerService, ParsedProduct } from './receiptScanner.service';
@@ -26,9 +28,11 @@ export class ReceiptScannerController {
       }),
     )
     file: Express.Multer.File,
+    @Query('inventoryId') inventoryId?: string,
   ): Promise<ParsedProduct[]> {
     return this.receiptScannerService.scanReceipt(file, {
       bypassScanning: true,
+      inventoryId,
     });
   }
 }

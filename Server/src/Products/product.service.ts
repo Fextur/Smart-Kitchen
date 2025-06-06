@@ -1,3 +1,4 @@
+// src/Products/product.service.ts (Updated)
 import {
   Injectable,
   InternalServerErrorException,
@@ -9,6 +10,18 @@ import { Product } from './product.entity';
 import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { User } from 'src/Users/user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
+import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
+
+export interface CreateProductsResult {
+  createdProducts: Product[];
+  updatedProducts: Product[];
+  matchingResults: Array<{
+    productName: string;
+    action: 'created' | 'merged';
+    matchedWith?: string;
+    confidence?: string;
+  }>;
+}
 
 @Injectable()
 export class ProductService {
@@ -17,10 +30,14 @@ export class ProductService {
     private productRepository: Repository<Product>,
 
     @InjectRepository(Inventory)
-    private inventoryRepository: Repository<User>,
+    private inventoryRepository: Repository<Inventory>,
+
+    private productMatchingService: ProductMatchingService,
   ) {}
 
-  async create(createProductsDto: CreateProductsDto): Promise<Product[]> {
+  async create(
+    createProductsDto: CreateProductsDto,
+  ): Promise<CreateProductsResult> {
     const { inventoryId, products } = createProductsDto;
 
     const inventory = await this.inventoryRepository.findOne({
@@ -32,15 +49,71 @@ export class ProductService {
       );
     }
 
-    const createdProducts = products.map((product) =>
-      this.productRepository.create({
-        ...product,
-        latestUpdateDate: new Date(),
-        inventory,
-      }),
-    );
+    // Get product names for matching
+    const productNames = products.map((p) => p.name);
 
-    return this.productRepository.save(createdProducts);
+    // Find matching products using the matching service
+    const matchingResult =
+      await this.productMatchingService.findMatchingProducts(
+        productNames,
+        inventoryId,
+      );
+
+    const createdProducts: Product[] = [];
+    const updatedProducts: Product[] = [];
+    const matchingResults: Array<{
+      productName: string;
+      action: 'created' | 'merged';
+      matchedWith?: string;
+      confidence?: string;
+    }> = [];
+
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+      const match = matchingResult.matches[i];
+
+      // Only merge if we have high or medium confidence match
+      if (
+        match.matchedProduct &&
+        (match.confidence === 'high' || match.confidence === 'medium')
+      ) {
+        // Merge with existing product - add quantities, override expiration and update date
+        const updatedProduct =
+          await this.productMatchingService.mergeProductQuantities(
+            match.matchedProduct,
+            product.size,
+            product.expirationDate,
+          );
+
+        updatedProducts.push(updatedProduct);
+        matchingResults.push({
+          productName: product.name,
+          action: 'merged',
+          matchedWith: match.matchedProduct.name,
+          confidence: match.confidence,
+        });
+      } else {
+        // Create new product - no good match found
+        const newProduct = this.productRepository.create({
+          ...product,
+          latestUpdateDate: new Date(),
+          inventory,
+        });
+
+        const savedProduct = await this.productRepository.save(newProduct);
+        createdProducts.push(savedProduct);
+        matchingResults.push({
+          productName: product.name,
+          action: 'created',
+        });
+      }
+    }
+
+    return {
+      createdProducts,
+      updatedProducts,
+      matchingResults,
+    };
   }
 
   async findByInventoryId(inventoryId: string): Promise<Product[]> {
@@ -55,8 +128,11 @@ export class ProductService {
     const updatedProducts: Product[] = [];
 
     for (const productDto of products) {
-      const updatedProduct = await this.productRepository.save(productDto);
-      updatedProducts.push({ ...updatedProduct, latestUpdateDate: new Date() });
+      const updatedProduct = await this.productRepository.save({
+        ...productDto,
+        latestUpdateDate: new Date(),
+      });
+      updatedProducts.push(updatedProduct);
     }
 
     return updatedProducts;

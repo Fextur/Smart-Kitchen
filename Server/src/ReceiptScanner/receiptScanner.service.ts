@@ -1,6 +1,10 @@
+// src/ReceiptScanner/receiptScanner.service.ts (Complete Updated File)
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { VISION_CLIENT } from '../config/vision.config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Product } from 'src/Products/product.entity';
 import OpenAI from 'openai';
 import { MeasureUnit } from 'src/types';
 
@@ -14,6 +18,7 @@ export interface ParsedProduct {
 export interface ReceiptScanOptions {
   bypassScanning?: boolean;
   mockReceiptText?: string;
+  inventoryId?: string; // Add inventory ID to get existing products
 }
 
 @Injectable()
@@ -23,6 +28,9 @@ export class ReceiptScannerService {
   constructor(
     @Inject(VISION_CLIENT)
     private visionClient: ImageAnnotatorClient,
+
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>,
   ) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -36,7 +44,7 @@ export class ReceiptScannerService {
     if (options.bypassScanning) {
       const mockText =
         options.mockReceiptText || this.getDefaultMockReceiptText();
-      return this.parseReceiptWithAI(mockText);
+      return this.parseReceiptWithAI(mockText, options.inventoryId);
     }
 
     try {
@@ -58,12 +66,164 @@ export class ReceiptScannerService {
 
       console.log('Detected text from receipt:', fullText);
 
-      return this.parseReceiptWithAI(fullText);
+      return this.parseReceiptWithAI(fullText, options.inventoryId);
     } catch (error) {
       console.error('Error processing receipt:', error);
       throw new BadRequestException(
         `Failed to process receipt: ${error.message}`,
       );
+    }
+  }
+
+  private async getExistingProducts(inventoryId?: string): Promise<string[]> {
+    if (!inventoryId) return [];
+
+    try {
+      const existingProducts = await this.productRepository.find({
+        where: { inventory: { id: inventoryId } },
+        select: ['name'],
+      });
+
+      return existingProducts.map((p) => p.name);
+    } catch (error) {
+      console.error('Error fetching existing products:', error);
+      return [];
+    }
+  }
+
+  private async parseReceiptWithAI(
+    receiptText: string,
+    inventoryId?: string,
+  ): Promise<ParsedProduct[]> {
+    try {
+      // Get existing products for better matching
+      const existingProducts = await this.getExistingProducts(inventoryId);
+      const existingProductsText =
+        existingProducts.length > 0
+          ? `\n\nמוצרים קיימים במלאי: ${existingProducts.join(', ')}`
+          : '';
+
+      const prompt = `
+      EXPERT HEBREW RECEIPT PARSING WITH ADVANCED MULTI-LINE PRODUCT DETECTION
+
+      CRITICAL MULTI-LINE PRODUCT IDENTIFICATION STRATEGY:
+      1. IDENTIFY CONNECTED PRODUCT ENTRIES:
+      - Look for CONSECUTIVE lines describing the SAME product
+      - Combine product information across multiple lines
+      - CRITICAL RULES FOR MULTI-LINE DETECTION:
+        * Same product name or very similar names
+        * Matching product characteristics
+        * Contextually related lines
+
+      2. SPECIFIC MULTI-LINE PARSING EXAMPLES:
+      EXAMPLE 1:
+      "38000232183 חטיף פרינגלס א 11.90"
+      "חטיף פרינגלס אוריגינל 149 ג"
+      → MERGE INTO ONE PRODUCT: 
+        {
+          "name": "חטיף פרינגלס אוריגינל",
+          "size": 149,
+          "measureUnit": "גרם",
+          "expirationDate": null
+        }
+
+      EXAMPLE 2:
+      "5701932026971 הוטפופ חמאה 00 15.90"
+      "הוטפופ 500-600 גר ב 14.90"
+      → MERGE INTO ONE PRODUCT:
+        {
+          "name": "הוטפופ חמאה",
+          "size": 500,
+          "measureUnit": "גרם",
+          "expirationDate": null
+        }
+
+      3. PRODUCT LINE CONSOLIDATION GUIDELINES:
+      - Prioritize COMPLETE product information
+      - Use context to fill in missing details
+      - Prefer more descriptive product names
+      - Combine size information from adjacent lines
+
+      4. EXISTING PRODUCTS MATCHING:
+      - Try to match scanned products with existing inventory items
+      - Use similar or exact names when possible
+      - Prefer existing product names for consistency
+      ${existingProductsText}
+
+      SCANNING CONTEXT:
+      - Receipt is from OCR scan
+      - Expect potential text recognition errors
+      - Focus on intelligent information reconstruction
+
+      OUTPUT FORMAT:
+      {
+        "products": [
+          {
+            "name": "מלא שם המוצר בעברית",
+            "size": 900,
+            "measureUnit": "גרם/ליטר/קילוגרם",
+            "expirationDate": null
+          }
+        ]
+      }
+
+      RECEIPT TEXT:
+      ${receiptText}
+      `;
+
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `You are an ADVANCED HEBREW RECEIPT PARSING EXPERT.
+            CRITICAL MISSION: Reconstruct COMPLETE product information
+            from fragmented, multi-line receipt entries.
+            Use MAXIMUM INTELLIGENCE to connect related product lines.
+            Try to match products with existing inventory when possible.
+            Generate a COMPREHENSIVE, ACCURATE JSON object.`,
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: 500,
+        temperature: 0.2,
+      });
+
+      const responseContent = response.choices[0].message?.content?.trim();
+
+      if (!responseContent) {
+        throw new Error('No response from OpenAI');
+      }
+
+      const parsedResponse = JSON.parse(responseContent);
+
+      if (!parsedResponse.products || !Array.isArray(parsedResponse.products)) {
+        console.error('Invalid response structure:', parsedResponse);
+        throw new Error('Invalid response structure from AI');
+      }
+
+      const processedProducts = parsedResponse.products.map((product) => ({
+        name: product.name?.trim() || 'Unknown Product',
+        size: Number(product.size) || 0,
+        measureUnit: this.validateMeasureUnit(product.measureUnit),
+        expirationDate: null, // Will be handled by the matching service later
+      }));
+
+      return processedProducts;
+    } catch (error) {
+      console.error('Error parsing receipt with AI:', error);
+
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+
+      return [];
     }
   }
 
@@ -103,127 +263,6 @@ export class ReceiptScannerService {
       0.00
       יתרת חשבון (פתיחה)
     `;
-  }
-
-  private async parseReceiptWithAI(
-    receiptText: string,
-  ): Promise<ParsedProduct[]> {
-    try {
-      const prompt = `
-      EXPERT HEBREW RECEIPT PARSING WITH ADVANCED MULTI-LINE PRODUCT DETECTION
-
-      CRITICAL MULTI-LINE PRODUCT IDENTIFICATION STRATEGY:
-      1. IDENTIFY CONNECTED PRODUCT ENTRIES:
-      - Look for CONSECUTIVE lines describing the SAME product
-      - Combine product information across multiple lines
-      - CRITICAL RULES FOR MULTI-LINE DETECTION:
-        * Same product name or very similar names
-        * Matching product characteristics
-        * Contextually related lines
-
-      2. SPECIFIC MULTI-LINE PARSING EXAMPLES:
-      EXAMPLE 1:
-      "38000232183 חטיף פרינגלס א 11.90"
-      "חטיף פרינגלס אוריגינל 149 ג"
-      → MERGE INTO ONE PRODUCT: 
-        {
-          "name": "חטיף פרינגלס אוריגינל",
-          "size": 149,
-          "measureUnit": "גרם",
-          "expirationDate" null
-        }
-
-      EXAMPLE 2:
-      "5701932026971 הוטפופ חמאה 00 15.90"
-      "הוטפופ 500-600 גר ב 14.90"
-      → MERGE INTO ONE PRODUCT:
-        {
-          "name": "הוטפופ חמאה",
-          "size": 500,
-          "measureUnit": "גרם",
-          "expirationDate" null
-        }
-
-      3. PRODUCT LINE CONSOLIDATION GUIDELINES:
-      - Prioritize COMPLETE product information
-      - Use context to fill in missing details
-      - Prefer more descriptive product names
-      - Combine size information from adjacent lines
-
-      SCANNING CONTEXT:
-      - Receipt is from OCR scan
-      - Expect potential text recognition errors
-      - Focus on intelligent information reconstruction
-
-      OUTPUT FORMAT:
-      {
-        "products": [
-          {
-            "name": "מלא שם המוצר בעברית",
-            "size": 900,
-            "measureUnit": "גרם/ליטר/קילוגרם",
-            "expirationDate" null
-
-          }
-        ]
-      }
-
-      RECEIPT TEXT:
-      ${receiptText}
-      `;
-
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: `You are an ADVANCED HEBREW RECEIPT PARSING EXPERT.
-            CRITICAL MISSION: Reconstruct COMPLETE product information
-            from fragmented, multi-line receipt entries.
-            Use MAXIMUM INTELLIGENCE to connect related product lines.
-            Generate a COMPREHENSIVE, ACCURATE JSON object.`,
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        max_tokens: 500,
-        temperature: 0.2,
-      });
-
-      const responseContent = response.choices[0].message?.content?.trim();
-
-      if (!responseContent) {
-        throw new Error('No response from OpenAI');
-      }
-
-      const parsedResponse = JSON.parse(responseContent);
-
-      if (!parsedResponse.products || !Array.isArray(parsedResponse.products)) {
-        console.error('Invalid response structure:', parsedResponse);
-        throw new Error('Invalid response structure from AI');
-      }
-
-      const processedProducts = parsedResponse.products.map((product) => ({
-        name: product.name?.trim() || 'Unknown Product',
-        size: Number(product.size) || 0,
-        measureUnit: this.validateMeasureUnit(product.measureUnit),
-      }));
-
-      return processedProducts;
-    } catch (error) {
-      console.error('Error parsing receipt with AI:', error);
-
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-      }
-
-      return [];
-    }
   }
 
   private validateMeasureUnit(unit: string): MeasureUnit {
