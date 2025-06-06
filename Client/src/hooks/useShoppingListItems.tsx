@@ -12,7 +12,7 @@ export const useShoppingListItems = () => {
     try {
       if (kitchen?.id) {
         const { data } = await api.get<ShoppingListItem[]>(
-          `${API_ROUTES.shoppingList}/${kitchen.id}`
+          `${API_ROUTES.products}/by-shopping-list/${kitchen.id}`
         );
 
         return data;
@@ -104,28 +104,6 @@ export const useShoppingListItems = () => {
 
   const transferIntoShoppingListMutation = useMutation({
     mutationFn: (item: KitchenItem) => transferIntoShoppingList(item),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
-
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
-    },
-  });
-
-  const transferIntoInventory = async () => {
-    try {
-      if (kitchen?.id) {
-        await api.post(
-          `${API_ROUTES.shoppingList}/${kitchen.id}/transfer-to-inventory`
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      throw new Error("An unexpected error occurred");
-    }
-  };
-
-  const transferIntoInventoryMutation = useMutation({
-    mutationFn: () => transferIntoInventory(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
 

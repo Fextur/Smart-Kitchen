@@ -1,10 +1,10 @@
-// import { IsArray, IsNotEmpty, IsUUID } from 'class-validator';
-// import { ProductDto } from 'src/Products/product.dto';
+import { IsArray, IsNotEmpty } from 'class-validator';
+import { ProductDto } from 'src/Products/product.dto';
 
-// export class CreateShoppingListDto {
-//   @IsNotEmpty()
-//   inventoryId: string;
+export class CreateShoppingListDto {
+  @IsNotEmpty()
+  inventoryId: string;
 
-//   @IsArray()
-//   products: ProductDto[];
-// }
+  @IsArray()
+  products: ProductDto[];
+}

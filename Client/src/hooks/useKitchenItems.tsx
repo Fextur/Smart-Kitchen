@@ -53,9 +53,11 @@ export const useKitchenItems = () => {
     },
   });
 
-  const updateKitchenItem = async (items: KitchenItem[]) => {
+  const updateKitchenItem = async (
+    items: (KitchenItem | ShoppingListItem)[]
+  ) => {
     try {
-      const { data } = await api.post<KitchenItem[]>(
+      const { data } = await api.post<(KitchenItem | ShoppingListItem)[]>(
         `${API_ROUTES.products}/updateBulk`,
         {
           products: items,

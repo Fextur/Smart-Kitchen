@@ -1,4 +1,3 @@
-// src/Products/product.service.ts (Updated)
 import {
   Injectable,
   InternalServerErrorException,
@@ -8,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './product.entity';
 import { CreateProductsDto, UpdateProductsDto } from './product.dto';
-import { User } from 'src/Users/user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
 
@@ -98,6 +96,7 @@ export class ProductService {
           ...product,
           latestUpdateDate: new Date(),
           inventory,
+          isInInventory: true,
         });
 
         const savedProduct = await this.productRepository.save(newProduct);
@@ -118,8 +117,29 @@ export class ProductService {
 
   async findByInventoryId(inventoryId: string): Promise<Product[]> {
     return this.productRepository.find({
-      where: { inventory: { id: inventoryId } },
+      select: [
+        'id',
+        'name',
+        'size',
+        'measureUnit',
+        'expirationDate',
+        'latestUpdateDate',
+      ],
+      where: { inventory: { id: inventoryId }, isInInventory: true },
     });
+  }
+
+  async findByShoppingList(inventoryId: string): Promise<Partial<Product>[]> {
+    const products = await this.productRepository.find({
+      select: ['id', 'name', 'measureUnit', 'isChecked', 'wantedSize'],
+      where: { inventory: { id: inventoryId }, isInShoppingList: true },
+    });
+
+    return products.map(({ wantedSize, ...product }) => ({
+      ...product,
+      size: wantedSize,
+      wantedSize: undefined,
+    }));
   }
 
   async updateBulk(updateProductsDto: UpdateProductsDto): Promise<Product[]> {
