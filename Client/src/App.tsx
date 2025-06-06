@@ -6,16 +6,21 @@ import { theme } from "@/theme";
 import { ThemeProvider } from "@mui/material";
 import { RouterProvider } from "@tanstack/react-router";
 import { FC } from "react";
+import { MobileWrapper } from "@/components/MobileWrapper";
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
+
 
 const App: FC = () => {
   return (
     <QueryProvider>
       <ThemeProvider theme={theme}>
-        <RouterProvider router={router} />
-        <GlobalLoader />
+        <MobileWrapper>
+          <RouterProvider router={router} />
+          <PWAUpdatePrompt />
+          <GlobalLoader />
+        </MobileWrapper>
       </ThemeProvider>
     </QueryProvider>
   );
 };
-
 export default App;

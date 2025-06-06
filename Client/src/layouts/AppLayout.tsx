@@ -1,11 +1,18 @@
 import { FC, useState } from "react";
 import { Outlet } from "@tanstack/react-router";
-import { AppBar, Toolbar, Box, Typography } from "@mui/material";
+import { AppBar, Toolbar, Box, Typography, IconButton } from "@mui/material";
+import { Menu } from "lucide-react";
+import { useUser } from "@/hooks/useUser";
+import { UserSettingsDrawer } from "@/layouts/UserSettingsDrawer";
 
 const AppLayout: FC = () => {
   const [refreshKey, _setRefreshKey] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { user } = useUser();
 
-  const headerHeight = 10;
+  const toggleDrawer = (open: boolean) => () => {
+    setDrawerOpen(open);
+  };
 
   return (
     <Box
@@ -13,7 +20,7 @@ const AppLayout: FC = () => {
         display: "flex",
         flexDirection: "column",
         height: "100vh",
-        width: "100vw",
+        width: "100%",
         backgroundColor: "#f8f9fa",
         position: "relative",
         overflow: "hidden",
@@ -40,7 +47,7 @@ const AppLayout: FC = () => {
       <Box
         sx={{
           p: 2,
-          height: `${headerHeight}vh`,
+          height: `10vh`,
           position: "relative",
           zIndex: 1,
         }}
@@ -55,16 +62,37 @@ const AppLayout: FC = () => {
             color: "text.primary",
             boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
             borderRadius: "32px",
+            padding: "0 !important",
           }}
         >
           <Toolbar
             sx={{
               display: "flex",
-              justifyContent: "center",
+              justifyContent: user ? "space-between" : "center",
               alignItems: "center",
+              width: "100%",
+              position: "relative",
+              padding: "0 !important",
             }}
           >
+            {user && (
+              <div style={{ padding: "0 15px 0 0" }}>
+                <IconButton
+                  color="inherit"
+                  aria-label="menu"
+                  onClick={toggleDrawer(true)}
+                  sx={{
+                    color: "primary.main",
+                  }}
+                >
+                  <Menu size={28} />
+                </IconButton>
+              </div>
+            )}
+
             <Typography variant="h3">מטבחכם</Typography>
+
+            {user && <Box sx={{ width: "59px" }} />}
           </Toolbar>
         </AppBar>
       </Box>
@@ -73,13 +101,15 @@ const AppLayout: FC = () => {
         sx={{
           flex: 1,
           backgroundColor: "transparent",
-          height: `calc(100vh - ${headerHeight}vh)`,
+          height: `90vh`,
           position: "relative",
           zIndex: 1,
         }}
       >
         <Outlet key={refreshKey} />
       </Box>
+
+      <UserSettingsDrawer open={drawerOpen} onClose={toggleDrawer(false)} />
     </Box>
   );
 };

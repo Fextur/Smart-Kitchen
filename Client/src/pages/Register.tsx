@@ -59,7 +59,7 @@ const Register = () => {
         הרשמה
       </Typography>
       <form
-        style={{ width: "80vw" }}
+        style={{ width: "80%" }}
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit();
