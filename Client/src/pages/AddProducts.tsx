@@ -6,6 +6,7 @@ import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
+import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
 
 interface AddProductsLocationState {
   items?: KitchenItem[];
@@ -16,6 +17,7 @@ const AddProducts: FC = () => {
   const navigate = useNavigate();
   const routerState = useRouterState();
   const { createItemsMutation } = useKitchenItems();
+  const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);
 
   const locationState = routerState.location.state as
     | AddProductsLocationState
@@ -134,8 +136,13 @@ const AddProducts: FC = () => {
       <ConfirmFooter
         onAccept={handleAccept}
         onCancel={handleCancel}
+        onBack={() => setIsAddProductsOpen(true)}
         isLoading={false}
         isDisabled={items.length === 0}
+      />
+      <AddProductsDialog
+        isOpen={isAddProductsOpen}
+        onClose={() => setIsAddProductsOpen(false)}
       />
     </Box>
   );

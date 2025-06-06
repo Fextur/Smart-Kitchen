@@ -1,6 +1,6 @@
 export const API_ROUTES = {
   users: `/users`,
   auth: `/auth`,
-  recipe: "/recipe",
+  recipes: "/recipes",
   products: `/products`,
 };
