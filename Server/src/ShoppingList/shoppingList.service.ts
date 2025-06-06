@@ -19,9 +19,7 @@ export class ShoppingListService {
     private inventoryRepository: Repository<Inventory>,
   ) {}
 
-  async getShoppingListWithProducts(
-    inventoryId: string,
-  ): Promise<ShoppingList> {
+  async getShoppingListProducts(inventoryId: string): Promise<Product[]> {
     let shoppingList = await this.shoppingListRepository.findOne({
       where: { inventory: { id: inventoryId } },
       relations: ['products'],
@@ -36,7 +34,7 @@ export class ShoppingListService {
       await this.shoppingListRepository.save(shoppingList);
     }
 
-    return shoppingList;
+    return shoppingList.products;
   }
 
   async addProductsToShoppingList(
@@ -110,6 +108,36 @@ export class ShoppingListService {
 
     const shoppingList = inventory.shoppingList;
     shoppingList.products = [];
+    await this.shoppingListRepository.save(shoppingList);
+  }
+
+  async transferProductsToShoppingList(
+    inventoryId: string,
+    product: Product,
+  ): Promise<void> {
+    const inventory = await this.inventoryRepository.findOne({
+      where: { id: inventoryId },
+      relations: ['shoppingList', 'shoppingList.products'],
+    });
+
+    if (!inventory || !inventory.shoppingList) {
+      throw new NotFoundException(
+        `No shopping list found for inventory ID ${inventoryId}`,
+      );
+    }
+
+    const shoppingList = inventory.shoppingList;
+
+    if (!shoppingList.products) {
+      shoppingList.products = [];
+    }
+
+    product.inventory = null;
+
+    shoppingList.products.push(product);
+
+    await this.productRepository.save(product);
+
     await this.shoppingListRepository.save(shoppingList);
   }
 }

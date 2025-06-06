@@ -2,6 +2,7 @@ import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
 import { ShoppingListService } from './shoppingList.service';
 import { CreateShoppingListDto } from './shoppingList.dto';
 import { instanceToPlain } from 'class-transformer';
+import { Product } from 'src/Products/product.entity';
 
 @Controller('shopping-list')
 export class ShoppingListController {
@@ -9,7 +10,7 @@ export class ShoppingListController {
 
   @Get(':inventoryId')
   async getShoppingListWithProducts(@Param('inventoryId') inventoryId: string) {
-    return this.shoppingListService.getShoppingListWithProducts(inventoryId);
+    return this.shoppingListService.getShoppingListProducts(inventoryId);
   }
 
   @Post()
@@ -28,6 +29,20 @@ export class ShoppingListController {
     await this.shoppingListService.transferProductsToInventory(inventoryId);
     return {
       message: 'Products transferred to inventory and shopping list cleared',
+    };
+  }
+
+  @Post(':inventoryId/transfer-to-shopping-list')
+  async transferProductsToShoppingList(
+    @Param('inventoryId') inventoryId: string,
+    @Body('product') product: Product,
+  ) {
+    await this.shoppingListService.transferProductsToShoppingList(
+      inventoryId,
+      product,
+    );
+    return {
+      message: 'Products successfully transferred to the shopping list',
     };
   }
 
