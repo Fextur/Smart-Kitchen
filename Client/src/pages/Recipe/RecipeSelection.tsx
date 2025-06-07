@@ -8,18 +8,16 @@ import {
   Checkbox,
   FormControlLabel,
   Typography,
-  CircularProgress,
 } from "@mui/material";
 import { ChevronDown } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRecipe } from "@/hooks/useRecipe";
-import { KitchenItem, Preferences, Recipe, ShoppingListItem } from "@/types";
+import { Preferences, Recipe } from "@/types";
 import { ServingsDialog } from "@/components/ServingsDialog";
 import { MissingIngredientsDialog } from "@/pages/Recipe/MissingIngredientsDialog";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
 import { RecipeCard } from "./RecipeCard";
-import { useShoppingListItems } from "@/hooks/useShoppingListItems";
 
 interface RecipeSelectionLocationState {
   servings?: number;
@@ -33,6 +31,7 @@ const RecipeSelection: FC = () => {
     generatedRecipes,
     usedRecipes,
     saveRecipeMutation,
+    getRecipeWithMissingItemsMutation, // Add this
   } = useRecipe();
 
   const locationState = routerState.location.state as
@@ -46,7 +45,6 @@ const RecipeSelection: FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showMissingDialog, setShowMissingDialog] = useState(false);
-  const { updateItemsMutation } = useShoppingListItems();
 
   const handleGenerate = () => {
     if (!servings) return;
@@ -58,13 +56,43 @@ const RecipeSelection: FC = () => {
     });
   };
 
-  const handleRecipeSelect = (recipe: Recipe) => {
-    setSelectedRecipe(recipe);
+  const handleRecipeSelect = async (recipe: Recipe) => {
+    if (!servings) return;
 
-    if (recipe.missingItems && recipe.missingItems.length > 0) {
-      setShowMissingDialog(true);
-    } else {
-      navigateToRecipeSteps(recipe);
+    try {
+      let recipeWithMissingItems: Recipe;
+
+      // If recipe has an ID (it's an old recipe), fetch it with calculated missing items
+      if (recipe.id) {
+        recipeWithMissingItems =
+          await getRecipeWithMissingItemsMutation.mutateAsync({
+            recipeId: recipe.id,
+            servings,
+          });
+      } else {
+        // For new generated recipes, missing items are already calculated
+        recipeWithMissingItems = recipe;
+      }
+
+      setSelectedRecipe(recipeWithMissingItems);
+
+      if (
+        recipeWithMissingItems.missingItems &&
+        recipeWithMissingItems.missingItems.length > 0
+      ) {
+        setShowMissingDialog(true);
+      } else {
+        navigateToRecipeSteps(recipeWithMissingItems);
+      }
+    } catch (error) {
+      console.error("Failed to get recipe with missing items:", error);
+      // Fallback to original recipe if fetching fails
+      setSelectedRecipe(recipe);
+      if (recipe.missingItems && recipe.missingItems.length > 0) {
+        setShowMissingDialog(true);
+      } else {
+        navigateToRecipeSteps(recipe);
+      }
     }
   };
 
@@ -79,16 +107,6 @@ const RecipeSelection: FC = () => {
         recipe,
       },
     });
-  };
-
-  const handleAddToShoppingList = (items: KitchenItem[]) => {
-    updateItemsMutation.mutate(
-      items.map((item) => ({ ...item, isChecked: false } as ShoppingListItem))
-    );
-    if (selectedRecipe) {
-      saveRecipeMutation.mutate(selectedRecipe);
-    }
-    navigate({ to: "/shopping-list" });
   };
 
   const handleContinueAnyway = () => {
@@ -233,11 +251,10 @@ const RecipeSelection: FC = () => {
             >
               {generateRecipeMutation.isPending ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CircularProgress size={20} color="inherit" />
-                  <Typography>מייצר מתכון...</Typography>
+                  <Typography color="white">מייצר מתכון...</Typography>
                 </Box>
               ) : (
-                <Typography>הכן מתכון</Typography>
+                <Typography color="white">הכן מתכון</Typography>
               )}
             </Button>
           </Box>
@@ -288,9 +305,7 @@ const RecipeSelection: FC = () => {
           isOpen={showMissingDialog}
           onClose={() => setShowMissingDialog(false)}
           recipe={selectedRecipe}
-          onAddToShoppingList={() =>
-            handleAddToShoppingList(selectedRecipe?.missingItems || [])
-          }
+          servings={servings || 0} // Make sure to pass servings
           onContinueAnyway={handleContinueAnyway}
         />
       )}

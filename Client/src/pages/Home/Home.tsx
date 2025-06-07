@@ -79,9 +79,9 @@ const Home: FC = () => {
           </Typography>
         </Box>
         {usedRecipes && usedRecipes.length > 0 && (
-          <Box sx={{ px: 2, pb: 2 }}>
+          <Box sx={{ px: 2 }}>
             <KitchenItemList
-              itemsCount={usedRecipes.length}
+              itemsCount={Math.min(usedRecipes.length, 4)}
               title="מתכונים קודמים"
               renderRow={(index) => (
                 <RecipeCard
@@ -123,7 +123,7 @@ const Home: FC = () => {
             }}
           >
             {categorizedItems && categorizedItems.expiringSoon.length > 0 && (
-              <Box sx={{ mb: 2 }}>
+              <Box>
                 <KitchenItemList
                   itemsCount={categorizedItems.expiringSoon.length}
                   title="עומד להתקלקל"
@@ -138,7 +138,7 @@ const Home: FC = () => {
             )}
 
             {categorizedItems && categorizedItems.empty.length > 0 && (
-              <Box sx={{ mb: 2 }}>
+              <Box>
                 <KitchenItemList
                   itemsCount={categorizedItems.empty.length}
                   title="נגמרו"
@@ -153,7 +153,7 @@ const Home: FC = () => {
             )}
 
             {categorizedItems && categorizedItems.inKitchen.length > 0 && (
-              <Box sx={{ mb: 2 }}>
+              <Box>
                 <KitchenItemList
                   isEditToggable
                   itemsCount={categorizedItems.inKitchen.length}

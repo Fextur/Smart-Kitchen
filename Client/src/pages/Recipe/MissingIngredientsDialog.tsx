@@ -1,3 +1,4 @@
+// Client/src/pages/Recipe/MissingIngredientsDialog.tsx
 import { FC } from "react";
 import { Box, Button } from "@mui/material";
 import { ShoppingCart, ArrowLeft, AlertCircle } from "lucide-react";
@@ -5,12 +6,14 @@ import { Dialog } from "@/components/Dialog";
 import { IngredientCard } from "./IngredientCard";
 import { Recipe } from "@/types";
 import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { useRecipe } from "@/hooks/useRecipe";
+import { useNavigate } from "@tanstack/react-router";
 
 interface MissingIngredientsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   recipe: Recipe;
-  onAddToShoppingList: () => void;
+  servings: number;
   onContinueAnyway: () => void;
 }
 
@@ -18,9 +21,37 @@ export const MissingIngredientsDialog: FC<MissingIngredientsDialogProps> = ({
   isOpen,
   onClose,
   recipe,
-  onAddToShoppingList,
+  servings,
   onContinueAnyway,
 }) => {
+  const { saveRecipeMutation, addMissingToShoppingListMutation } = useRecipe();
+  const navigate = useNavigate();
+
+  const handleAddToShoppingList = async () => {
+    try {
+      // First save the recipe to ensure products exist and get a valid recipe ID
+      const savedRecipe = await saveRecipeMutation.mutateAsync({
+        ...recipe,
+        id: undefined, // Don't pass stub IDs, let the server generate new ones
+      });
+
+      // Then add missing items to shopping list using the real recipe ID
+      if (savedRecipe.id) {
+        await addMissingToShoppingListMutation.mutateAsync({
+          recipeId: savedRecipe.id,
+          servings,
+        });
+
+        // Navigate to shopping list after successful addition
+        navigate({ to: "/shopping-list" });
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("Failed to add missing items to shopping list:", error);
+    }
+  };
+
   return (
     <Dialog
       isOpen={isOpen}
@@ -31,7 +62,7 @@ export const MissingIngredientsDialog: FC<MissingIngredientsDialogProps> = ({
     >
       <Box sx={{ direction: "rtl" }}>
         <KitchenItemList
-          itemsCount={recipe.missingItems!.length}
+          itemsCount={recipe.missingItems?.length || 0}
           title="המצרכים הבאים חסרים במטבח שלך:"
           initialCollapsed={false}
           renderRow={(index) => (
@@ -51,7 +82,11 @@ export const MissingIngredientsDialog: FC<MissingIngredientsDialogProps> = ({
           <Button
             fullWidth
             variant="contained"
-            onClick={onAddToShoppingList}
+            onClick={handleAddToShoppingList}
+            disabled={
+              addMissingToShoppingListMutation.isPending ||
+              saveRecipeMutation.isPending
+            }
             endIcon={<ShoppingCart size={20} />}
             sx={{
               bgcolor: "#E49A61",

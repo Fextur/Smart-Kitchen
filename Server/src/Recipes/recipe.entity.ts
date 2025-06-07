@@ -1,11 +1,11 @@
-// recipe.entity.ts
+// Server/src/Recipes/recipe.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   CreateDateColumn,
-  OneToMany,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from 'src/Users/user.entity';
 
@@ -35,35 +35,15 @@ export class Recipe {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToMany(() => RecipeHistory, (history) => history.recipe)
-  history: RecipeHistory[];
-}
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-@Entity()
-export class RecipeHistory {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @ManyToOne(() => Recipe, (recipe) => recipe.history)
-  recipe: Recipe;
-
-  @ManyToOne(() => User)
-  user: User;
-
-  @Column()
-  servingsUsed: number;
-
-  @Column({ default: false })
-  completed: boolean;
-
-  @Column({ default: false })
-  addedMissingToShoppingList: boolean;
-
-  @CreateDateColumn()
-  accessedAt: Date;
+  @Column({ type: 'timestamptz', nullable: true })
+  lastAccessedAt: Date;
 }
 
 export interface RecipeIngredient {
+  productId?: string; // Reference to the actual product
   name: string;
   baseAmount: number;
   perServingAmount: number;
