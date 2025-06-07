@@ -6,6 +6,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
+import { User } from './user.entity';
 
 export class CreateUserDto {
   @IsString()
@@ -69,4 +70,8 @@ export class JoinInventoryDto {
   @IsUUID()
   @IsNotEmpty()
   inventoryId: string;
+}
+
+export class UserWithToken extends User {
+  accessToken: string;
 }

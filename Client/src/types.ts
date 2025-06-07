@@ -25,13 +25,14 @@ export type Kitchen = {
   name?: string;
 };
 
-export type UserWithKitchen = {
+export type UserRes = {
   id: string;
   email: string;
   name: string;
   userName: string;
   sensitivities: string[];
   inventory: Kitchen;
+  accessToken: string;
 };
 
 export type KitchenItem = {
