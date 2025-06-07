@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { Edit3 } from "lucide-react";
 import { TextField, Button, Box } from "@mui/material";
 import { Dialog } from "@/components/Dialog";
@@ -7,7 +7,7 @@ interface DateEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
   currentDate: string;
-  onSave: (date: string | null) => void; // Updated to accept null instead of undefined
+  onSave: (date: string | null) => void;
 }
 
 export const DateEditDialog: FC<DateEditDialogProps> = ({
@@ -20,8 +20,12 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
   const formatDateForInput = (dateString: string): string => {
     if (!dateString) return "";
     try {
-      const date = new Date(dateString);
-      return date.toISOString().split("T")[0];
+      // Parse the date and format it without timezone conversion
+      const date = new Date(dateString + "T00:00:00"); // Add time to prevent timezone issues
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     } catch {
       return "";
     }
@@ -29,25 +33,32 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
 
   const [date, setDate] = useState(formatDateForInput(currentDate));
 
+  // Reset form when dialog opens with new data
+  useEffect(() => {
+    if (isOpen) {
+      setDate(formatDateForInput(currentDate));
+    }
+  }, [isOpen, currentDate]);
+
   const handleSave = () => {
     onSave(date);
-    onClose();
+    handleClose();
   };
 
-  const handleCancel = () => {
+  const handleClose = () => {
     setDate(formatDateForInput(currentDate));
     onClose();
   };
 
   const handleClearDate = () => {
-    onSave(null); // Changed from empty string to undefined
-    onClose();
+    onSave(null);
+    handleClose();
   };
 
   return (
     <Dialog
       isOpen={isOpen}
-      onClose={handleCancel}
+      onClose={handleClose}
       icon={<Edit3 size={24} />}
       color="#E49A61"
       title="עדכן את תאריך התפוגה"
@@ -86,7 +97,7 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
         </Button>
 
         <Button
-          onClick={handleClearDate} // Updated to use the new handler
+          onClick={handleClearDate}
           variant="contained"
           fullWidth
           sx={{

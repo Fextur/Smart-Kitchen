@@ -3,7 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRouter } from "@tanstack/react-router";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { SuggestedShoppingListItemCard } from "@/pages/ShoppingList/SuggestedShoppingListItemCard";
 import { ShoppingListItem } from "@/types";
 import { useShoppingListItems } from "@/hooks/useShoppingListItems";
@@ -105,7 +105,7 @@ const ShoppingList: FC = () => {
           }}
         >
           <Box sx={{ mb: 2 }}>
-            <KitchenItemList
+            <ItemList
               itemsCount={shoppingListItems.length}
               title="ברשימה"
               onAddNewItem={(item) => {
@@ -134,7 +134,7 @@ const ShoppingList: FC = () => {
             />
           </Box>
           <Box sx={{ mb: 2 }}>
-            <KitchenItemList
+            <ItemList
               itemsCount={
                 !emptyKitchenItemsMissingFromShoppingList
                   ? 0

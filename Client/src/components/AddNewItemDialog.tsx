@@ -1,9 +1,9 @@
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { TextField, Button, Box } from "@mui/material";
 import { SizeUnit, KitchenItem } from "@/types";
 import { Dialog } from "@/components/Dialog";
-import { QuantityInput } from "@/components/KitchenItemList/KitchenItemCard/QuantityInput";
+import { QuantityInput } from "@/components/KitchenItemCard/QuantityInput";
 
 interface AddNewItemDialogProps {
   isOpen: boolean;
@@ -23,8 +23,18 @@ export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
   const [unit, setUnit] = useState<SizeUnit>(SizeUnit.UNIT);
   const [expirationDate, setExpirationDate] = useState("");
 
+  // Clear form data when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setName("");
+      setSize(1);
+      setUnit(SizeUnit.UNIT);
+      setExpirationDate("");
+    }
+  }, [isOpen]);
+
   const handleSave = () => {
-    if (!name.trim()) {
+    if (!name.trim() || size <= 0) {
       return;
     }
 
@@ -46,6 +56,8 @@ export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
     setExpirationDate("");
     onClose();
   };
+
+  const isFormValid = name.trim().length > 0 && size > 0;
 
   return (
     <Dialog
@@ -109,7 +121,7 @@ export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
             onClick={handleSave}
             variant="contained"
             color="primary"
-            disabled={!name.trim()}
+            disabled={!isFormValid}
             sx={{
               flex: 1,
               py: 1.5,

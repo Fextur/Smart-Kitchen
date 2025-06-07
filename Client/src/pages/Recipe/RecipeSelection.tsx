@@ -16,7 +16,7 @@ import { useRecipe } from "@/hooks/useRecipe";
 import { Preferences, Recipe } from "@/types";
 import { ServingsDialog } from "@/components/ServingsDialog";
 import { MissingIngredientsDialog } from "@/pages/Recipe/MissingIngredientsDialog";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { RecipeCard } from "./RecipeCard";
 
 interface RecipeSelectionLocationState {
@@ -259,7 +259,7 @@ const RecipeSelection: FC = () => {
 
         {generatedRecipes.length > 0 && (
           <Box sx={{ px: 2 }}>
-            <KitchenItemList
+            <ItemList
               itemsCount={generatedRecipes.length}
               title="מתכונים חדשים"
               renderRow={(index) => (
@@ -276,7 +276,7 @@ const RecipeSelection: FC = () => {
 
         {usedRecipes && usedRecipes.length > 0 && (
           <Box sx={{ px: 2 }}>
-            <KitchenItemList
+            <ItemList
               itemsCount={usedRecipes.length}
               title="מתכונים קודמים"
               renderRow={(index) => (

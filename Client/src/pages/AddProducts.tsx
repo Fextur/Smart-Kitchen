@@ -2,10 +2,10 @@ import { FC, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { KitchenItem } from "@/types";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
-import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
+import { KitchenItemCard } from "@/components/KitchenItemCard/KitchenItemCard";
 import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
 
 interface AddProductsLocationState {
@@ -117,7 +117,7 @@ const AddProducts: FC = () => {
           direction: "rtl",
         }}
       >
-        <KitchenItemList
+        <ItemList
           itemsCount={items.length}
           title="פריטים להוספה"
           isEditing

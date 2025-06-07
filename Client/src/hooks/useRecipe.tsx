@@ -85,7 +85,16 @@ export const useRecipe = () => {
         `${API_ROUTES.recipes}/history/${user.id}`
       );
 
-      return data;
+      // Sort by lastAccessedAt (most recent first)
+      return data.sort((a, b) => {
+        const dateA = a.lastAccessedAt
+          ? new Date(a.lastAccessedAt).getTime()
+          : 0;
+        const dateB = b.lastAccessedAt
+          ? new Date(b.lastAccessedAt).getTime()
+          : 0;
+        return dateB - dateA; // Descending order (latest first)
+      });
     } catch (error) {
       console.error("Fetch used recipes error:", error);
       return [];

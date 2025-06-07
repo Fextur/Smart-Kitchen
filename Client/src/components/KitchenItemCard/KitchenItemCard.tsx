@@ -2,10 +2,10 @@ import { FC, useState } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { Trash2 } from "lucide-react";
 import { KitchenItem, SizeUnit } from "@/types";
-import { DateEditDialog } from "@/components/KitchenItemList/KitchenItemCard/DateEditDialog";
+import { DateEditDialog } from "@/components/KitchenItemCard/DateEditDialog";
 import { formatDate, isExpiringSoon } from "@/utils/dateUtils";
-import { DeleteConfirmDialog } from "@/components/KitchenItemList/KitchenItemCard/DeleteConfirmDialog";
-import { AmountEditDialog } from "@/components/KitchenItemList/KitchenItemCard/AmountEditDialog";
+import { DeleteConfirmDialog } from "@/components/KitchenItemCard/DeleteConfirmDialog";
+import { AmountEditDialog } from "@/components/KitchenItemCard/AmountEditDialog";
 
 interface KitchenItemCardProps {
   item: KitchenItem;
@@ -32,14 +32,20 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
       });
     }
   };
+
   const handleDateSave = (expirationDate: string | null) => {
     if (onEdit) {
       onEdit({
         ...item,
-        expirationDate: expirationDate, // Always include this field, even if null
+        expirationDate: expirationDate,
         latestUpdateDate: new Date().toISOString().split("T")[0],
       });
     }
+  };
+
+  const handleDelete = () => {
+    handleAmountSave(0, item.measureUnit);
+    setShowDeleteDialog(false); // Close the dialog after deletion
   };
 
   return (
@@ -77,8 +83,15 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
               borderRadius: 1,
               bgcolor: "transparent",
               border: isEditing ? "1px dashed" : "none",
-              borderColor: "primary.main",
-              transition: "all 0.2s",
+              borderColor: "#E49A61",
+              transition: "all 0.2s ease",
+              ...(isEditing && {
+                "&:hover": {
+                  bgcolor: "rgba(228, 154, 97, 0.1)",
+                  boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
+                  transform: "translateY(-1px)",
+                },
+              }),
             }}
           >
             <Typography
@@ -123,8 +136,15 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
                 borderRadius: 1,
                 bgcolor: "transparent",
                 border: isEditing ? "1px dashed" : "none",
-                borderColor: "primary.main",
-                transition: "all 0.2s",
+                borderColor: "#E49A61",
+                transition: "all 0.2s ease",
+                ...(isEditing && {
+                  "&:hover": {
+                    bgcolor: "rgba(228, 154, 97, 0.1)",
+                    boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
+                    transform: "translateY(-1px)",
+                  },
+                }),
               }}
             >
               <Typography
@@ -163,13 +183,18 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
             </Box>
           ) : (
             <IconButton
-              onClick={() => setShowDeleteDialog(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteDialog(true);
+              }}
               size="small"
               sx={{
-                color: "error.main",
+                color: "#ef4444",
                 "&:hover": {
-                  bgcolor: "error.light",
-                  color: "white",
+                  bgcolor: "rgba(239, 68, 68, 0.1)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                  transform: "translateY(-1px)",
+                  transition: "all 0.2s ease",
                 },
               }}
             >
@@ -198,7 +223,7 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
       <DeleteConfirmDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onConfirm={() => handleAmountSave(0, item.measureUnit)}
+        onConfirm={handleDelete}
         itemName={item.name}
       />
     </>

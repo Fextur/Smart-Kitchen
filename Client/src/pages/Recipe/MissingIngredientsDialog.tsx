@@ -4,7 +4,7 @@ import { ShoppingCart, ArrowLeft, AlertCircle } from "lucide-react";
 import { Dialog } from "@/components/Dialog";
 import { IngredientCard } from "./IngredientCard";
 import { Recipe } from "@/types";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { useRecipe } from "@/hooks/useRecipe";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -57,7 +57,7 @@ export const MissingIngredientsDialog: FC<MissingIngredientsDialogProps> = ({
       title="נראה שאין לך את כל המצרכים למתכון"
     >
       <Box sx={{ direction: "rtl" }}>
-        <KitchenItemList
+        <ItemList
           itemsCount={recipe.missingItems?.length || 0}
           title="המצרכים הבאים חסרים במטבח שלך:"
           initialCollapsed={false}
@@ -93,7 +93,10 @@ export const MissingIngredientsDialog: FC<MissingIngredientsDialogProps> = ({
               fontSize: "14px",
               fontWeight: 500,
               "&:hover": {
-                bgcolor: "#E6850E",
+                bgcolor: "#E49A61",
+                boxShadow: "0 4px 12px rgba(228, 154, 97, 0.3)",
+                transform: "translateY(-1px)",
+                transition: "all 0.2s ease",
               },
             }}
           >
@@ -116,8 +119,11 @@ export const MissingIngredientsDialog: FC<MissingIngredientsDialogProps> = ({
               borderWidth: 2,
               "&:hover": {
                 borderWidth: 2,
-                bgcolor: "rgba(255, 149, 0, 0.1)",
+                bgcolor: "rgba(228, 154, 97, 0.1)",
                 borderColor: "#E49A61",
+                boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
+                transform: "translateY(-1px)",
+                transition: "all 0.2s ease",
               },
             }}
           >

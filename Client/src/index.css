@@ -20,3 +20,52 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+/* Custom Scrollbar Styles - Apple-like design */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.5);
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Specific styling for the app containers */
+.MuiBox-root::-webkit-scrollbar-thumb {
+  background: rgba(228, 154, 97, 0.3);
+  background-clip: content-box;
+}
+
+.MuiBox-root::-webkit-scrollbar-thumb:hover {
+  background: rgba(228, 154, 97, 0.5);
+  background-clip: content-box;
+}

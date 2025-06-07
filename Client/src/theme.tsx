@@ -86,6 +86,35 @@ export const theme = createTheme({
     borderRadius: 12,
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        "*": {
+          "&::-webkit-scrollbar": {
+            width: "8px",
+            height: "8px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "rgba(0, 0, 0, 0.05)",
+            borderRadius: "10px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "rgba(0, 0, 0, 0.2)",
+            borderRadius: "10px",
+            border: "2px solid transparent",
+            backgroundClip: "content-box",
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+            },
+          },
+          "&::-webkit-scrollbar-corner": {
+            backgroundColor: "transparent",
+          },
+          // Firefox scrollbar styling
+          scrollbarWidth: "thin",
+          scrollbarColor: "rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05)",
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
@@ -96,7 +125,38 @@ export const theme = createTheme({
         contained: {
           boxShadow: "none",
           "&:hover": {
-            boxShadow: "none",
+            boxShadow: "0 4px 12px rgba(228, 154, 97, 0.3)",
+            transform: "translateY(-1px)",
+            transition: "all 0.2s ease",
+          },
+        },
+        outlined: {
+          "&:hover": {
+            boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
+            transform: "translateY(-1px)",
+            transition: "all 0.2s ease",
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            transform: "translateY(-1px)",
+            transition: "all 0.2s ease",
+          },
+        },
+      },
+    },
+    MuiFab: {
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            boxShadow: "0 8px 20px rgba(228, 154, 97, 0.4)",
+            transform: "translateY(-2px)",
+            transition: "all 0.2s ease",
           },
         },
       },
@@ -112,9 +172,11 @@ export const theme = createTheme({
             },
             "&:hover .MuiOutlinedInput-notchedOutline": {
               borderColor: "#E49A61",
+              boxShadow: "0 2px 8px rgba(228, 154, 97, 0.1)",
             },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: "#E49A61",
+              boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
             },
           },
         },
@@ -128,9 +190,11 @@ export const theme = createTheme({
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
             borderColor: "#E49A61",
+            boxShadow: "0 2px 8px rgba(228, 154, 97, 0.1)",
           },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "#E49A61",
+            boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
           },
         },
       },

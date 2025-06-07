@@ -17,7 +17,12 @@ export const useKitchenItems = () => {
           `${API_ROUTES.products}/by-inventory/${kitchen.id}`
         );
 
-        return data;
+        // Sort by latest update date (most recent first)
+        return data.sort((a, b) => {
+          const dateA = new Date(a.latestUpdateDate || "1970-01-01").getTime();
+          const dateB = new Date(b.latestUpdateDate || "1970-01-01").getTime();
+          return dateB - dateA; // Descending order (latest first)
+        });
       }
     } catch (error) {
       console.error(error);
@@ -93,18 +98,36 @@ export const useKitchenItems = () => {
 
   const categorizedItems = useMemo(() => {
     if (!data) return null;
-    const expiringSoon = data.filter(
-      (item) =>
-        item.expirationDate &&
-        isExpiringSoon(item.expirationDate) &&
-        item.size > 0
-    );
+
+    const expiringSoon = data
+      .filter(
+        (item) =>
+          item.expirationDate &&
+          isExpiringSoon(item.expirationDate) &&
+          item.size > 0
+      )
+      .sort((a, b) => {
+        const dateA = new Date(a.latestUpdateDate || "1970-01-01").getTime();
+        const dateB = new Date(b.latestUpdateDate || "1970-01-01").getTime();
+        return dateB - dateA;
+      });
 
     const empty = data
       .filter((item) => item.size <= 0)
-      .map((item) => ({ ...item, expirationDate: undefined } as KitchenItem));
+      .map((item) => ({ ...item, expirationDate: undefined } as KitchenItem))
+      .sort((a, b) => {
+        const dateA = new Date(a.latestUpdateDate || "1970-01-01").getTime();
+        const dateB = new Date(b.latestUpdateDate || "1970-01-01").getTime();
+        return dateB - dateA;
+      });
 
-    const inKitchen = data.filter((item) => item.size > 0);
+    const inKitchen = data
+      .filter((item) => item.size > 0)
+      .sort((a, b) => {
+        const dateA = new Date(a.latestUpdateDate || "1970-01-01").getTime();
+        const dateB = new Date(b.latestUpdateDate || "1970-01-01").getTime();
+        return dateB - dateA;
+      });
 
     return { expiringSoon, empty, inKitchen };
   }, [data]);

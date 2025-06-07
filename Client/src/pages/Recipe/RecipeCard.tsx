@@ -38,6 +38,15 @@ export const RecipeCard: FC<RecipeCardProps> = ({
           justifyContent: "space-between",
           minHeight: 60,
           borderRadius: "50px",
+          cursor: onSelect ? "pointer" : "default",
+          transition: "all 0.2s ease",
+          ...(onSelect && {
+            "&:hover": {
+              boxShadow: "0 4px 12px rgba(228, 154, 97, 0.2)",
+              transform: "translateY(-1px)",
+              bgcolor: "rgba(228, 154, 97, 0.02)",
+            },
+          }),
         }}
         onClick={() => onSelect && onSelect()}
       >
@@ -77,21 +86,22 @@ export const RecipeCard: FC<RecipeCardProps> = ({
             }}
             size="small"
             sx={{
-              color: "error.main",
+              color:
+                recipe.missingItems && recipe.missingItems.length > 0
+                  ? "#ef4444"
+                  : "#E49A61",
               "&:hover": {
-                bgcolor: "error.light",
-                color: "white",
+                bgcolor:
+                  recipe.missingItems && recipe.missingItems.length > 0
+                    ? "rgba(239, 68, 68, 0.1)"
+                    : "rgba(228, 154, 97, 0.1)",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                transform: "translateY(-1px)",
+                transition: "all 0.2s ease",
               },
             }}
           >
-            <ScrollText
-              size={20}
-              color={
-                recipe.missingItems && recipe.missingItems.length > 0
-                  ? "#ef4444"
-                  : "gray"
-              }
-            />
+            <ScrollText size={20} />
           </IconButton>
         )}
       </Box>

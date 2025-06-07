@@ -13,7 +13,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRecipe } from "@/hooks/useRecipe";
 import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { IngredientCard } from "./IngredientCard";
 import { PreparationStepCard } from "./PreparationStepCard";
 import { getIngredientSize } from "@/utils/recipeUtils";
@@ -287,7 +287,7 @@ const RecipeFlow: FC = () => {
 
           <Box sx={{ p: 2, flex: 1 }}>
             <Box sx={{ mb: 3 }}>
-              <KitchenItemList
+              <ItemList
                 itemsCount={recipe.ingredients.length}
                 title="המצרכים"
                 initialCollapsed={false}
@@ -306,7 +306,7 @@ const RecipeFlow: FC = () => {
               />
             </Box>
 
-            <KitchenItemList
+            <ItemList
               itemsCount={recipe.steps.length}
               title="שלבי ההכנה"
               initialCollapsed={false}
@@ -467,33 +467,51 @@ const RecipeFlow: FC = () => {
                           )
                         }
                         sx={{
-                          bgcolor: "primary.main",
+                          bgcolor: "white",
+                          color: "#E49A61",
                           borderRadius: "25px",
-                          "&:hover": { bgcolor: "primary.dark" },
+                          border: "2px solid #E49A61",
+                          fontWeight: 600,
+                          "&:hover": {
+                            // bgcolor: "#E49A61",
+                            // color: "white",
+                            boxShadow: "0 4px 12px rgba(228, 154, 97, 0.4)",
+                            transform: "translateY(-1px)",
+                            transition: "all 0.2s ease",
+                          },
                         }}
                       >
-                        <Typography sx={{ marginLeft: "0.5rem" }}>
+                        <Typography
+                          sx={{ marginLeft: "0.5rem", fontWeight: 600 }}
+                        >
                           {isTimerRunning ? "השהה" : "התחל"}
                         </Typography>
                       </Button>
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         onClick={() => {
                           setTimer(timerSeconds);
                           setIsTimerRunning(false);
                         }}
                         endIcon={<RotateCcw size={16} />}
                         sx={{
-                          borderColor: "grey.300",
-                          color: "text.primary",
+                          bgcolor: "white",
+                          color: "#6b7280",
                           borderRadius: "25px",
+                          border: "2px solid #d1d5db",
+                          fontWeight: 600,
                           "&:hover": {
-                            borderColor: "grey.400",
-                            bgcolor: "grey.50",
+                            bgcolor: "#f3f4f6",
+                            borderColor: "#9ca3af",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                            transform: "translateY(-1px)",
+                            transition: "all 0.2s ease",
                           },
                         }}
                       >
-                        <Typography sx={{ marginLeft: "0.5rem" }}>
+                        <Typography
+                          sx={{ marginLeft: "0.5rem", fontWeight: 600 }}
+                        >
                           אפס
                         </Typography>
                       </Button>
