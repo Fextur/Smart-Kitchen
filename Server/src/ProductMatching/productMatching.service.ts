@@ -175,6 +175,7 @@ export class ProductMatchingService {
     existingProduct: Product,
     newProductSize: number,
     newExpirationDate?: Date,
+    isInInventory?: boolean,
   ): Promise<Product> {
     // Add the new quantity to existing (not replace)
     existingProduct.size += newProductSize;
@@ -186,6 +187,8 @@ export class ProductMatchingService {
 
     // Always override the latest update date
     existingProduct.latestUpdateDate = new Date();
+    existingProduct.isInInventory =
+      isInInventory ?? existingProduct.isInInventory;
 
     return await this.productRepository.save(existingProduct);
   }

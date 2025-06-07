@@ -134,6 +134,7 @@ export class ProductService {
             match.matchedProduct,
             product.size,
             product.expirationDate,
+            true,
           );
 
         updatedProducts.push(updatedProduct);
