@@ -1,15 +1,22 @@
+// Server/src/Products/product.dto.ts
 import {
   IsArray,
   IsDate,
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
+  IsUUID,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { MeasureUnit } from 'src/types';
 
 export class ProductDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -27,9 +34,10 @@ export class ProductDto {
   @IsNotEmpty()
   measureUnit: MeasureUnit;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  expirationDate: Date;
+  expirationDate?: Date;
 }
 
 export class CreateProductsDto {
@@ -48,8 +56,4 @@ export class UpdateProductsDto {
   @IsNotEmpty()
   @Type(() => ProductDto)
   products: ProductDto[];
-
-  @IsString()
-  @IsNotEmpty()
-  inventoryId: string;
 }

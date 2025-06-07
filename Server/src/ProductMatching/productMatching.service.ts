@@ -1,8 +1,11 @@
+// Server/src/ProductMatching/productMatching.service.ts - Updated with simple unit conversion
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import OpenAI from 'openai';
 import { Product } from 'src/Products/product.entity';
+import { UnitConverter } from 'src/utils/unitConversion';
+import { MeasureUnit } from 'src/types';
 
 export interface ProductMatch {
   productName: string;
@@ -82,6 +85,7 @@ export class ProductMatchingService {
     2. מוצרים מאותה קטגוריה (לדוגמה: "הוטפופ חמאה" ו"פופקורן")
     3. שמות מקוצרים או מלאים של אותו מוצר
     4. שמות עם מותגים שונים לאותו מוצר
+    5. **יחידות מידה שונות של אותו מוצר (לדוגמה: חלב בליטר וחלב במיליליטר)**
     
     רמות ביטחון:
     - high: התאמה ברורה (99% בטחון)
@@ -110,7 +114,7 @@ export class ProductMatchingService {
           {
             role: 'system',
             content:
-              'אתה מומחה בזיהוי והתאמת מוצרי מזון. תחזיר תמיד JSON תקין.',
+              'אתה מומחה בזיהוי והתאמת מוצרי מזון. תחזיר תמיד JSON תקין. זהה מוצרים זהים גם עם יחידות מידה שונות.',
           },
           {
             role: 'user',
@@ -164,13 +168,35 @@ export class ProductMatchingService {
     }
   }
 
+  /**
+   * Merge product quantities with smart unit conversion
+   */
   async mergeProductQuantities(
     existingProduct: Product,
     newProductSize: number,
+    newMeasureUnit: MeasureUnit,
     newExpirationDate?: Date,
     isInInventory?: boolean,
   ): Promise<Product> {
-    existingProduct.size += newProductSize;
+    // Use the simple unit converter
+    const mergeResult = UnitConverter.mergeQuantities(
+      existingProduct.size || 0,
+      existingProduct.measureUnit,
+      newProductSize,
+      newMeasureUnit,
+      existingProduct.name,
+    );
+
+    // Update the product
+    existingProduct.size = mergeResult.size;
+
+    // Only change unit if conversion was successful and resulted in a different unit
+    if (
+      mergeResult.converted &&
+      mergeResult.unit !== existingProduct.measureUnit
+    ) {
+      existingProduct.measureUnit = mergeResult.unit;
+    }
 
     if (newExpirationDate) {
       existingProduct.expirationDate = newExpirationDate;
@@ -181,5 +207,27 @@ export class ProductMatchingService {
       isInInventory ?? existingProduct.isInInventory;
 
     return await this.productRepository.save(existingProduct);
+  }
+
+  /**
+   * Check if products can be merged based on unit compatibility
+   */
+  checkProductCompatibility(
+    existingProduct: Product,
+    newProductUnit: MeasureUnit,
+    productName?: string,
+  ): { compatible: boolean; reason: string } {
+    const compatible = UnitConverter.areUnitsCompatible(
+      existingProduct.measureUnit,
+      newProductUnit,
+      productName || existingProduct.name,
+    );
+
+    return {
+      compatible,
+      reason: compatible
+        ? 'Units are compatible and can be merged'
+        : 'Units are not compatible for this product type',
+    };
   }
 }

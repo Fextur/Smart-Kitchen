@@ -1,3 +1,4 @@
+// Server/src/Products/product.service.ts - Updated with simple unit conversion
 import {
   Injectable,
   InternalServerErrorException,
@@ -9,6 +10,7 @@ import { Product } from './product.entity';
 import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
+import { UnitConverter } from 'src/utils/unitConversion';
 
 export interface CreateProductsResult {
   createdProducts: Product[];
@@ -18,6 +20,9 @@ export interface CreateProductsResult {
     action: 'created' | 'merged';
     matchedWith?: string;
     confidence?: string;
+    unitConversionApplied?: boolean;
+    originalUnit?: string;
+    finalUnit?: string;
   }>;
 }
 
@@ -95,6 +100,9 @@ export class ProductService {
       action: 'created' | 'merged';
       matchedWith?: string;
       confidence?: string;
+      unitConversionApplied?: boolean;
+      originalUnit?: string;
+      finalUnit?: string;
     }> = [];
 
     let allProducts = await this.productRepository.find({
@@ -118,27 +126,66 @@ export class ProductService {
         match.matchedProduct &&
         (match.confidence === 'high' || match.confidence === 'medium')
       ) {
-        const updatedProduct =
-          await this.productMatchingService.mergeProductQuantities(
+        // Check unit compatibility before merging
+        const compatibility =
+          this.productMatchingService.checkProductCompatibility(
             match.matchedProduct,
-            product.size,
-            product.expirationDate,
-            true,
+            product.measureUnit,
+            product.name,
           );
 
-        updatedProducts.push(updatedProduct);
-        matchingResults.push({
-          productName: product.name,
-          action: 'merged',
-          matchedWith: match.matchedProduct.name,
-          confidence: match.confidence,
-        });
+        if (compatibility.compatible) {
+          const originalUnit = match.matchedProduct.measureUnit;
 
-        const index = allProducts.findIndex((p) => p.id === updatedProduct.id);
-        if (index !== -1) {
-          allProducts[index] = updatedProduct;
+          const updatedProduct =
+            await this.productMatchingService.mergeProductQuantities(
+              match.matchedProduct,
+              product.size,
+              product.measureUnit,
+              product.expirationDate,
+              true,
+            );
+
+          updatedProducts.push(updatedProduct);
+          matchingResults.push({
+            productName: product.name,
+            action: 'merged',
+            matchedWith: match.matchedProduct.name,
+            confidence: match.confidence,
+            unitConversionApplied: originalUnit !== updatedProduct.measureUnit,
+            originalUnit: product.measureUnit,
+            finalUnit: updatedProduct.measureUnit,
+          });
+
+          const index = allProducts.findIndex(
+            (p) => p.id === updatedProduct.id,
+          );
+          if (index !== -1) {
+            allProducts[index] = updatedProduct;
+          }
+        } else {
+          // Units not compatible, create new product
+          const newProduct = this.productRepository.create({
+            ...product,
+            latestUpdateDate: new Date(),
+            inventory,
+            isInInventory: true,
+          });
+
+          const savedProduct = await this.productRepository.save(newProduct);
+          createdProducts.push(savedProduct);
+          matchingResults.push({
+            productName: product.name,
+            action: 'created',
+            unitConversionApplied: false,
+            originalUnit: product.measureUnit,
+            finalUnit: product.measureUnit,
+          });
+
+          allProducts.push(savedProduct);
         }
       } else {
+        // No match found, create new product
         const newProduct = this.productRepository.create({
           ...product,
           latestUpdateDate: new Date(),
@@ -151,6 +198,9 @@ export class ProductService {
         matchingResults.push({
           productName: product.name,
           action: 'created',
+          unitConversionApplied: false,
+          originalUnit: product.measureUnit,
+          finalUnit: product.measureUnit,
         });
 
         allProducts.push(savedProduct);
@@ -197,6 +247,37 @@ export class ProductService {
     const updatedProducts: Product[] = [];
 
     for (const productDto of products) {
+      // Check if this is a unit change scenario
+      if (productDto.id) {
+        const existingProduct = await this.productRepository.findOne({
+          where: { id: productDto.id },
+        });
+
+        if (
+          existingProduct &&
+          existingProduct.measureUnit !== productDto.measureUnit
+        ) {
+          // Unit change detected - try conversion
+          const conversionResult = UnitConverter.convertUnits(
+            productDto.size || existingProduct.size || 0,
+            productDto.measureUnit || existingProduct.measureUnit,
+            existingProduct.measureUnit, // Keep existing unit as target
+            existingProduct.name,
+          );
+
+          if (conversionResult.success) {
+            productDto.size = conversionResult.convertedSize;
+            productDto.measureUnit = existingProduct.measureUnit;
+          } else {
+            console.warn(
+              `Cannot convert units for ${existingProduct.name}: ` +
+                `${productDto.measureUnit} -> ${existingProduct.measureUnit}`,
+            );
+            // Keep the new unit if conversion isn't possible
+          }
+        }
+      }
+
       const updatedProduct = await this.productRepository.save({
         ...productDto,
         latestUpdateDate: new Date(),
@@ -217,5 +298,59 @@ export class ProductService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Failed to delete product');
     }
+  }
+
+  /**
+   * Standardize product units across the entire inventory
+   */
+  async standardizeInventoryUnits(inventoryId: string): Promise<{
+    processedCount: number;
+    conversionsApplied: number;
+    errors: string[];
+  }> {
+    const products = await this.productRepository.find({
+      where: { inventory: { id: inventoryId } },
+    });
+
+    let processedCount = 0;
+    let conversionsApplied = 0;
+    const errors: string[] = [];
+
+    for (const product of products) {
+      try {
+        const preferredUnit = UnitConverter.getPreferredUnit(
+          product.size || 0,
+          product.measureUnit,
+        );
+
+        if (preferredUnit !== product.measureUnit) {
+          const conversionResult = UnitConverter.convertUnits(
+            product.size || 0,
+            product.measureUnit,
+            preferredUnit,
+            product.name,
+          );
+
+          if (conversionResult.success) {
+            product.size = conversionResult.convertedSize;
+            product.measureUnit = preferredUnit;
+            product.latestUpdateDate = new Date();
+
+            await this.productRepository.save(product);
+            conversionsApplied++;
+          }
+        }
+
+        processedCount++;
+      } catch (error) {
+        errors.push(`Failed to standardize ${product.name}: ${error.message}`);
+      }
+    }
+
+    return {
+      processedCount,
+      conversionsApplied,
+      errors,
+    };
   }
 }

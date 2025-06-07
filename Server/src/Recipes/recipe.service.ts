@@ -1,3 +1,4 @@
+// Server/src/Recipes/recipe.service.ts - Complete file
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +7,7 @@ import { User } from 'src/Users/user.entity';
 import { Recipe } from './recipe.entity';
 import { Product } from 'src/Products/product.entity';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
+import { UnitConverter } from 'src/utils/unitConversion';
 import {
   GenerateRecipeDto,
   SaveRecipeDto,
@@ -83,7 +85,7 @@ export class RecipeService {
                 "name": "שם המצרך",
                 "baseAmount": כמות בסיס (למתכון מינימלי),
                 "perServingAmount": כמות נוספת לכל מנה,
-                "unit": "יחידת מידה"
+                "unit": "יחידת מידה - השתמש ביחידות מהמלאי אם אפשר!"
               }
             ],
             "steps": [
@@ -103,6 +105,7 @@ export class RecipeService {
         3. הוראות חייבות להיות קצרות מאוד - עד 15 מילים
         4. סמן isTimerStep=true רק כאשר יש זמן המתנה/בישול/אפייה ספציפי
         5. השתמש במצרכים מהמלאי ככל האפשר
+        6. **שים לב ליחידות המידה במלאי וניסה להשתמש באותן יחידות**
       `;
 
       const response = await this.openai.chat.completions.create({
@@ -133,37 +136,48 @@ export class RecipeService {
             const requiredAmount =
               ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-            const matchingResult =
-              await this.productMatchingService.findMatchingProducts(
-                [ingredient.name],
-                user.inventory.id,
+            // Try to match and standardize units
+            const { matchedProduct, standardizedIngredient } =
+              await this.matchAndStandardizeIngredient(
+                ingredient,
                 allInventoryProducts,
+                user.inventory.id,
               );
 
-            const match = matchingResult.matches[0];
             let productId: string | undefined;
             let availableAmount = 0;
 
-            if (
-              match.matchedProduct &&
-              (match.confidence === 'high' || match.confidence === 'medium')
-            ) {
-              productId = match.matchedProduct.id;
-              availableAmount = match.matchedProduct.isInInventory
-                ? match.matchedProduct.size || 0
-                : 0;
+            if (matchedProduct) {
+              productId = matchedProduct.id;
+
+              // Convert available amount to ingredient unit for comparison
+              const conversionResult = UnitConverter.convertUnits(
+                matchedProduct.size || 0,
+                matchedProduct.measureUnit,
+                this.mapStringToMeasureUnit(standardizedIngredient.unit),
+                matchedProduct.name,
+              );
+
+              availableAmount = conversionResult.success
+                ? conversionResult.convertedSize
+                : matchedProduct.size || 0;
             }
 
             processedIngredients.push({
-              ...ingredient,
+              ...standardizedIngredient,
               productId,
             });
 
-            if (availableAmount < requiredAmount) {
+            // Calculate missing amount in the standardized unit
+            const requiredAmountStandardized =
+              standardizedIngredient.baseAmount +
+              standardizedIngredient.perServingAmount * servings;
+
+            if (availableAmount < requiredAmountStandardized) {
               missingItems.push({
-                name: ingredient.name,
-                size: requiredAmount - availableAmount,
-                measureUnit: ingredient.unit,
+                name: standardizedIngredient.name,
+                size: requiredAmountStandardized - availableAmount,
+                measureUnit: standardizedIngredient.unit,
               });
             }
           }
@@ -184,6 +198,76 @@ export class RecipeService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  /**
+   * Match ingredient to inventory and standardize units
+   */
+  private async matchAndStandardizeIngredient(
+    ingredient: any,
+    inventoryProducts: Product[],
+    inventoryId: string,
+  ): Promise<{
+    matchedProduct: Product | null;
+    standardizedIngredient: any;
+  }> {
+    // Find matching product in inventory
+    const matchingResult =
+      await this.productMatchingService.findMatchingProducts(
+        [ingredient.name],
+        inventoryId,
+        inventoryProducts,
+      );
+
+    const match = matchingResult.matches[0];
+    let matchedProduct: Product | null = null;
+    let standardizedIngredient = { ...ingredient };
+
+    if (
+      match.matchedProduct &&
+      (match.confidence === 'high' || match.confidence === 'medium')
+    ) {
+      matchedProduct = match.matchedProduct;
+
+      // Try to standardize ingredient unit to match inventory
+      const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
+      const areCompatible = UnitConverter.areUnitsCompatible(
+        ingredientUnit,
+        matchedProduct.measureUnit,
+        ingredient.name,
+      );
+
+      if (areCompatible) {
+        // Convert ingredient amounts to inventory unit
+        const baseConversion = UnitConverter.convertUnits(
+          ingredient.baseAmount,
+          ingredientUnit,
+          matchedProduct.measureUnit,
+          ingredient.name,
+        );
+
+        const perServingConversion = UnitConverter.convertUnits(
+          ingredient.perServingAmount,
+          ingredientUnit,
+          matchedProduct.measureUnit,
+          ingredient.name,
+        );
+
+        if (baseConversion.success && perServingConversion.success) {
+          standardizedIngredient = {
+            ...ingredient,
+            baseAmount: baseConversion.convertedSize,
+            perServingAmount: perServingConversion.convertedSize,
+            unit: matchedProduct.measureUnit,
+          };
+        }
+      }
+    }
+
+    return {
+      matchedProduct,
+      standardizedIngredient,
+    };
   }
 
   async askQuestion(
@@ -248,7 +332,7 @@ export class RecipeService {
         (item) => item.isInInventory && item.size > 0,
       );
 
-      const recipesWithMissingItems = recipes.map((recipe, index) => {
+      const recipesWithMissingItems = recipes.map((recipe) => {
         const missingItems: KitchenItemDto[] = [];
         const defaultServings = 2;
 
@@ -263,7 +347,20 @@ export class RecipeService {
             const product = inventoryProducts.find(
               (p) => p.id === ingredient.productId,
             );
-            availableAmount = product?.size || 0;
+
+            if (product) {
+              // Convert available amount to ingredient unit for comparison
+              const conversionResult = UnitConverter.convertUnits(
+                product.size || 0,
+                product.measureUnit,
+                this.mapStringToMeasureUnit(ingredient.unit),
+                product.name,
+              );
+
+              availableAmount = conversionResult.success
+                ? conversionResult.convertedSize
+                : product.size || 0;
+            }
           }
 
           if (availableAmount < requiredAmount) {
@@ -328,7 +425,6 @@ export class RecipeService {
       }
 
       const recipe = this.recipeRepository.create(recipeData);
-
       const savedRecipe = await this.recipeRepository.save(recipe);
 
       const recipeEntity = Array.isArray(savedRecipe)
@@ -438,7 +534,20 @@ export class RecipeService {
             const amountToConsume =
               ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-            const newSize = Math.max(0, product.size - amountToConsume);
+            // Convert consumption amount to product's unit
+            const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
+            const conversionResult = UnitConverter.convertUnits(
+              amountToConsume,
+              ingredientUnit,
+              product.measureUnit,
+              product.name,
+            );
+
+            const consumeInProductUnit = conversionResult.success
+              ? conversionResult.convertedSize
+              : amountToConsume;
+
+            const newSize = Math.max(0, product.size - consumeInProductUnit);
             product.size = newSize;
             product.latestUpdateDate = new Date();
 
@@ -459,123 +568,6 @@ export class RecipeService {
       console.error('Consume ingredients error:', error);
       throw new HttpException(
         'Failed to consume ingredients',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private isValidUUID(str: string): boolean {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(str);
-  }
-
-  async recalculateMissingItems(
-    recipeId: string,
-    servings: number,
-  ): Promise<KitchenItemDto[]> {
-    try {
-      const recipe = await this.recipeRepository.findOne({
-        where: { id: recipeId },
-        relations: ['user', 'user.inventory', 'user.inventory.products'],
-      });
-
-      if (!recipe) {
-        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
-      }
-
-      const missingItems: KitchenItemDto[] = [];
-
-      const inventoryProducts = recipe.user.inventory.products.filter(
-        (item) => item.isInInventory && item.size > 0,
-      );
-
-      for (const ingredient of recipe.ingredients) {
-        const requiredAmount =
-          ingredient.baseAmount + ingredient.perServingAmount * servings;
-
-        let availableAmount = 0;
-        if (ingredient.productId) {
-          const product = inventoryProducts.find(
-            (p) => p.id === ingredient.productId,
-          );
-          availableAmount = product?.size || 0;
-        }
-
-        if (availableAmount < requiredAmount) {
-          missingItems.push({
-            name: ingredient.name,
-            size: requiredAmount - availableAmount,
-            measureUnit: ingredient.unit,
-          });
-        }
-      }
-
-      return missingItems;
-    } catch (error) {
-      console.error('Recalculate missing items error:', error);
-      throw new HttpException(
-        'Failed to recalculate missing items',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async getRecipeWithMissingItems(
-    recipeId: string,
-    servings: number,
-  ): Promise<RecipeResponseDto> {
-    try {
-      const recipe = await this.recipeRepository.findOne({
-        where: { id: recipeId },
-        relations: ['user', 'user.inventory', 'user.inventory.products'],
-      });
-
-      if (!recipe) {
-        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
-      }
-
-      const missingItems: KitchenItemDto[] = [];
-
-      const inventoryProducts = recipe.user.inventory.products.filter(
-        (item) => item.isInInventory && item.size > 0,
-      );
-
-      for (const ingredient of recipe.ingredients) {
-        const requiredAmount =
-          ingredient.baseAmount + ingredient.perServingAmount * servings;
-
-        let availableAmount = 0;
-        if (ingredient.productId) {
-          const product = inventoryProducts.find(
-            (p) => p.id === ingredient.productId,
-          );
-          availableAmount = product?.size || 0;
-        }
-
-        if (availableAmount < requiredAmount) {
-          missingItems.push({
-            name: ingredient.name,
-            size: requiredAmount - availableAmount,
-            measureUnit: ingredient.unit,
-          });
-        }
-      }
-
-      return {
-        id: recipe.id,
-        name: recipe.name,
-        description: recipe.description,
-        ingredients: recipe.ingredients,
-        steps: recipe.steps,
-        totalTimeMinutes: recipe.totalTimeMinutes,
-        lastAccessedAt: recipe.lastAccessedAt,
-        missingItems: missingItems.length > 0 ? missingItems : undefined,
-      };
-    } catch (error) {
-      console.error('Get recipe with missing items error:', error);
-      throw new HttpException(
-        'Failed to get recipe with missing items',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -617,10 +609,40 @@ export class RecipeService {
 
         if (product) {
           const currentAmount = product.isInInventory ? product.size || 0 : 0;
-          const missingAmount = Math.max(0, requiredAmount - currentAmount);
+
+          // Convert current amount to ingredient unit for comparison
+          const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
+          const conversionResult = UnitConverter.convertUnits(
+            currentAmount,
+            product.measureUnit,
+            ingredientUnit,
+            product.name,
+          );
+
+          const availableInIngredientUnit = conversionResult.success
+            ? conversionResult.convertedSize
+            : currentAmount;
+
+          const missingAmount = Math.max(
+            0,
+            requiredAmount - availableInIngredientUnit,
+          );
 
           if (missingAmount > 0) {
-            product.wantedSize = (product.wantedSize || 0) + missingAmount;
+            // Convert missing amount back to product's preferred unit for shopping list
+            const shoppingListConversion = UnitConverter.convertUnits(
+              missingAmount,
+              ingredientUnit,
+              product.measureUnit,
+              product.name,
+            );
+
+            const missingInProductUnit = shoppingListConversion.success
+              ? shoppingListConversion.convertedSize
+              : missingAmount;
+
+            product.wantedSize =
+              (product.wantedSize || 0) + missingInProductUnit;
             product.isInShoppingList = true;
             await this.productRepository.save(product);
           }
@@ -640,5 +662,131 @@ export class RecipeService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async recalculateMissingItems(
+    recipeId: string,
+    servings: number,
+  ): Promise<KitchenItemDto[]> {
+    try {
+      const recipe = await this.recipeRepository.findOne({
+        where: { id: recipeId },
+        relations: ['user', 'user.inventory', 'user.inventory.products'],
+      });
+
+      if (!recipe) {
+        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
+      }
+
+      const missingItems: KitchenItemDto[] = [];
+      const inventoryProducts = recipe.user.inventory.products.filter(
+        (item) => item.isInInventory && item.size > 0,
+      );
+
+      for (const ingredient of recipe.ingredients) {
+        const requiredAmount =
+          ingredient.baseAmount + ingredient.perServingAmount * servings;
+
+        let availableAmount = 0;
+        if (ingredient.productId) {
+          const product = inventoryProducts.find(
+            (p) => p.id === ingredient.productId,
+          );
+
+          if (product) {
+            const conversionResult = UnitConverter.convertUnits(
+              product.size || 0,
+              product.measureUnit,
+              this.mapStringToMeasureUnit(ingredient.unit),
+              product.name,
+            );
+
+            availableAmount = conversionResult.success
+              ? conversionResult.convertedSize
+              : product.size || 0;
+          }
+        }
+
+        if (availableAmount < requiredAmount) {
+          missingItems.push({
+            name: ingredient.name,
+            size: requiredAmount - availableAmount,
+            measureUnit: ingredient.unit,
+          });
+        }
+      }
+
+      return missingItems;
+    } catch (error) {
+      console.error('Recalculate missing items error:', error);
+      throw new HttpException(
+        'Failed to recalculate missing items',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getRecipeWithMissingItems(
+    recipeId: string,
+    servings: number,
+  ): Promise<RecipeResponseDto> {
+    try {
+      const recipe = await this.recipeRepository.findOne({
+        where: { id: recipeId },
+        relations: ['user', 'user.inventory', 'user.inventory.products'],
+      });
+
+      if (!recipe) {
+        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
+      }
+
+      const missingItems = await this.recalculateMissingItems(
+        recipeId,
+        servings,
+      );
+
+      return {
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        steps: recipe.steps,
+        totalTimeMinutes: recipe.totalTimeMinutes,
+        lastAccessedAt: recipe.lastAccessedAt,
+        missingItems: missingItems.length > 0 ? missingItems : undefined,
+      };
+    } catch (error) {
+      console.error('Get recipe with missing items error:', error);
+      throw new HttpException(
+        'Failed to get recipe with missing items',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private isValidUUID(str: string): boolean {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  }
+
+  private mapStringToMeasureUnit(unit: string): MeasureUnit {
+    const unitMappings = {
+      גרם: MeasureUnit.GRAM,
+      קילוגרם: MeasureUnit.KILOGRAM,
+      'ק״ג': MeasureUnit.KILOGRAM,
+      kg: MeasureUnit.KILOGRAM,
+      ליטר: MeasureUnit.LITER,
+      'ל׳': MeasureUnit.LITER,
+      l: MeasureUnit.LITER,
+      מיליליטר: MeasureUnit.MILLILITER,
+      'מ״ל': MeasureUnit.MILLILITER,
+      ml: MeasureUnit.MILLILITER,
+      יחידות: MeasureUnit.UNIT,
+      יח: MeasureUnit.UNIT,
+      unit: MeasureUnit.UNIT,
+    };
+
+    return unitMappings[unit.toLowerCase()] || MeasureUnit.UNIT;
   }
 }
