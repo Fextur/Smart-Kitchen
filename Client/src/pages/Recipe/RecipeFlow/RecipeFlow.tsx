@@ -14,11 +14,11 @@ import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRecipe } from "@/hooks/useRecipe";
 import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import { ItemList } from "@/components/ItemList";
-import { IngredientCard } from "./IngredientCard";
-import { PreparationStepCard } from "./PreparationStepCard";
 import { getIngredientSize } from "@/utils/recipeUtils";
 import { useUser } from "@/hooks/useUser";
 import { Recipe } from "@/types";
+import { IngredientCard } from "@/pages/Recipe/IngredientCard";
+import { PreparationStepCard } from "@/pages/Recipe/RecipeFlow/PreparationStepCard";
 
 interface ChatMessage {
   text: string;
@@ -473,8 +473,6 @@ const RecipeFlow: FC = () => {
                           border: "2px solid #E49A61",
                           fontWeight: 600,
                           "&:hover": {
-                            // bgcolor: "#E49A61",
-                            // color: "white",
                             boxShadow: "0 4px 12px rgba(228, 154, 97, 0.4)",
                             transform: "translateY(-1px)",
                             transition: "all 0.2s ease",

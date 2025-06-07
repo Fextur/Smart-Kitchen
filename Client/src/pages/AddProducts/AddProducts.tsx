@@ -6,7 +6,7 @@ import { ItemList } from "@/components/ItemList";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { KitchenItemCard } from "@/components/KitchenItemCard/KitchenItemCard";
-import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
+import { AddProductsDialog } from "@/pages/AddProducts/AddProductsDialog/AddProductsDialog";
 
 interface AddProductsLocationState {
   items?: KitchenItem[];

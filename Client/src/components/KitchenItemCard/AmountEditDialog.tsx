@@ -27,7 +27,6 @@ export const AmountEditDialog: FC<AmountEditDialogProps> = ({
   const [unit, setUnit] = useState(currentUnit);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Reset form when dialog opens with new data
   useEffect(() => {
     if (isOpen) {
       setSize(currentSize);

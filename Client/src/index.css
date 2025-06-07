@@ -21,7 +21,6 @@ body {
   min-height: 100vh;
 }
 
-/* Custom Scrollbar Styles - Apple-like design */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
@@ -59,7 +58,6 @@ body {
   background: transparent;
 }
 
-/* Specific styling for the app containers */
 .MuiBox-root::-webkit-scrollbar-thumb {
   background: rgba(228, 154, 97, 0.3);
   background-clip: content-box;

@@ -17,11 +17,10 @@ export const useKitchenItems = () => {
           `${API_ROUTES.products}/by-inventory/${kitchen.id}`
         );
 
-        // Sort by latest update date (most recent first)
         return data.sort((a, b) => {
           const dateA = new Date(a.latestUpdateDate || "1970-01-01").getTime();
           const dateB = new Date(b.latestUpdateDate || "1970-01-01").getTime();
-          return dateB - dateA; // Descending order (latest first)
+          return dateB - dateA;
         });
       }
     } catch (error) {
@@ -62,7 +61,6 @@ export const useKitchenItems = () => {
     items: (KitchenItem | ShoppingListItem)[]
   ) => {
     try {
-      console.log(items);
       const { data } = await api.post<(KitchenItem | ShoppingListItem)[]>(
         `${API_ROUTES.products}/updateBulk`,
         {

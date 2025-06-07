@@ -3,7 +3,7 @@ import { Box, Button, Typography } from "@mui/material";
 import { Plus, ScanLine, Edit } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
-import { ImageSelectionDialog } from "@/components/AddProductsDialog/ImageSelectionDialog";
+import { ImageSelectionDialog } from "@/pages/AddProducts/AddProductsDialog/ImageSelectionDialog";
 
 interface AddProductsDialogProps {
   isOpen: boolean;

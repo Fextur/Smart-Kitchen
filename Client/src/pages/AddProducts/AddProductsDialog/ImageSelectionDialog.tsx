@@ -5,7 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
 import { useCameraCapture } from "@/hooks/useCameraCapture";
 import { useReceiptScanner } from "@/hooks/useReceiptScanner";
-import { CameraCaptureDialog } from "@/components/AddProductsDialog/CameraCaptureDialog";
+import { CameraCaptureDialog } from "@/pages/AddProducts/AddProductsDialog/CameraCaptureDialog";
 
 interface ImageSelectionDialogProps {
   isOpen: boolean;

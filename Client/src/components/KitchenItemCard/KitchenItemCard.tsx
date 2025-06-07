@@ -45,7 +45,7 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
 
   const handleDelete = () => {
     handleAmountSave(0, item.measureUnit);
-    setShowDeleteDialog(false); // Close the dialog after deletion
+    setShowDeleteDialog(false);
   };
 
   return (

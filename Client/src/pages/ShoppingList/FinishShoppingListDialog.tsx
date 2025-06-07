@@ -3,7 +3,7 @@ import { Box, Button, Typography } from "@mui/material";
 import { ScanLine, Edit, Check, ScrollText } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
-import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
+import { AddProductsDialog } from "@/pages/AddProducts/AddProductsDialog/AddProductsDialog";
 import { ShoppingListItem, KitchenItem } from "@/types";
 
 interface FinishShoppingListDialogProps {
@@ -35,7 +35,6 @@ export const FinishShoppingListDialog: FC<FinishShoppingListDialogProps> = ({
   };
 
   const handleAutoAddToKitchen = () => {
-    // Convert shopping list items to kitchen items
     const kitchenItems: KitchenItem[] = shoppingListItems.map(
       (item, index) => ({
         id: `shopping-${index}-${Date.now()}`,
@@ -47,9 +46,8 @@ export const FinishShoppingListDialog: FC<FinishShoppingListDialogProps> = ({
     );
 
     onClose();
-    onFinish(); // This will clear the shopping list
+    onFinish();
 
-    // Navigate to add products page with the shopping list items
     (navigate as any)({
       to: "/add-products",
       state: {

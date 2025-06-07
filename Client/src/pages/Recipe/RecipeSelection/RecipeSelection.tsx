@@ -14,10 +14,10 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRecipe } from "@/hooks/useRecipe";
 import { Preferences, Recipe } from "@/types";
-import { ServingsDialog } from "@/components/ServingsDialog";
-import { MissingIngredientsDialog } from "@/pages/Recipe/MissingIngredientsDialog";
+import { ServingsDialog } from "@/pages/Recipe/ServingsDialog";
 import { ItemList } from "@/components/ItemList";
 import { RecipeCard } from "./RecipeCard";
+import { MissingIngredientsDialog } from "@/pages/Recipe/RecipeSelection/MissingIngredientsDialog";
 
 interface RecipeSelectionLocationState {
   servings?: number;

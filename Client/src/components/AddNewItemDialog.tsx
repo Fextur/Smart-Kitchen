@@ -23,7 +23,6 @@ export const AddNewItemDialog: FC<AddNewItemDialogProps> = ({
   const [unit, setUnit] = useState<SizeUnit>(SizeUnit.UNIT);
   const [expirationDate, setExpirationDate] = useState("");
 
-  // Clear form data when dialog opens
   useEffect(() => {
     if (isOpen) {
       setName("");

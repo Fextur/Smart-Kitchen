@@ -7,7 +7,7 @@ import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
 import { KitchenItemCard } from "@/components/KitchenItemCard/KitchenItemCard";
 import { useRecipe } from "@/hooks/useRecipe";
-import { RecipeCard } from "@/pages/Recipe/RecipeCard";
+import { RecipeCard } from "@/pages/Recipe/RecipeSelection/RecipeCard";
 
 const Home: FC = () => {
   const { items, isLoading, updateItemsMutation, categorizedItems } =
@@ -30,7 +30,6 @@ const Home: FC = () => {
 
   const handleEditItem = useCallback(
     (item: KitchenItem) => {
-      console.log(item);
       updateItemsMutation.mutate([item]);
     },
     [updateItemsMutation]

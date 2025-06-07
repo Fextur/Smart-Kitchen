@@ -2,8 +2,8 @@ import { FC, useState, useEffect, useCallback } from "react";
 import { Box, IconButton, Fab } from "@mui/material";
 import { Plus, CookingPot, ScrollText } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
-import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
-import { ServingsDialog } from "@/components/ServingsDialog";
+import { AddProductsDialog } from "@/pages/AddProducts/AddProductsDialog/AddProductsDialog";
+import { ServingsDialog } from "@/pages/Recipe/ServingsDialog";
 
 const HomeFooter: FC = () => {
   const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);

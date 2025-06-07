@@ -13,10 +13,10 @@ import { useEffect } from "react";
 import Register from "@/pages/Register";
 import { KitchenItem, Recipe } from "@/types";
 import { useUser } from "@/hooks/useUser";
-import AddProducts from "@/pages/AddProducts";
+import AddProducts from "@/pages/AddProducts/AddProducts";
 import ShoppingList from "@/pages/ShoppingList/ShoppingList";
-import RecipeSelection from "@/pages/Recipe/RecipeSelection";
-import RecipeFlow from "@/pages/Recipe/RecipeFlow";
+import RecipeSelection from "@/pages/Recipe/RecipeSelection/RecipeSelection";
+import RecipeFlow from "@/pages/Recipe/RecipeFlow/RecipeFlow";
 
 interface AddProductsLocationState {
   items: KitchenItem[];

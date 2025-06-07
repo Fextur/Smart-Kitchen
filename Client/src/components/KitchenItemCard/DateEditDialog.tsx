@@ -16,12 +16,10 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
   currentDate,
   onSave,
 }) => {
-  // Convert ISO date to yyyy-MM-dd format for the date input
   const formatDateForInput = (dateString: string): string => {
     if (!dateString) return "";
     try {
-      // Parse the date and format it without timezone conversion
-      const date = new Date(dateString + "T00:00:00"); // Add time to prevent timezone issues
+      const date = new Date(dateString + "T00:00:00");
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
@@ -33,7 +31,6 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
 
   const [date, setDate] = useState(formatDateForInput(currentDate));
 
-  // Reset form when dialog opens with new data
   useEffect(() => {
     if (isOpen) {
       setDate(formatDateForInput(currentDate));

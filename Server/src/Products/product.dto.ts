@@ -35,7 +35,6 @@ export class ProductDto {
 
   @IsOptional()
   @Transform(({ value }) => {
-    // Handle null, undefined, and empty string cases
     if (value === null || value === undefined || value === '') {
       return null;
     }
@@ -43,7 +42,7 @@ export class ProductDto {
   })
   @IsDate()
   @Type(() => Date)
-  expirationDate?: Date | null; // Allow both undefined and null
+  expirationDate?: Date | null;
 }
 export class CreateProductsDto {
   @IsArray()

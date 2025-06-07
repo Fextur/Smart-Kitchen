@@ -2,11 +2,11 @@ import { FC } from "react";
 import { Box, Button } from "@mui/material";
 import { ShoppingCart, ArrowLeft, AlertCircle } from "lucide-react";
 import { Dialog } from "@/components/Dialog";
-import { IngredientCard } from "./IngredientCard";
 import { Recipe } from "@/types";
 import { ItemList } from "@/components/ItemList";
 import { useRecipe } from "@/hooks/useRecipe";
 import { useNavigate } from "@tanstack/react-router";
+import { IngredientCard } from "@/pages/Recipe/IngredientCard";
 
 interface MissingIngredientsDialogProps {
   isOpen: boolean;

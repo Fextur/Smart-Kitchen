@@ -85,7 +85,6 @@ export const useRecipe = () => {
         `${API_ROUTES.recipes}/history/${user.id}`
       );
 
-      // Sort by lastAccessedAt (most recent first)
       return data.sort((a, b) => {
         const dateA = a.lastAccessedAt
           ? new Date(a.lastAccessedAt).getTime()
@@ -93,7 +92,7 @@ export const useRecipe = () => {
         const dateB = b.lastAccessedAt
           ? new Date(b.lastAccessedAt).getTime()
           : 0;
-        return dateB - dateA; // Descending order (latest first)
+        return dateB - dateA;
       });
     } catch (error) {
       console.error("Fetch used recipes error:", error);

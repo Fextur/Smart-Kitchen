@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { ScrollText } from "lucide-react";
-import { IngredientsDrawer } from "@/pages/Recipe/IngredientsDrawer";
+import { IngredientsDrawer } from "@/pages/Recipe/RecipeSelection/IngredientsDrawer";
 import { Recipe } from "@/types";
 
 interface RecipeCardProps {

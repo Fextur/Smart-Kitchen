@@ -13,7 +13,6 @@ export const QRCodeGenerator: FC<QRCodeGeneratorProps> = ({
   const [currentUrl, setCurrentUrl] = useState<string>("");
 
   useEffect(() => {
-    // Get the current URL dynamically
     const url = value || window.location.origin;
     setCurrentUrl(url);
   }, [value]);
@@ -41,7 +40,6 @@ export const QRCodeGenerator: FC<QRCodeGeneratorProps> = ({
     );
   }
 
-  // Simple QR Code implementation using a free API service
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(
     currentUrl
   )}&format=png&margin=20&color=000000&bgcolor=ffffff`;
@@ -71,7 +69,6 @@ export const QRCodeGenerator: FC<QRCodeGeneratorProps> = ({
           objectFit: "contain",
         }}
         onError={(e) => {
-          // Fallback if the API fails
           const target = e.target as HTMLImageElement;
           target.style.display = "none";
           target.parentElement!.innerHTML = `

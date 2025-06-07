@@ -1,8 +1,8 @@
 import { FC } from "react";
 import { Box, Typography } from "@mui/material";
 import { Drawer } from "@/components/Drawer";
-import { IngredientCard } from "./IngredientCard";
-import { Recipe, RecipeIngredient } from "@/types";
+import { IngredientCard } from "../IngredientCard";
+import { Recipe } from "@/types";
 import { ItemList } from "@/components/ItemList";
 import { getIngredientSize } from "@/utils/recipeUtils";
 

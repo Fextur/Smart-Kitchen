@@ -1,7 +1,7 @@
 import { FC, ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { QRCodeGenerator } from "@/components/QRCodeGenerator";
+import { QRCodeGenerator } from "@/pages/MobileWrapper/QRCodeGenerator";
 
 interface MobileWrapperProps {
   children: ReactNode;

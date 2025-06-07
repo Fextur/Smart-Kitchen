@@ -5,7 +5,7 @@ import { User, UserWithKitchen } from "@/types";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
 import { useAtom } from "jotai";
-import { userAtom } from "@/atoms";
+import { userAtom } from "@/atoms/atoms";
 import { useKitchen } from "./useKitchen";
 
 export const useUser = () => {

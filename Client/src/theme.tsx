@@ -109,7 +109,6 @@ export const theme = createTheme({
           "&::-webkit-scrollbar-corner": {
             backgroundColor: "transparent",
           },
-          // Firefox scrollbar styling
           scrollbarWidth: "thin",
           scrollbarColor: "rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05)",
         },
