@@ -1,4 +1,3 @@
-// Server/src/Recipes/recipe.service.ts - Complete file
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -136,7 +135,6 @@ export class RecipeService {
             const requiredAmount =
               ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-            // Try to match and standardize units
             const { matchedProduct, standardizedIngredient } =
               await this.matchAndStandardizeIngredient(
                 ingredient,
@@ -150,7 +148,6 @@ export class RecipeService {
             if (matchedProduct) {
               productId = matchedProduct.id;
 
-              // Convert available amount to ingredient unit for comparison
               const conversionResult = UnitConverter.convertUnits(
                 matchedProduct.size || 0,
                 matchedProduct.measureUnit,
@@ -168,7 +165,6 @@ export class RecipeService {
               productId,
             });
 
-            // Calculate missing amount in the standardized unit
             const requiredAmountStandardized =
               standardizedIngredient.baseAmount +
               standardizedIngredient.perServingAmount * servings;
@@ -200,9 +196,6 @@ export class RecipeService {
     }
   }
 
-  /**
-   * Match ingredient to inventory and standardize units
-   */
   private async matchAndStandardizeIngredient(
     ingredient: any,
     inventoryProducts: Product[],
@@ -211,7 +204,6 @@ export class RecipeService {
     matchedProduct: Product | null;
     standardizedIngredient: any;
   }> {
-    // Find matching product in inventory
     const matchingResult =
       await this.productMatchingService.findMatchingProducts(
         [ingredient.name],
@@ -229,7 +221,6 @@ export class RecipeService {
     ) {
       matchedProduct = match.matchedProduct;
 
-      // Try to standardize ingredient unit to match inventory
       const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
       const areCompatible = UnitConverter.areUnitsCompatible(
         ingredientUnit,
@@ -238,7 +229,6 @@ export class RecipeService {
       );
 
       if (areCompatible) {
-        // Convert ingredient amounts to inventory unit
         const baseConversion = UnitConverter.convertUnits(
           ingredient.baseAmount,
           ingredientUnit,
@@ -349,7 +339,6 @@ export class RecipeService {
             );
 
             if (product) {
-              // Convert available amount to ingredient unit for comparison
               const conversionResult = UnitConverter.convertUnits(
                 product.size || 0,
                 product.measureUnit,
@@ -534,7 +523,6 @@ export class RecipeService {
             const amountToConsume =
               ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-            // Convert consumption amount to product's unit
             const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
             const conversionResult = UnitConverter.convertUnits(
               amountToConsume,
@@ -610,7 +598,6 @@ export class RecipeService {
         if (product) {
           const currentAmount = product.isInInventory ? product.size || 0 : 0;
 
-          // Convert current amount to ingredient unit for comparison
           const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
           const conversionResult = UnitConverter.convertUnits(
             currentAmount,
@@ -629,7 +616,6 @@ export class RecipeService {
           );
 
           if (missingAmount > 0) {
-            // Convert missing amount back to product's preferred unit for shopping list
             const shoppingListConversion = UnitConverter.convertUnits(
               missingAmount,
               ingredientUnit,

@@ -1,4 +1,3 @@
-// Server/src/ShoppingList/shoppingList.service.ts - Updated with simple unit conversion
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -60,7 +59,6 @@ export class ShoppingListService {
       finalUnit?: string;
     }> = [];
 
-    // Handle products with IDs (direct references)
     const productsWithIds = products.filter((p) => p.id);
     const productsWithoutIds = products.filter((p) => !p.id);
 
@@ -76,7 +74,6 @@ export class ShoppingListService {
         );
       }
 
-      // Check if unit conversion is needed for shopping list
       const areCompatible = UnitConverter.areUnitsCompatible(
         existingProduct.measureUnit,
         productDto.measureUnit,
@@ -108,7 +105,6 @@ export class ShoppingListService {
           finalUnit: existingProduct.measureUnit,
         });
       } else {
-        // Units incompatible, create separate entry
         const newProduct = this.productRepository.create({
           name: `${productDto.name} (${productDto.measureUnit})`,
           size: 0,
@@ -135,7 +131,6 @@ export class ShoppingListService {
       }
     }
 
-    // Handle products without IDs (need matching)
     if (productsWithoutIds.length > 0) {
       const productNames = productsWithoutIds.map((p) => p.name);
 
@@ -153,7 +148,6 @@ export class ShoppingListService {
           match.matchedProduct &&
           (match.confidence === 'high' || match.confidence === 'medium')
         ) {
-          // Check unit compatibility
           const areCompatible = UnitConverter.areUnitsCompatible(
             match.matchedProduct.measureUnit,
             productDto.measureUnit,
@@ -188,7 +182,6 @@ export class ShoppingListService {
               finalUnit: match.matchedProduct.measureUnit,
             });
           } else {
-            // Create new product with incompatible units
             const newProduct = this.productRepository.create({
               name: productDto.name,
               size: 0,
@@ -214,7 +207,6 @@ export class ShoppingListService {
             });
           }
         } else {
-          // No match found, create new product
           const newProduct = this.productRepository.create({
             name: productDto.name,
             size: 0,
@@ -292,7 +284,6 @@ export class ShoppingListService {
       );
     }
 
-    // Units should be compatible since it's the same product
     existingProduct.wantedSize =
       (existingProduct.wantedSize || 0) + (product.size || 0);
     existingProduct.size = Math.max(
@@ -340,7 +331,6 @@ export class ShoppingListService {
       );
     }
 
-    // Handle unit changes in shopping list
     if (updates.measureUnit && updates.measureUnit !== product.measureUnit) {
       const newUnit = this.mapStringToMeasureUnit(updates.measureUnit);
       const areCompatible = UnitConverter.areUnitsCompatible(
@@ -350,7 +340,6 @@ export class ShoppingListService {
       );
 
       if (areCompatible) {
-        // Convert existing wantedSize to new unit
         const conversionResult = UnitConverter.convertUnits(
           product.wantedSize || 0,
           product.measureUnit,
@@ -367,7 +356,6 @@ export class ShoppingListService {
           `Cannot convert shopping list units for ${product.name}: ` +
             `${product.measureUnit} -> ${newUnit}`,
         );
-        // Keep original unit if conversion not possible
         delete updates.measureUnit;
       }
     }
@@ -395,9 +383,6 @@ export class ShoppingListService {
     await this.productRepository.save(product);
   }
 
-  /**
-   * Map string unit to MeasureUnit enum
-   */
   private mapStringToMeasureUnit(unit: string): MeasureUnit {
     const unitMappings = {
       גרם: MeasureUnit.GRAM,
@@ -419,9 +404,6 @@ export class ShoppingListService {
     return unitMappings[unit.toLowerCase()] || MeasureUnit.UNIT;
   }
 
-  /**
-   * Consolidate shopping list items with compatible units
-   */
   async consolidateShoppingListUnits(inventoryId: string): Promise<{
     consolidatedCount: number;
     errors: string[];
@@ -441,7 +423,6 @@ export class ShoppingListService {
     for (const product of shoppingListProducts) {
       if (processedIds.has(product.id)) continue;
 
-      // Find similar products that can be consolidated
       const similarProducts = shoppingListProducts.filter(
         (p) =>
           p.id !== product.id &&
@@ -458,7 +439,6 @@ export class ShoppingListService {
 
         if (areCompatible) {
           try {
-            // Convert and merge
             const conversionResult = UnitConverter.convertUnits(
               similarProduct.wantedSize || 0,
               similarProduct.measureUnit,
@@ -471,7 +451,6 @@ export class ShoppingListService {
                 (product.wantedSize || 0) + conversionResult.convertedSize;
               await this.productRepository.save(product);
 
-              // Remove the similar product
               await this.productRepository.remove(similarProduct);
 
               processedIds.add(similarProduct.id);
@@ -494,27 +473,20 @@ export class ShoppingListService {
     };
   }
 
-  /**
-   * Check if two product names are similar enough to consolidate
-   */
   private areSimilarProducts(name1: string, name2: string): boolean {
     const normalize = (name: string) => name.trim().toLowerCase();
     const n1 = normalize(name1);
     const n2 = normalize(name2);
 
-    // Exact match
     if (n1 === n2) return true;
 
-    // One contains the other
     if (n1.includes(n2) || n2.includes(n1)) return true;
 
-    // Similar with minor differences (brands, etc.)
     const words1 = n1.split(/\s+/);
     const words2 = n2.split(/\s+/);
 
     const commonWords = words1.filter((word) => words2.includes(word));
 
-    // If majority of words are common, consider similar
     return commonWords.length >= Math.min(words1.length, words2.length) * 0.7;
   }
 }

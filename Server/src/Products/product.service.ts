@@ -1,8 +1,8 @@
-// Server/src/Products/product.service.ts - Updated with simple unit conversion
 import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,8 +21,10 @@ export interface CreateProductsResult {
     matchedWith?: string;
     confidence?: string;
     unitConversionApplied?: boolean;
+    conversionType?: string;
     originalUnit?: string;
     finalUnit?: string;
+    conversionDetails?: string;
   }>;
 }
 
@@ -37,47 +39,6 @@ export class ProductService {
 
     private productMatchingService: ProductMatchingService,
   ) {}
-
-  async mergeProductQuantities(
-    existingProduct: Product,
-    newProductSize: number,
-    newExpirationDate?: Date,
-  ): Promise<Product> {
-    try {
-      const currentSize = Number(existingProduct.size) || 0;
-      const additionalSize = Number(newProductSize) || 0;
-
-      if (isNaN(currentSize)) {
-        console.warn(
-          `Invalid current size for product ${existingProduct.name}: ${existingProduct.size}`,
-        );
-      }
-
-      if (isNaN(additionalSize)) {
-        console.warn(`Invalid additional size: ${newProductSize}`);
-        throw new Error(`Invalid size value: ${newProductSize}`);
-      }
-
-      const newSize = currentSize + additionalSize;
-
-      existingProduct.size = newSize;
-
-      if (newExpirationDate) {
-        existingProduct.expirationDate = newExpirationDate;
-      }
-
-      existingProduct.latestUpdateDate = new Date();
-
-      const savedProduct = await this.productRepository.save(existingProduct);
-
-      return savedProduct;
-    } catch (error) {
-      console.error(`Error merging product quantities:`, error);
-      throw new InternalServerErrorException(
-        `Failed to merge product quantities: ${error.message}`,
-      );
-    }
-  }
 
   async create(
     createProductsDto: CreateProductsDto,
@@ -101,8 +62,10 @@ export class ProductService {
       matchedWith?: string;
       confidence?: string;
       unitConversionApplied?: boolean;
+      conversionType?: string;
       originalUnit?: string;
       finalUnit?: string;
+      conversionDetails?: string;
     }> = [];
 
     let allProducts = await this.productRepository.find({
@@ -113,29 +76,29 @@ export class ProductService {
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
 
-      const matchingResult =
-        await this.productMatchingService.findMatchingProducts(
-          [product.name],
-          inventoryId,
-          allProducts,
-        );
-
-      const match = matchingResult.matches[0];
-
-      if (
-        match.matchedProduct &&
-        (match.confidence === 'high' || match.confidence === 'medium')
-      ) {
-        // Check unit compatibility before merging
-        const compatibility =
-          this.productMatchingService.checkProductCompatibility(
-            match.matchedProduct,
-            product.measureUnit,
-            product.name,
+      try {
+        const matchingResult =
+          await this.productMatchingService.findMatchingProducts(
+            [product.name],
+            inventoryId,
+            allProducts,
           );
 
-        if (compatibility.compatible) {
+        const match = matchingResult.matches[0];
+
+        if (
+          match.matchedProduct &&
+          (match.confidence === 'high' || match.confidence === 'medium')
+        ) {
+          const compatibility =
+            this.productMatchingService.checkProductCompatibility(
+              match.matchedProduct,
+              product.measureUnit,
+              product.name,
+            );
+
           const originalUnit = match.matchedProduct.measureUnit;
+          const originalSize = match.matchedProduct.size;
 
           const updatedProduct =
             await this.productMatchingService.mergeProductQuantities(
@@ -147,14 +110,21 @@ export class ProductService {
             );
 
           updatedProducts.push(updatedProduct);
+
+          const conversionApplied =
+            originalUnit !== updatedProduct.measureUnit ||
+            product.measureUnit !== updatedProduct.measureUnit;
+
           matchingResults.push({
             productName: product.name,
             action: 'merged',
             matchedWith: match.matchedProduct.name,
             confidence: match.confidence,
-            unitConversionApplied: originalUnit !== updatedProduct.measureUnit,
+            unitConversionApplied: conversionApplied,
+            conversionType: compatibility.conversionType,
             originalUnit: product.measureUnit,
             finalUnit: updatedProduct.measureUnit,
+            conversionDetails: `${originalSize} ${originalUnit} + ${product.size} ${product.measureUnit} = ${updatedProduct.size} ${updatedProduct.measureUnit}`,
           });
 
           const index = allProducts.findIndex(
@@ -164,46 +134,40 @@ export class ProductService {
             allProducts[index] = updatedProduct;
           }
         } else {
-          // Units not compatible, create new product
-          const newProduct = this.productRepository.create({
-            ...product,
-            latestUpdateDate: new Date(),
-            inventory,
-            isInInventory: true,
-          });
+          const newProduct = await this.createNewProduct(product, inventory);
+          createdProducts.push(newProduct);
+          allProducts.push(newProduct);
 
-          const savedProduct = await this.productRepository.save(newProduct);
-          createdProducts.push(savedProduct);
           matchingResults.push({
             productName: product.name,
             action: 'created',
             unitConversionApplied: false,
             originalUnit: product.measureUnit,
             finalUnit: product.measureUnit,
+            conversionDetails: `New product - no existing match found`,
           });
-
-          allProducts.push(savedProduct);
         }
-      } else {
-        // No match found, create new product
-        const newProduct = this.productRepository.create({
-          ...product,
-          latestUpdateDate: new Date(),
-          inventory,
-          isInInventory: true,
-        });
+      } catch (error) {
+        console.error(`Error processing product ${product.name}:`, error);
 
-        const savedProduct = await this.productRepository.save(newProduct);
-        createdProducts.push(savedProduct);
-        matchingResults.push({
-          productName: product.name,
-          action: 'created',
-          unitConversionApplied: false,
-          originalUnit: product.measureUnit,
-          finalUnit: product.measureUnit,
-        });
+        try {
+          const newProduct = await this.createNewProduct(product, inventory);
+          createdProducts.push(newProduct);
 
-        allProducts.push(savedProduct);
+          matchingResults.push({
+            productName: product.name,
+            action: 'created',
+            unitConversionApplied: false,
+            originalUnit: product.measureUnit,
+            finalUnit: product.measureUnit,
+            conversionDetails: `Created due to processing error: ${error.message}`,
+          });
+        } catch (createError) {
+          console.error(`Failed to create fallback product:`, createError);
+          throw new InternalServerErrorException(
+            `Failed to process product ${product.name}: ${createError.message}`,
+          );
+        }
       }
     }
 
@@ -212,6 +176,21 @@ export class ProductService {
       updatedProducts,
       matchingResults,
     };
+  }
+
+  private async createNewProduct(
+    productDto: any,
+    inventory: any,
+  ): Promise<Product> {
+    const newProduct = this.productRepository.create({
+      ...productDto,
+      latestUpdateDate: new Date(),
+      inventory,
+      isInInventory: true,
+    });
+
+    const savedProduct = await this.productRepository.save(newProduct);
+    return Array.isArray(savedProduct) ? savedProduct[0] : savedProduct;
   }
 
   async findByInventoryId(inventoryId: string): Promise<Product[]> {
@@ -243,46 +222,58 @@ export class ProductService {
 
   async updateBulk(updateProductsDto: UpdateProductsDto): Promise<Product[]> {
     const { products } = updateProductsDto;
-
     const updatedProducts: Product[] = [];
 
     for (const productDto of products) {
-      // Check if this is a unit change scenario
-      if (productDto.id) {
-        const existingProduct = await this.productRepository.findOne({
-          where: { id: productDto.id },
-        });
+      try {
+        if (productDto.id) {
+          const existingProduct = await this.productRepository.findOne({
+            where: { id: productDto.id },
+          });
 
-        if (
-          existingProduct &&
-          existingProduct.measureUnit !== productDto.measureUnit
-        ) {
-          // Unit change detected - try conversion
-          const conversionResult = UnitConverter.convertUnits(
-            productDto.size || existingProduct.size || 0,
-            productDto.measureUnit || existingProduct.measureUnit,
-            existingProduct.measureUnit, // Keep existing unit as target
-            existingProduct.name,
-          );
+          if (
+            existingProduct &&
+            productDto.measureUnit &&
+            existingProduct.measureUnit !== productDto.measureUnit
+          ) {
+            const compatibility =
+              this.productMatchingService.checkProductCompatibility(
+                existingProduct,
+                productDto.measureUnit,
+                existingProduct.name,
+              );
 
-          if (conversionResult.success) {
-            productDto.size = conversionResult.convertedSize;
-            productDto.measureUnit = existingProduct.measureUnit;
-          } else {
-            console.warn(
-              `Cannot convert units for ${existingProduct.name}: ` +
-                `${productDto.measureUnit} -> ${existingProduct.measureUnit}`,
-            );
-            // Keep the new unit if conversion isn't possible
+            if (compatibility.compatible) {
+              const conversionResult = UnitConverter.convertUnits(
+                productDto.size || existingProduct.size || 0,
+                productDto.measureUnit,
+                existingProduct.measureUnit,
+                existingProduct.name,
+              );
+
+              if (conversionResult.success) {
+                productDto.size = conversionResult.convertedSize;
+                productDto.measureUnit = existingProduct.measureUnit;
+              } else {
+                console.warn(`Conversion failed, allowing unit change`);
+              }
+            } else {
+              console.warn(`Units incompatible: ${compatibility.reason}`);
+            }
           }
         }
-      }
 
-      const updatedProduct = await this.productRepository.save({
-        ...productDto,
-        latestUpdateDate: new Date(),
-      });
-      updatedProducts.push(updatedProduct);
+        const updatedProduct = await this.productRepository.save({
+          ...productDto,
+          latestUpdateDate: new Date(),
+        });
+        updatedProducts.push(updatedProduct);
+      } catch (error) {
+        console.error(`Error updating product ${productDto.id}:`, error);
+        throw new InternalServerErrorException(
+          `Failed to update product: ${error.message}`,
+        );
+      }
     }
 
     return updatedProducts;
@@ -300,10 +291,46 @@ export class ProductService {
     }
   }
 
-  /**
-   * Standardize product units across the entire inventory
-   */
-  async standardizeInventoryUnits(inventoryId: string): Promise<{
+  async getConversionPreview(
+    productId: string,
+    newSize: number,
+    newUnit: string,
+  ): Promise<{
+    success: boolean;
+    convertedSize?: number;
+    conversionType?: string;
+    explanation?: string;
+  }> {
+    const product = await this.productRepository.findOne({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with id ${productId} not found`);
+    }
+
+    const newMeasureUnit = this.mapStringToMeasureUnit(newUnit);
+
+    return this.productMatchingService.getConversionPreview(
+      newSize,
+      newMeasureUnit,
+      product.measureUnit,
+      product.name,
+    );
+  }
+
+  private mapStringToMeasureUnit(unit: string): any {
+    const unitMappings = {
+      גרם: 'GRAM',
+      קילוגרם: 'KILOGRAM',
+      ליטר: 'LITER',
+      מיליליטר: 'MILLILITER',
+      יחידות: 'UNIT',
+    };
+    return unitMappings[unit] || unit;
+  }
+
+  async optimizeInventoryUnits(inventoryId: string): Promise<{
     processedCount: number;
     conversionsApplied: number;
     errors: string[];
@@ -321,6 +348,7 @@ export class ProductService {
         const preferredUnit = UnitConverter.getPreferredUnit(
           product.size || 0,
           product.measureUnit,
+          product.name,
         );
 
         if (preferredUnit !== product.measureUnit) {
@@ -343,7 +371,7 @@ export class ProductService {
 
         processedCount++;
       } catch (error) {
-        errors.push(`Failed to standardize ${product.name}: ${error.message}`);
+        errors.push(`Failed to optimize ${product.name}: ${error.message}`);
       }
     }
 
