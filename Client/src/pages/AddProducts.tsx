@@ -78,7 +78,6 @@ const AddProducts: FC = () => {
       <Box
         sx={{
           p: 2,
-          // bgcolor: "background.paper",
           borderBottom: "1px solid",
           borderColor: "grey.100",
           direction: "rtl",

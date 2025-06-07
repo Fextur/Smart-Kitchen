@@ -28,14 +28,6 @@ export class ShoppingListController {
     );
   }
 
-  // @Post(':inventoryId/transfer-to-inventory')
-  // async transferProductsToInventory(@Param('inventoryId') inventoryId: string) {
-  //   await this.shoppingListService.transferProductsToInventory(inventoryId);
-  //   return {
-  //     message: 'Products transferred to inventory and shopping list cleared',
-  //   };
-  // }
-
   @Post(':inventoryId/transfer-to-shopping-list')
   async transferProductsToShoppingList(
     @Param('inventoryId') inventoryId: string,

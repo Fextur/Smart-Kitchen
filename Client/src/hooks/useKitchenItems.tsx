@@ -110,10 +110,28 @@ export const useKitchenItems = () => {
 
   const consumeKitchenItem = async (items: KitchenItem[]) => {
     try {
-      return items;
+      const validItems = items.filter((item) => item.id && item.id !== "");
+
+      if (validItems.length === 0) {
+        console.warn("No valid items to consume (all items missing IDs)");
+        return [];
+      }
+
+      const itemsToUpdate = validItems.map((item) => ({
+        ...item,
+      }));
+
+      const { data } = await api.post<KitchenItem[]>(
+        `${API_ROUTES.products}/updateBulk`,
+        {
+          products: itemsToUpdate,
+        }
+      );
+
+      return data;
     } catch (error) {
-      console.error(error);
-      throw new Error("An unexpected error occurred");
+      console.error("Error consuming kitchen items:", error);
+      throw new Error("Failed to consume kitchen items");
     }
   };
 
@@ -121,6 +139,9 @@ export const useKitchenItems = () => {
     mutationFn: (items: KitchenItem[]) => consumeKitchenItem(items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+    },
+    onError: (error) => {
+      console.error("Consume mutation error:", error);
     },
   });
 

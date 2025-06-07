@@ -1,4 +1,3 @@
-// src/ProductMatching/productMatching.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -32,9 +31,8 @@ export class ProductMatchingService {
   async findMatchingProducts(
     newProductNames: string[],
     inventoryId: string,
-    existingProductsList?: Product[], // Optional parameter for dynamic list
+    existingProductsList?: Product[],
   ): Promise<ProductMatchingResult> {
-    // Use provided list or fetch from database
     const existingProducts =
       existingProductsList ||
       (await this.productRepository.find({
@@ -43,7 +41,6 @@ export class ProductMatchingService {
       }));
 
     if (existingProducts.length === 0) {
-      // No existing products, return all as no matches
       return {
         matches: newProductNames.map((name) => ({
           productName: name,
@@ -53,7 +50,6 @@ export class ProductMatchingService {
       };
     }
 
-    // Use GPT to analyze matches
     const matches = await this.analyzeProductMatches(
       newProductNames,
       existingProducts,
@@ -132,12 +128,10 @@ export class ProductMatchingService {
 
       const aiResult = JSON.parse(responseContent);
 
-      // Map AI results to our format with actual Product entities
       const matches: ProductMatch[] = aiResult.matches.map((match: any) => {
         let matchedProduct: Product | null = null;
 
         if (match.matchedProductName && match.confidence !== 'none') {
-          // Find the actual product entity - be more precise in matching
           matchedProduct =
             existingProducts.find((p) => {
               const exactMatch = p.name === match.matchedProductName;
@@ -161,7 +155,6 @@ export class ProductMatchingService {
     } catch (error) {
       console.error('Error in product matching:', error);
 
-      // Fallback: return no matches if AI fails
       return newProductNames.map((name) => ({
         productName: name,
         matchedProduct: null,
@@ -177,15 +170,12 @@ export class ProductMatchingService {
     newExpirationDate?: Date,
     isInInventory?: boolean,
   ): Promise<Product> {
-    // Add the new quantity to existing (not replace)
     existingProduct.size += newProductSize;
 
-    // Override expiration date if new one is provided
     if (newExpirationDate) {
       existingProduct.expirationDate = newExpirationDate;
     }
 
-    // Always override the latest update date
     existingProduct.latestUpdateDate = new Date();
     existingProduct.isInInventory =
       isInInventory ?? existingProduct.isInInventory;

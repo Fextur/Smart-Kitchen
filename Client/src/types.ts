@@ -1,5 +1,3 @@
-// Client/src/types.ts - Update the recipe-related types
-
 export enum SizeUnit {
   GRAM = "גרם",
   KILOGRAM = "קילוגרם",
@@ -65,7 +63,7 @@ export type ShoppingListItem = Omit<KitchenItem, "expirationDate"> & {
 };
 
 export type RecipeIngredient = {
-  productId?: string; // Reference to the actual product
+  productId?: string;
   name: string;
   baseAmount: number;
   perServingAmount: number;

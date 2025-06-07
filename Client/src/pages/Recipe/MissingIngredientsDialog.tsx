@@ -1,4 +1,3 @@
-// Client/src/pages/Recipe/MissingIngredientsDialog.tsx
 import { FC } from "react";
 import { Box, Button } from "@mui/material";
 import { ShoppingCart, ArrowLeft, AlertCircle } from "lucide-react";
@@ -29,20 +28,17 @@ export const MissingIngredientsDialog: FC<MissingIngredientsDialogProps> = ({
 
   const handleAddToShoppingList = async () => {
     try {
-      // First save the recipe to ensure products exist and get a valid recipe ID
       const savedRecipe = await saveRecipeMutation.mutateAsync({
         ...recipe,
-        id: undefined, // Don't pass stub IDs, let the server generate new ones
+        id: undefined,
       });
 
-      // Then add missing items to shopping list using the real recipe ID
       if (savedRecipe.id) {
         await addMissingToShoppingListMutation.mutateAsync({
           recipeId: savedRecipe.id,
           servings,
         });
 
-        // Navigate to shopping list after successful addition
         navigate({ to: "/shopping-list" });
       }
 

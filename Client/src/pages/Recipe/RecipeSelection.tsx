@@ -31,7 +31,7 @@ const RecipeSelection: FC = () => {
     generatedRecipes,
     usedRecipes,
     saveRecipeMutation,
-    getRecipeWithMissingItemsMutation, // Add this
+    getRecipeWithMissingItemsMutation,
   } = useRecipe();
 
   const locationState = routerState.location.state as
@@ -62,7 +62,6 @@ const RecipeSelection: FC = () => {
     try {
       let recipeWithMissingItems: Recipe;
 
-      // If recipe has an ID (it's an old recipe), fetch it with calculated missing items
       if (recipe.id) {
         recipeWithMissingItems =
           await getRecipeWithMissingItemsMutation.mutateAsync({
@@ -70,7 +69,6 @@ const RecipeSelection: FC = () => {
             servings,
           });
       } else {
-        // For new generated recipes, missing items are already calculated
         recipeWithMissingItems = recipe;
       }
 
@@ -86,7 +84,6 @@ const RecipeSelection: FC = () => {
       }
     } catch (error) {
       console.error("Failed to get recipe with missing items:", error);
-      // Fallback to original recipe if fetching fails
       setSelectedRecipe(recipe);
       if (recipe.missingItems && recipe.missingItems.length > 0) {
         setShowMissingDialog(true);
@@ -305,7 +302,7 @@ const RecipeSelection: FC = () => {
           isOpen={showMissingDialog}
           onClose={() => setShowMissingDialog(false)}
           recipe={selectedRecipe}
-          servings={servings || 0} // Make sure to pass servings
+          servings={servings || 0}
           onContinueAnyway={handleContinueAnyway}
         />
       )}

@@ -1,4 +1,3 @@
-// Server/src/Recipes/recipe.module.ts
 import { Module } from '@nestjs/common';
 import { RecipeController } from './recipe.controller';
 import { RecipeService } from './recipe.service';

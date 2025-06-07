@@ -4,7 +4,7 @@ import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { Product } from './product.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
-import { ProductMatchingModule } from 'src/ProductMatching/productMatching.module'; // Add this import
+import { ProductMatchingModule } from 'src/ProductMatching/productMatching.module';
 
 @Module({
   imports: [

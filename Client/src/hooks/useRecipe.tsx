@@ -1,4 +1,3 @@
-// Client/src/hooks/useRecipe.tsx
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { GenerateRecipeParams, Recipe, KitchenItem } from "@/types";
@@ -155,7 +154,6 @@ export const useRecipe = () => {
   const consumeIngredientsMutation = useMutation({
     mutationFn: consumeIngredients,
     onSuccess: () => {
-      // Invalidate kitchen items to refresh the inventory
       queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
     },
     onError: (error) => {
@@ -190,7 +188,6 @@ export const useRecipe = () => {
   const addMissingToShoppingListMutation = useMutation({
     mutationFn: addMissingToShoppingList,
     onSuccess: () => {
-      // Invalidate shopping list to refresh
       queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
     },
     onError: (error) => {

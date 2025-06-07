@@ -1,4 +1,3 @@
-// Server/src/Recipes/recipe.service.ts
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -57,7 +56,6 @@ export class RecipeService {
         ? `המשתמש מחפש: ${searchQuery}.`
         : '';
 
-      // Get ALL products from inventory (not just those in inventory)
       const allInventoryProducts = user.inventory.products;
 
       const productsString = allInventoryProducts
@@ -120,7 +118,6 @@ export class RecipeService {
       const resContent = cleanOpenAIResponse(resContentRaw);
       const generatedRecipes = JSON.parse(resContent);
 
-      // Process each recipe to add product IDs and calculate missing items
       const recipesWithInventoryStatus = await Promise.all(
         generatedRecipes.map(async (recipe: any) => {
           const processedIngredients: Array<{
@@ -136,7 +133,6 @@ export class RecipeService {
             const requiredAmount =
               ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-            // Try to find matching product
             const matchingResult =
               await this.productMatchingService.findMatchingProducts(
                 [ingredient.name],
@@ -158,13 +154,11 @@ export class RecipeService {
                 : 0;
             }
 
-            // Add processed ingredient with productId if found
             processedIngredients.push({
               ...ingredient,
               productId,
             });
 
-            // Check if missing
             if (availableAmount < requiredAmount) {
               missingItems.push({
                 name: ingredient.name,
@@ -241,7 +235,6 @@ export class RecipeService {
         return [];
       }
 
-      // Get user inventory separately to avoid join issues
       const user = await this.userRepository.findOne({
         where: { id: userId },
         relations: ['inventory', 'inventory.products'],
@@ -251,12 +244,10 @@ export class RecipeService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Get products that are actually in inventory with stock
       const inventoryProducts = user.inventory.products.filter(
         (item) => item.isInInventory && item.size > 0,
       );
 
-      // Calculate missing ingredients for each recipe
       const recipesWithMissingItems = recipes.map((recipe, index) => {
         const missingItems: KitchenItemDto[] = [];
         const defaultServings = 2;
@@ -296,9 +287,6 @@ export class RecipeService {
         };
       });
 
-      console.log(
-        `Returning ${recipesWithMissingItems.length} recipes to client`,
-      );
       return recipesWithMissingItems;
     } catch (error) {
       console.error('Get user recipe history error:', error);
@@ -320,13 +308,11 @@ export class RecipeService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Step 1: Process ingredients and create/find products
       const processedIngredients = await this.processRecipeIngredients(
         saveRecipeDto.ingredients,
         user.inventory.id,
       );
 
-      // Step 2: Create and save the recipe with product IDs
       const recipeData: any = {
         name: saveRecipeDto.name,
         description: saveRecipeDto.description,
@@ -334,10 +320,9 @@ export class RecipeService {
         steps: saveRecipeDto.steps,
         totalTimeMinutes: saveRecipeDto.totalTimeMinutes,
         user,
-        lastAccessedAt: new Date(), // Mark as accessed when saved
+        lastAccessedAt: new Date(),
       };
 
-      // Only set ID if it's a valid UUID
       if (saveRecipeDto.id && this.isValidUUID(saveRecipeDto.id)) {
         recipeData.id = saveRecipeDto.id;
       }
@@ -346,7 +331,6 @@ export class RecipeService {
 
       const savedRecipe = await this.recipeRepository.save(recipe);
 
-      // Ensure savedRecipe is a single entity, not an array
       const recipeEntity = Array.isArray(savedRecipe)
         ? savedRecipe[0]
         : savedRecipe;
@@ -359,7 +343,7 @@ export class RecipeService {
         steps: recipeEntity.steps,
         totalTimeMinutes: recipeEntity.totalTimeMinutes,
         lastAccessedAt: recipeEntity.lastAccessedAt,
-        missingItems: saveRecipeDto.missingItems, // Use the original missing items from generation
+        missingItems: saveRecipeDto.missingItems,
       };
     } catch (error) {
       console.error('Save recipe error:', error);
@@ -377,13 +361,11 @@ export class RecipeService {
     const processedIngredients: any[] = [];
 
     for (const ingredient of ingredients) {
-      // If ingredient already has productId from generation, use it
       if (ingredient.productId) {
         processedIngredients.push(ingredient);
         continue;
       }
 
-      // If no productId, create new product
       const newProduct = this.productRepository.create({
         name: ingredient.name,
         size: 0,
@@ -428,7 +410,6 @@ export class RecipeService {
     try {
       const { recipeId, servings, userId } = consumeDto;
 
-      // Find the recipe
       const recipe = await this.recipeRepository.findOne({
         where: { id: recipeId },
         relations: ['user'],
@@ -438,7 +419,6 @@ export class RecipeService {
         throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
       }
 
-      // Verify user owns the recipe (optional, since we're also checking by user)
       if (recipe.user.id !== userId) {
         throw new HttpException(
           'Unauthorized access to recipe',
@@ -448,7 +428,6 @@ export class RecipeService {
 
       const updatedProducts: Product[] = [];
 
-      // Process each ingredient
       for (const ingredient of recipe.ingredients) {
         if (ingredient.productId) {
           const product = await this.productRepository.findOne({
@@ -456,11 +435,9 @@ export class RecipeService {
           });
 
           if (product && product.isInInventory && product.size > 0) {
-            // Calculate amount to consume
             const amountToConsume =
               ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-            // Decrease the product size
             const newSize = Math.max(0, product.size - amountToConsume);
             product.size = newSize;
             product.latestUpdateDate = new Date();
@@ -471,7 +448,6 @@ export class RecipeService {
         }
       }
 
-      // Update recipe lastAccessedAt
       recipe.lastAccessedAt = new Date();
       await this.recipeRepository.save(recipe);
 
@@ -510,7 +486,6 @@ export class RecipeService {
 
       const missingItems: KitchenItemDto[] = [];
 
-      // Get only products that are actually in inventory with stock
       const inventoryProducts = recipe.user.inventory.products.filter(
         (item) => item.isInInventory && item.size > 0,
       );
@@ -519,7 +494,6 @@ export class RecipeService {
         const requiredAmount =
           ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-        // Find the actual product for this ingredient
         let availableAmount = 0;
         if (ingredient.productId) {
           const product = inventoryProducts.find(
@@ -563,7 +537,6 @@ export class RecipeService {
 
       const missingItems: KitchenItemDto[] = [];
 
-      // Get only products that are actually in inventory with stock
       const inventoryProducts = recipe.user.inventory.products.filter(
         (item) => item.isInInventory && item.size > 0,
       );
@@ -572,7 +545,6 @@ export class RecipeService {
         const requiredAmount =
           ingredient.baseAmount + ingredient.perServingAmount * servings;
 
-        // Find the actual product for this ingredient
         let availableAmount = 0;
         if (ingredient.productId) {
           const product = inventoryProducts.find(
@@ -615,7 +587,6 @@ export class RecipeService {
     servings: number,
   ): Promise<{ message: string }> {
     try {
-      // Find the recipe
       const recipe = await this.recipeRepository.findOne({
         where: { id: recipeId },
         relations: ['user'],
@@ -625,7 +596,6 @@ export class RecipeService {
         throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
       }
 
-      // Verify user owns the recipe
       if (recipe.user.id !== userId) {
         throw new HttpException(
           'Unauthorized access to recipe',
@@ -633,10 +603,9 @@ export class RecipeService {
         );
       }
 
-      // Process each ingredient
       for (const ingredient of recipe.ingredients) {
         if (!ingredient.productId) {
-          continue; // Skip ingredients without product IDs
+          continue;
         }
 
         const requiredAmount =
@@ -651,7 +620,6 @@ export class RecipeService {
           const missingAmount = Math.max(0, requiredAmount - currentAmount);
 
           if (missingAmount > 0) {
-            // Add missing amount to shopping list
             product.wantedSize = (product.wantedSize || 0) + missingAmount;
             product.isInShoppingList = true;
             await this.productRepository.save(product);
@@ -659,7 +627,6 @@ export class RecipeService {
         }
       }
 
-      // Update recipe lastAccessedAt
       recipe.lastAccessedAt = new Date();
       await this.recipeRepository.save(recipe);
 

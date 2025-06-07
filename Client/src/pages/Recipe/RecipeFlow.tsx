@@ -17,8 +17,8 @@ import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
 import { IngredientCard } from "./IngredientCard";
 import { PreparationStepCard } from "./PreparationStepCard";
 import { getIngredientSize } from "@/utils/recipeUtils";
-import { useKitchenItems } from "@/hooks/useKitchenItems";
-import { KitchenItem, Recipe } from "@/types";
+import { useUser } from "@/hooks/useUser";
+import { Recipe } from "@/types";
 
 interface ChatMessage {
   text: string;
@@ -44,14 +44,8 @@ enum ActiveSection {
 const RecipeFlow: FC = () => {
   const navigate = useNavigate();
   const routerState = useRouterState();
-  const { askQuestionMutation } = useRecipe();
-  const { consumeItemsMutation } = useKitchenItems();
-
-  const locationState = routerState.location.state as
-    | RecipeFlowLocationState
-    | undefined;
-  const servings = locationState?.servings || 2;
-  const recipe = locationState?.recipe;
+  const { askQuestionMutation, consumeIngredientsMutation } = useRecipe();
+  const { user } = useUser();
 
   const [flowStep, setFlowStep] = useState<FlowStep>(FlowStep.STEPS_VIEW);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -62,28 +56,34 @@ const RecipeFlow: FC = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>(
     ActiveSection.INSTRUCTIONS
   );
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!recipe) {
-    navigate({ to: "/home" });
-    return null;
-  }
-
-  const currentStep = recipe.steps[currentStepIndex];
-  const isLastStep = currentStepIndex === recipe.steps.length - 1;
-  const timerMinutes = currentStep?.timerMinutes || 0;
-  const timerSeconds = timerMinutes * 60;
-
-  const hasActiveChat = chatMessages.length > 0;
-  const isAskingQuestion = askQuestionMutation.isPending;
+  const locationState = routerState.location.state as
+    | RecipeFlowLocationState
+    | undefined;
+  const servings = locationState?.servings || 2;
+  const recipe = locationState?.recipe;
 
   useEffect(() => {
-    if (flowStep === FlowStep.INTERACTIVE) {
+    if (!recipe) {
+      navigate({ to: "/home" });
+    } else {
+      setIsLoading(false);
+    }
+  }, [recipe, navigate]);
+
+  useEffect(() => {
+    if (recipe && flowStep === FlowStep.INTERACTIVE) {
+      const currentStep = recipe.steps[currentStepIndex];
+      const timerMinutes = currentStep?.timerMinutes || 0;
+      const timerSeconds = timerMinutes * 60;
+
       setTimer(timerSeconds);
       setIsTimerRunning(false);
       setChatMessages([]);
       setActiveSection(ActiveSection.INSTRUCTIONS);
     }
-  }, [currentStepIndex, timerSeconds, flowStep]);
+  }, [currentStepIndex, flowStep, recipe]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -109,8 +109,9 @@ const RecipeFlow: FC = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isAskingQuestion) return;
+    if (!inputMessage.trim() || isAskingQuestion || !recipe) return;
 
+    const currentStep = recipe.steps[currentStepIndex];
     const userMessage = inputMessage;
     setChatMessages([...chatMessages, { text: userMessage, isUser: true }]);
     setInputMessage("");
@@ -140,9 +141,12 @@ const RecipeFlow: FC = () => {
   };
 
   const handleContinue = () => {
+    if (!recipe) return;
+
     if (flowStep === FlowStep.STEPS_VIEW) {
       setFlowStep(FlowStep.INTERACTIVE);
     } else if (flowStep === FlowStep.INTERACTIVE) {
+      const isLastStep = currentStepIndex === recipe.steps.length - 1;
       if (isLastStep) {
         setFlowStep(FlowStep.COMPLETE);
       } else {
@@ -169,25 +173,59 @@ const RecipeFlow: FC = () => {
   };
 
   const handleConsumeIngredients = () => {
-    consumeItemsMutation.mutate(
-      recipe.ingredients.map(
-        (ingredient) =>
-          ({
-            id: "",
-            name: ingredient.name,
-            size: getIngredientSize(ingredient, servings),
-            measureUnit: ingredient.unit,
-            baseAmount: ingredient.baseAmount,
-            perServingAmount: ingredient.perServingAmount,
-          } as KitchenItem)
-      )
+    if (!recipe?.id) {
+      console.error("Recipe has no ID, cannot consume ingredients");
+      navigate({ to: "/home" });
+      return;
+    }
+
+    if (!user?.id) {
+      console.error("No user found, cannot consume ingredients");
+      navigate({ to: "/home" });
+      return;
+    }
+
+    consumeIngredientsMutation.mutate(
+      {
+        recipeId: recipe.id,
+        servings: servings,
+      },
+      {
+        onSuccess: () => {
+          navigate({ to: "/home" });
+        },
+        onError: (error) => {
+          console.error("Failed to consume ingredients:", error);
+          navigate({ to: "/home" });
+        },
+      }
     );
-    navigate({ to: "/home" });
   };
 
   const handleGoHome = () => {
     navigate({ to: "/home" });
   };
+
+  if (isLoading || !recipe) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+        }}
+      >
+        <Typography>טוען...</Typography>
+      </Box>
+    );
+  }
+
+  const currentStep = recipe.steps[currentStepIndex];
+  const timerMinutes = currentStep?.timerMinutes || 0;
+  const timerSeconds = timerMinutes * 60;
+  const hasActiveChat = chatMessages.length > 0;
+  const isAskingQuestion = askQuestionMutation.isPending;
 
   if (flowStep === FlowStep.STEPS_VIEW) {
     return (
@@ -740,6 +778,7 @@ const RecipeFlow: FC = () => {
               variant="contained"
               onClick={handleConsumeIngredients}
               endIcon={<ShoppingCart size={20} />}
+              disabled={consumeIngredientsMutation.isPending}
               sx={{
                 bgcolor: "primary.main",
                 color: "white",
@@ -751,10 +790,16 @@ const RecipeFlow: FC = () => {
                 "&:hover": {
                   bgcolor: "primary.dark",
                 },
+                "&:disabled": {
+                  bgcolor: "grey.300",
+                  color: "grey.500",
+                },
               }}
             >
               <Typography sx={{ marginLeft: "1rem" }}>
-                עדכן את המצרכים שהשתמשתי
+                {consumeIngredientsMutation.isPending
+                  ? "מעדכן מלאי..."
+                  : "עדכן את המצרכים שהשתמשתי"}
               </Typography>
             </Button>
 

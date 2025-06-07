@@ -1,4 +1,3 @@
-// Server/src/Recipes/recipe.dto.ts
 import {
   IsArray,
   IsNotEmpty,
@@ -88,7 +87,7 @@ export class ConsumeIngredientsDto {
 export class RecipeIngredientDto {
   @IsOptional()
   @IsUUID()
-  productId?: string; // Reference to the actual product
+  productId?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -146,8 +145,6 @@ export class KitchenItemDto {
   @IsString()
   latestUpdateDate?: string;
 }
-
-// Response DTOs
 export class RecipeResponseDto {
   id?: string;
   name: string;

@@ -1,4 +1,3 @@
-// src/ReceiptScanner/receiptScanner.controller.ts (Complete Updated File)
 import {
   Controller,
   Post,

@@ -1,4 +1,3 @@
-// routes.tsx
 import {
   createRootRoute,
   createRoute,

@@ -34,7 +34,6 @@ export class ShoppingListService {
   ): Promise<ShoppingListResult> {
     const { inventoryId, products } = createShoppingListDto;
 
-    // Verify inventory exists
     const inventory = await this.inventoryRepository.findOne({
       where: { id: inventoryId },
     });
@@ -52,11 +51,9 @@ export class ShoppingListService {
       confidence?: string;
     }> = [];
 
-    // Separate products with IDs from products without IDs
     const productsWithIds = products.filter((p) => p.id);
     const productsWithoutIds = products.filter((p) => !p.id);
 
-    // Handle products with existing IDs (Type 1: Update existing products)
     for (const productDto of productsWithIds) {
       const existingProduct = await this.productRepository.findOne({
         where: { id: productDto.id },
@@ -69,7 +66,6 @@ export class ShoppingListService {
         );
       }
 
-      // Add to wantedSize and ensure it's in shopping list
       existingProduct.wantedSize =
         (existingProduct.wantedSize || 0) + productDto.size;
       existingProduct.isInShoppingList = true;
@@ -84,11 +80,9 @@ export class ShoppingListService {
       });
     }
 
-    // Handle products without IDs (Type 2: Manual input - check for matches)
     if (productsWithoutIds.length > 0) {
       const productNames = productsWithoutIds.map((p) => p.name);
 
-      // Use product matching service to find potential matches
       const matchingResult =
         await this.productMatchingService.findMatchingProducts(
           productNames,
@@ -99,12 +93,10 @@ export class ShoppingListService {
         const productDto = productsWithoutIds[i];
         const match = matchingResult.matches[i];
 
-        // If we have a high or medium confidence match, update the existing product
         if (
           match.matchedProduct &&
           (match.confidence === 'high' || match.confidence === 'medium')
         ) {
-          // Update existing product's wantedSize
           match.matchedProduct.wantedSize =
             (match.matchedProduct.wantedSize || 0) + productDto.size;
           match.matchedProduct.isInShoppingList = true;
@@ -121,10 +113,9 @@ export class ShoppingListService {
             confidence: match.confidence,
           });
         } else {
-          // Create new product (not in inventory yet)
           const newProduct = this.productRepository.create({
             name: productDto.name,
-            size: 0, // Not in inventory yet
+            size: 0,
             wantedSize: productDto.size,
             measureUnit: productDto.measureUnit,
             expirationDate: productDto.expirationDate,
@@ -154,7 +145,6 @@ export class ShoppingListService {
   }
 
   async transferProductsToInventory(inventoryId: string): Promise<void> {
-    // Get all products in shopping list for this inventory
     const shoppingListProducts = await this.productRepository.find({
       where: {
         inventory: { id: inventoryId },
@@ -168,12 +158,10 @@ export class ShoppingListService {
       );
     }
 
-    // Transfer each product to inventory
     for (const product of shoppingListProducts) {
-      // Add wantedSize to actual size (or set size if it was 0)
       if (product.wantedSize) {
         product.size = (product.size || 0) + product.wantedSize;
-        product.wantedSize = 0; // Reset wanted size
+        product.wantedSize = 0;
       }
 
       product.isInInventory = true;
@@ -189,7 +177,6 @@ export class ShoppingListService {
     inventoryId: string,
     product: Product,
   ): Promise<void> {
-    // Find the actual product in the database
     const existingProduct = await this.productRepository.findOne({
       where: { id: product.id, inventory: { id: inventoryId } },
     });
@@ -200,7 +187,6 @@ export class ShoppingListService {
       );
     }
 
-    // Move size to wantedSize and add to shopping list
     existingProduct.wantedSize =
       (existingProduct.wantedSize || 0) + (product.size || 0);
     existingProduct.size = Math.max(
@@ -214,7 +200,6 @@ export class ShoppingListService {
   }
 
   async clearShoppingList(inventoryId: string): Promise<void> {
-    // Get all products in shopping list for this inventory
     const shoppingListProducts = await this.productRepository.find({
       where: {
         inventory: { id: inventoryId },
@@ -223,7 +208,6 @@ export class ShoppingListService {
     });
 
     for (const product of shoppingListProducts) {
-      // If product exists in inventory, just remove from shopping list
       product.isInShoppingList = false;
       product.wantedSize = 0;
       product.isChecked = false;
@@ -267,7 +251,6 @@ export class ShoppingListService {
       );
     }
 
-    // Product exists in inventory, just remove from shopping list
     product.isInShoppingList = false;
     product.wantedSize = 0;
     product.isChecked = false;

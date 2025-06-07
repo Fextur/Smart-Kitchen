@@ -14,7 +14,7 @@ import { Type } from 'class-transformer';
 export class ShoppingListProductDto {
   @IsOptional()
   @IsUUID()
-  id?: string; // Optional - only present when updating existing product
+  id?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -22,7 +22,7 @@ export class ShoppingListProductDto {
 
   @IsNumber()
   @IsNotEmpty()
-  size: number; // This will be added to wantedSize
+  size: number;
 
   @IsEnum(MeasureUnit)
   @IsNotEmpty()

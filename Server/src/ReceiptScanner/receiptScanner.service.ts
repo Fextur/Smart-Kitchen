@@ -1,4 +1,3 @@
-// src/ReceiptScanner/receiptScanner.service.ts (Complete Updated File)
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { VISION_CLIENT } from '../config/vision.config';
@@ -18,7 +17,7 @@ export interface ParsedProduct {
 export interface ReceiptScanOptions {
   bypassScanning?: boolean;
   mockReceiptText?: string;
-  inventoryId?: string; // Add inventory ID to get existing products
+  inventoryId?: string;
 }
 
 @Injectable()
@@ -94,7 +93,6 @@ export class ReceiptScannerService {
     inventoryId?: string,
   ): Promise<ParsedProduct[]> {
     try {
-      // Get existing products for better matching
       const existingProducts = await this.getExistingProducts(inventoryId);
       const existingProductsText =
         existingProducts.length > 0
@@ -208,7 +206,7 @@ export class ReceiptScannerService {
         name: product.name?.trim() || 'Unknown Product',
         size: Number(product.size) || 0,
         measureUnit: this.validateMeasureUnit(product.measureUnit),
-        expirationDate: null, // Will be handled by the matching service later
+        expirationDate: null,
       }));
 
       return processedProducts;

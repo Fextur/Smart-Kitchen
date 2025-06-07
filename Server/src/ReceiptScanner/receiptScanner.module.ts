@@ -1,4 +1,3 @@
-// src/ReceiptScanner/receiptScanner.module.ts (Complete Updated File)
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { VisionModule } from 'src/config/vision.config';

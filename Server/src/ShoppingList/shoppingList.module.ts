@@ -9,7 +9,7 @@ import { ProductMatchingModule } from 'src/ProductMatching/productMatching.modul
 @Module({
   imports: [
     TypeOrmModule.forFeature([Product, Inventory]),
-    ProductMatchingModule, // Add ProductMatching dependency
+    ProductMatchingModule,
   ],
   providers: [ShoppingListService],
   controllers: [ShoppingListController],

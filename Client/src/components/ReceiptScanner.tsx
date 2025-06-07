@@ -99,7 +99,7 @@ const ReceiptScanner = () => {
   const createProducts = async () => {
     await axios.post(`${import.meta.env.VITE_API_URL}/products`, {
       products: products,
-      userId: "5f6d36a1-e883-4e27-9f3a-c6c5e8a7b2d9", //TODO:change
+      userId: "5f6d36a1-e883-4e27-9f3a-c6c5e8a7b2d9",
     });
   };
 

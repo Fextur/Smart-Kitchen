@@ -1,4 +1,3 @@
-// Client/src/utils/recipeUtils.tsx
 import { RecipeIngredient } from "@/types";
 
 export const getIngredientSize = (

@@ -16,10 +16,10 @@ export class ProductDto {
 
   @IsNumber()
   @IsNotEmpty()
-  @Type(() => Number) // Ensure it's transformed to a number
+  @Type(() => Number)
   @Transform(({ value }) => {
     const num = Number(value);
-    return isNaN(num) ? 0 : num; // Default to 0 if NaN
+    return isNaN(num) ? 0 : num;
   })
   size: number;
 

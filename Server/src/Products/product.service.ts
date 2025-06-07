@@ -39,11 +39,9 @@ export class ProductService {
     newExpirationDate?: Date,
   ): Promise<Product> {
     try {
-      // Ensure both values are valid numbers
       const currentSize = Number(existingProduct.size) || 0;
       const additionalSize = Number(newProductSize) || 0;
 
-      // Validate that we have valid numbers
       if (isNaN(currentSize)) {
         console.warn(
           `Invalid current size for product ${existingProduct.name}: ${existingProduct.size}`,
@@ -55,21 +53,16 @@ export class ProductService {
         throw new Error(`Invalid size value: ${newProductSize}`);
       }
 
-      // Calculate new size
       const newSize = currentSize + additionalSize;
 
-      // Update the product
       existingProduct.size = newSize;
 
-      // Override expiration date if new one is provided
       if (newExpirationDate) {
         existingProduct.expirationDate = newExpirationDate;
       }
 
-      // Always override the latest update date
       existingProduct.latestUpdateDate = new Date();
 
-      // Save and return
       const savedProduct = await this.productRepository.save(existingProduct);
 
       return savedProduct;
@@ -81,7 +74,6 @@ export class ProductService {
     }
   }
 
-  // Also let's check the ProductService create method for potential issues
   async create(
     createProductsDto: CreateProductsDto,
   ): Promise<CreateProductsResult> {
@@ -105,7 +97,6 @@ export class ProductService {
       confidence?: string;
     }> = [];
 
-    // Keep track of all products (existing + newly created) for subsequent matches
     let allProducts = await this.productRepository.find({
       where: { inventory: { id: inventoryId } },
       select: ['id', 'name', 'measureUnit', 'size'],
@@ -116,19 +107,17 @@ export class ProductService {
 
       const matchingResult =
         await this.productMatchingService.findMatchingProducts(
-          [product.name], // Process one at a time
+          [product.name],
           inventoryId,
-          allProducts, // Pass current product list
+          allProducts,
         );
 
       const match = matchingResult.matches[0];
 
-      // Only merge if we have high or medium confidence match
       if (
         match.matchedProduct &&
         (match.confidence === 'high' || match.confidence === 'medium')
       ) {
-        // Merge with existing product - add quantities, override expiration and update date
         const updatedProduct =
           await this.productMatchingService.mergeProductQuantities(
             match.matchedProduct,
@@ -145,7 +134,6 @@ export class ProductService {
           confidence: match.confidence,
         });
 
-        // Update the product in our tracking list
         const index = allProducts.findIndex((p) => p.id === updatedProduct.id);
         if (index !== -1) {
           allProducts[index] = updatedProduct;
@@ -165,7 +153,6 @@ export class ProductService {
           action: 'created',
         });
 
-        // Add the new product to our tracking list for subsequent matches
         allProducts.push(savedProduct);
       }
     }

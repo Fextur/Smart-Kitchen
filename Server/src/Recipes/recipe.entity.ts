@@ -1,4 +1,3 @@
-// Server/src/Recipes/recipe.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -43,7 +42,7 @@ export class Recipe {
 }
 
 export interface RecipeIngredient {
-  productId?: string; // Reference to the actual product
+  productId?: string;
   name: string;
   baseAmount: number;
   perServingAmount: number;
