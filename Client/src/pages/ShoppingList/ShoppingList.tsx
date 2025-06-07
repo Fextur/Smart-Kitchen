@@ -9,6 +9,7 @@ import { ShoppingListItem } from "@/types";
 import { useShoppingListItems } from "@/hooks/useShoppingListItems";
 import { ShoppingListItemCard } from "@/pages/ShoppingList/ShoppingListItemCard";
 import { FinishShoppingListDialog } from "@/pages/ShoppingList/FinishShoppingListDialog";
+
 const ShoppingList: FC = () => {
   const { categorizedItems, isLoading, updateItemsMutation } =
     useKitchenItems();
@@ -168,6 +169,7 @@ const ShoppingList: FC = () => {
         onFinish={() => {
           clearShoppingListMutation.mutate();
         }}
+        shoppingListItems={shoppingListItems}
       />
     </div>
   );

@@ -110,7 +110,9 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
             gap: 1.5,
           }}
         >
-          {(item.expirationDate !== undefined || isEditing) && (
+          {((item.expirationDate !== undefined &&
+            item.expirationDate !== null) ||
+            isEditing) && (
             <Box
               onClick={isEditing ? () => setShowDateDialog(true) : undefined}
               sx={{
