@@ -12,9 +12,11 @@ import {
   JoinInventoryDto,
   LoginUserDto,
   UpdateUserDto,
+  UserWithToken,
 } from './user.dto';
 import { UnauthorizedException } from '@nestjs/common';
 import { Inventory } from 'src/Inventory/inventory.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
@@ -24,9 +26,27 @@ export class UserService {
 
     @InjectRepository(Inventory)
     private inventoryRepository: Repository<Inventory>,
+
+    private jwtService: JwtService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+  async generateAccessToken(id: User['id'], userName: User['userName']) {
+    const payload = {
+      sub: id,
+      userName: userName,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: process.env.TOKEN_SECRET,
+      expiresIn: process.env.TOKEN_EXPIRES,
+    });
+
+    return accessToken;
+  }
+
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<Omit<UserWithToken, 'password'>> {
     try {
       const { name, userName, email, password } = createUserDto;
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -46,9 +66,13 @@ export class UserService {
       });
 
       const savedUser = await this.userRepository.save(user);
+      const accessToken = await this.generateAccessToken(
+        savedUser.id,
+        savedUser.userName,
+      );
 
       const { password: _, ...userWithoutPassword } = savedUser;
-      return userWithoutPassword;
+      return { ...userWithoutPassword, accessToken };
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException('Failed to create user');
@@ -130,7 +154,9 @@ export class UserService {
     }
   }
 
-  async login(loginUserDto: LoginUserDto): Promise<Omit<User, 'password'>> {
+  async login(
+    loginUserDto: LoginUserDto,
+  ): Promise<Omit<UserWithToken, 'password'>> {
     const { userName, password } = loginUserDto;
 
     try {
@@ -147,7 +173,38 @@ export class UserService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
+      const accessToken = await this.generateAccessToken(
+        user.id,
+        user.userName,
+      );
+
       const { password: _, ...userWithoutPassword } = user;
+
+      return { ...userWithoutPassword, accessToken };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      throw new InternalServerErrorException('Login failed');
+    }
+  }
+
+  async validateToken(accessToken: string): Promise<Omit<User, 'password'>> {
+    const payload = this.jwtService.verify(accessToken, {
+      secret: process.env.TOKEN_SECRET,
+    });
+
+    const id = payload.sub;
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+        relations: ['inventory'],
+      });
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+
       return userWithoutPassword;
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;

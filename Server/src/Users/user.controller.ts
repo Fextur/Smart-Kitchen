@@ -46,6 +46,13 @@ export class UserController {
     return this.userService.login(loginUserDto);
   }
 
+  @Post('validate-token')
+  async validateToken(
+    @Body() { accessToken }: { accessToken: string },
+  ): Promise<Omit<User, 'password'>> {
+    return this.userService.validateToken(accessToken);
+  }
+
   @Post('join-to-inventory')
   async joinToInventory(@Body() joinInventoryDto: JoinInventoryDto) {
     return this.userService.joinToInventory(joinInventoryDto);
