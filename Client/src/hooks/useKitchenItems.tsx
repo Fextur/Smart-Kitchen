@@ -57,6 +57,7 @@ export const useKitchenItems = () => {
     items: (KitchenItem | ShoppingListItem)[]
   ) => {
     try {
+      console.log(items);
       const { data } = await api.post<(KitchenItem | ShoppingListItem)[]>(
         `${API_ROUTES.products}/updateBulk`,
         {

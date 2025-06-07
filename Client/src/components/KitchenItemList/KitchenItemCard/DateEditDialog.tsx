@@ -7,7 +7,7 @@ interface DateEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
   currentDate: string;
-  onSave: (date: string) => void;
+  onSave: (date: string | null) => void; // Updated to accept null instead of undefined
 }
 
 export const DateEditDialog: FC<DateEditDialogProps> = ({
@@ -16,7 +16,18 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
   currentDate,
   onSave,
 }) => {
-  const [date, setDate] = useState(currentDate);
+  // Convert ISO date to yyyy-MM-dd format for the date input
+  const formatDateForInput = (dateString: string): string => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  };
+
+  const [date, setDate] = useState(formatDateForInput(currentDate));
 
   const handleSave = () => {
     onSave(date);
@@ -24,7 +35,12 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
   };
 
   const handleCancel = () => {
-    setDate(currentDate);
+    setDate(formatDateForInput(currentDate));
+    onClose();
+  };
+
+  const handleClearDate = () => {
+    onSave(null); // Changed from empty string to undefined
     onClose();
   };
 
@@ -70,10 +86,7 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
         </Button>
 
         <Button
-          onClick={() => {
-            onSave("");
-            onClose();
-          }}
+          onClick={handleClearDate} // Updated to use the new handler
           variant="contained"
           fullWidth
           sx={{

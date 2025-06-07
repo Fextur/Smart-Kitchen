@@ -32,12 +32,11 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
       });
     }
   };
-
-  const handleDateSave = (expirationDate: string) => {
+  const handleDateSave = (expirationDate: string | null) => {
     if (onEdit) {
       onEdit({
         ...item,
-        expirationDate,
+        expirationDate: expirationDate, // Always include this field, even if null
         latestUpdateDate: new Date().toISOString().split("T")[0],
       });
     }

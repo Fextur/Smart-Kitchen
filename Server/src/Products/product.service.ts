@@ -105,7 +105,7 @@ export class ProductService {
               match.matchedProduct,
               product.size,
               product.measureUnit,
-              product.expirationDate,
+              product.expirationDate ?? undefined,
               true,
             );
 
@@ -227,12 +227,19 @@ export class ProductService {
     for (const productDto of products) {
       try {
         if (productDto.id) {
+          // Fetch the existing product first
           const existingProduct = await this.productRepository.findOne({
             where: { id: productDto.id },
           });
 
+          if (!existingProduct) {
+            throw new NotFoundException(
+              `Product with id ${productDto.id} not found`,
+            );
+          }
+
+          // Handle unit conversion logic
           if (
-            existingProduct &&
             productDto.measureUnit &&
             existingProduct.measureUnit !== productDto.measureUnit
           ) {
@@ -261,13 +268,35 @@ export class ProductService {
               console.warn(`Units incompatible: ${compatibility.reason}`);
             }
           }
-        }
 
-        const updatedProduct = await this.productRepository.save({
-          ...productDto,
-          latestUpdateDate: new Date(),
-        });
-        updatedProducts.push(updatedProduct);
+          // Update the existing product with new values
+          if (productDto.name !== undefined)
+            existingProduct.name = productDto.name;
+          if (productDto.size !== undefined)
+            existingProduct.size = productDto.size;
+          if (productDto.measureUnit !== undefined)
+            existingProduct.measureUnit = productDto.measureUnit;
+
+          // Handle expiration date specially - allow null to clear the date
+          if (productDto.expirationDate !== undefined) {
+            existingProduct.expirationDate =
+              typeof productDto.expirationDate === 'string' &&
+              productDto.expirationDate === ''
+                ? null
+                : productDto.expirationDate;
+          }
+
+          // Always update the latest update date
+          existingProduct.latestUpdateDate = new Date();
+
+          // Save the updated product
+          const savedProduct =
+            await this.productRepository.save(existingProduct);
+          updatedProducts.push(savedProduct);
+        } else {
+          // Handle case where no ID is provided (shouldn't happen in update, but just in case)
+          throw new BadRequestException('Product ID is required for update');
+        }
       } catch (error) {
         console.error(`Error updating product ${productDto.id}:`, error);
         throw new InternalServerErrorException(

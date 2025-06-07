@@ -39,7 +39,7 @@ export type KitchenItem = {
   name: string;
   size: number;
   measureUnit: SizeUnit;
-  expirationDate?: string;
+  expirationDate?: string | null;
   latestUpdateDate?: string;
 };
 

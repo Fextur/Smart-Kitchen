@@ -30,6 +30,7 @@ const Home: FC = () => {
 
   const handleEditItem = useCallback(
     (item: KitchenItem) => {
+      console.log(item);
       updateItemsMutation.mutate([item]);
     },
     [updateItemsMutation]

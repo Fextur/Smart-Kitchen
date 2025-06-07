@@ -34,11 +34,17 @@ export class ProductDto {
   measureUnit: MeasureUnit;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    // Handle null, undefined, and empty string cases
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    return value;
+  })
   @IsDate()
   @Type(() => Date)
-  expirationDate?: Date;
+  expirationDate?: Date | null; // Allow both undefined and null
 }
-
 export class CreateProductsDto {
   @IsArray()
   @IsNotEmpty()
