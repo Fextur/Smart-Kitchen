@@ -48,7 +48,7 @@ export class Product {
   @Column({
     type: 'timestamptz',
     nullable: true,
-    default: null, // Explicitly set default to null
+    default: null,
   })
   expirationDate: Date | null;
 
