@@ -57,13 +57,17 @@ export const useUser = () => {
         credential,
       });
 
+      // Save the token to localStorage - this was missing!
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+      }
+
       return data;
     } catch (error) {
       console.error("Invalid credentials ", error);
       throw error;
     }
   };
-
   const loginMutation = useMutation({
     mutationFn: ({
       userName,
