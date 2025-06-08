@@ -79,7 +79,6 @@ export const useUser = () => {
     onSuccess: (user) => {
       if (user) {
         const { inventory, accessToken, ...userWithoutInventory } = user;
-        console.log({ userWithoutInventory });
 
         setUser(userWithoutInventory);
         setKitchen(inventory);
@@ -90,8 +89,6 @@ export const useUser = () => {
   const loginByTokenMutation = useMutation({
     mutationFn: (token: string) => loginByToken(token),
     onSuccess: (user) => {
-      console.log({ user });
-
       if (user) {
         const { inventory, accessToken, ...userWithoutInventory } = user;
 
