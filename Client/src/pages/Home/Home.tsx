@@ -1,4 +1,4 @@
-import { FC, useMemo, useCallback } from "react";
+import { FC, useMemo, useCallback, useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import { ItemList } from "@/components/ItemList";
@@ -8,12 +8,27 @@ import { useUser } from "@/hooks/useUser";
 import { KitchenItemCard } from "@/components/KitchenItemCard/KitchenItemCard";
 import { useRecipe } from "@/hooks/useRecipe";
 import { RecipeCard } from "@/pages/Recipe/RecipeSelection/RecipeCard";
+import { useSearch } from "@tanstack/react-router";
+import type { RootSearchParams } from "@/routes";
+import { InvitationDialog } from "@/pages/Home/InvitationDialog";
 
 const Home: FC = () => {
   const { items, isLoading, updateItemsMutation, categorizedItems } =
     useKitchenItems();
   const { user } = useUser();
   const { usedRecipes } = useRecipe();
+  const search = useSearch({ from: "__root__" }) as RootSearchParams;
+
+  // State for join kitchen dialog
+  const [showJoinKitchenDialog, setShowJoinKitchenDialog] = useState(false);
+
+  // Check for join_kitchen parameter on component mount
+  useEffect(() => {
+    if (search?.join_kitchen && user) {
+      // Only show dialog if user is logged in and we have a kitchen hash
+      setShowJoinKitchenDialog(true);
+    }
+  }, [search?.join_kitchen, user]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -34,6 +49,10 @@ const Home: FC = () => {
     },
     [updateItemsMutation]
   );
+
+  const handleCloseJoinDialog = () => {
+    setShowJoinKitchenDialog(false);
+  };
 
   if (isLoading) {
     return (
@@ -129,21 +148,6 @@ const Home: FC = () => {
                   title="עומד להתקלקל"
                   renderRow={(itemIndex, isEditing) => (
                     <KitchenItemCard
-                      item={categorizedItems.expiringSoon[itemIndex]}
-                      isEditing={isEditing}
-                    />
-                  )}
-                />
-              </Box>
-            )}
-
-            {categorizedItems && categorizedItems.empty.length > 0 && (
-              <Box>
-                <ItemList
-                  itemsCount={categorizedItems.empty.length}
-                  title="נגמרו"
-                  renderRow={(itemIndex, isEditing) => (
-                    <KitchenItemCard
                       item={categorizedItems.empty[itemIndex]}
                       isEditing={isEditing}
                     />
@@ -173,6 +177,13 @@ const Home: FC = () => {
       </Box>
 
       <HomeFooter />
+
+      {/* Join Kitchen Dialog */}
+      <InvitationDialog
+        isOpen={showJoinKitchenDialog}
+        onClose={handleCloseJoinDialog}
+        kitchenHash={search?.join_kitchen || ""}
+      />
     </div>
   );
 };

@@ -1,8 +1,9 @@
-// Client/src/hooks/useUserSettings.tsx - Updated hook
+// Updated useUserSettings hook with proper query invalidation
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
 import { useUser } from "./useUser";
+import { useKitchen } from "./useKitchen";
 
 interface UserSettings {
   kitchenName: string;
@@ -34,6 +35,7 @@ interface JoinKitchenResponse {
 export const useUserSettings = () => {
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { setKitchen } = useKitchen();
 
   const fetchUserSettings = async (): Promise<UserSettings> => {
     try {
@@ -177,13 +179,32 @@ export const useUserSettings = () => {
 
   const createKitchenMutation = useMutation({
     mutationFn: createKitchen,
-    onSuccess: () => {
-      // Invalidate all kitchen-related data when switching kitchens
+    onSuccess: (data) => {
+      // Update kitchen context with new inventory
+      setKitchen(data.inventory);
+
+      // Invalidate all kitchen-related queries with new inventory ID
       queryClient.invalidateQueries({ queryKey: ["userSettings"] });
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
-      queryClient.invalidateQueries({ queryKey: ["usedRecipes"] });
+      queryClient.removeQueries({ queryKey: ["kitchenItems"] });
+      queryClient.removeQueries({ queryKey: ["shoppingListItems"] });
+      queryClient.removeQueries({ queryKey: ["usedRecipes"] });
       queryClient.invalidateQueries({ queryKey: ["kitchenHash"] });
+
+      // Clear stale data and refetch with new kitchen context
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["kitchenItems"],
+          exact: false,
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["shoppingListItems"],
+          exact: false,
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["usedRecipes"],
+          exact: false,
+        });
+      }, 100);
     },
     onError: (error) => {
       console.error("Create kitchen error:", error);
@@ -192,13 +213,34 @@ export const useUserSettings = () => {
 
   const joinKitchenMutation = useMutation({
     mutationFn: joinKitchenByHash,
-    onSuccess: () => {
-      // Invalidate all kitchen-related data when switching kitchens
-      queryClient.invalidateQueries({ queryKey: ["userSettings"] });
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
-      queryClient.invalidateQueries({ queryKey: ["usedRecipes"] });
-      queryClient.invalidateQueries({ queryKey: ["kitchenHash"] });
+    onSuccess: (data) => {
+      if (data.success && data.inventory) {
+        // Update kitchen context with new inventory
+        setKitchen(data.inventory);
+
+        // Invalidate all kitchen-related queries with new inventory ID
+        queryClient.invalidateQueries({ queryKey: ["userSettings"] });
+        queryClient.removeQueries({ queryKey: ["kitchenItems"] });
+        queryClient.removeQueries({ queryKey: ["shoppingListItems"] });
+        queryClient.removeQueries({ queryKey: ["usedRecipes"] });
+        queryClient.invalidateQueries({ queryKey: ["kitchenHash"] });
+
+        // Clear stale data and refetch with new kitchen context
+        setTimeout(() => {
+          queryClient.invalidateQueries({
+            queryKey: ["kitchenItems"],
+            exact: false,
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["shoppingListItems"],
+            exact: false,
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["usedRecipes"],
+            exact: false,
+          });
+        }, 100);
+      }
     },
     onError: (error) => {
       console.error("Join kitchen error:", error);

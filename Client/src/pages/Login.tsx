@@ -3,12 +3,14 @@ import { useForm } from "@tanstack/react-form";
 import { useEffect, useState } from "react";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { useUser } from "@/hooks/useUser";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import type { RootSearchParams } from "@/routes";
 
 const Login = () => {
   const [isGoogleErrorShown, setIsGoogleErrorShown] = useState(false);
 
   const navigate = useNavigate();
+  const search = useSearch({ from: "__root__" }) as RootSearchParams;
   const { login, loginByToken, isLoggingIn, loginError, loginGoogle } =
     useUser();
 
@@ -17,10 +19,17 @@ const Login = () => {
 
     if (accessToken) {
       loginByToken(accessToken, {
-        onSuccess: () => navigate({ to: "/" }),
+        onSuccess: () => {
+          // Preserve search params when navigating after successful token validation
+          navigate({
+            to: "/",
+            search: search, // Keep join_kitchen param
+            replace: true,
+          });
+        },
       });
     }
-  }, []);
+  }, [navigate, search, loginByToken]);
 
   const form = useForm({
     defaultValues: {
@@ -29,7 +38,14 @@ const Login = () => {
     },
     onSubmit: async ({ value }) => {
       login(value, {
-        onSuccess: () => navigate({ to: "/" }),
+        onSuccess: () => {
+          // Preserve search params when navigating after successful login
+          navigate({
+            to: "/",
+            search: search, // Keep join_kitchen param
+            replace: true,
+          });
+        },
       });
     },
   });
@@ -38,7 +54,14 @@ const Login = () => {
     loginGoogle(
       { credential: credentialResponse.credential },
       {
-        onSuccess: () => navigate({ to: "/" }),
+        onSuccess: () => {
+          // Preserve search params when navigating after successful Google login
+          navigate({
+            to: "/",
+            search: search, // Keep join_kitchen param
+            replace: true,
+          });
+        },
       }
     );
   };
@@ -134,7 +157,12 @@ const Login = () => {
           fullWidth
           variant="text"
           sx={{ m: 1, color: "#E49A61" }}
-          onClick={() => navigate({ to: "/register" })}
+          onClick={() =>
+            navigate({
+              to: "/register",
+              search: search, // Preserve search params when going to register
+            })
+          }
         >
           עוד אין לך חשבון קיים? הירשם כאן
         </Button>

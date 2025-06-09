@@ -5,6 +5,7 @@ import {
   Navigate,
   useNavigate,
   useRouterState,
+  useSearch,
 } from "@tanstack/react-router";
 import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home/Home";
@@ -32,6 +33,11 @@ interface RecipeFlowLocationState {
   recipe: Recipe;
 }
 
+// Define search params schema for root route
+interface RootSearchParams {
+  join_kitchen?: string;
+}
+
 declare module "@tanstack/react-router" {
   interface HistoryState {
     addProducts?: AddProductsLocationState;
@@ -44,6 +50,7 @@ const ProtectedLayout = () => {
   const { user } = useUser();
   const routerState = useRouterState();
   const navigate = useNavigate();
+  const search = useSearch({ from: "__root__" }) as RootSearchParams;
 
   useEffect(() => {
     if (
@@ -51,14 +58,23 @@ const ProtectedLayout = () => {
       routerState.location.pathname !== "/login" &&
       routerState.location.pathname !== "/register"
     ) {
-      navigate({ to: "/login", replace: true });
+      // Preserve search params when redirecting to login
+      navigate({
+        to: "/login",
+        search: search, // Keep the search params (including join_kitchen)
+        replace: true,
+      });
     }
-  }, [user, routerState.location.pathname, navigate]);
+  }, [user, routerState.location.pathname, navigate, search]);
 
   return <AppLayout />;
 };
 
+// Root route with search params validation
 const rootRoute = createRootRoute({
+  validateSearch: (search: Record<string, unknown>): RootSearchParams => ({
+    join_kitchen: search?.join_kitchen as string | undefined,
+  }),
   component: ProtectedLayout,
 });
 
@@ -74,6 +90,7 @@ const addProductsRoute = createRoute({
   component: AddProducts,
 });
 
+// Updated login route to preserve search params
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
@@ -92,6 +109,7 @@ const recipeFlowRoute = createRoute({
   component: RecipeFlow,
 });
 
+// Updated register route to preserve search params
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
@@ -126,10 +144,12 @@ export const router = createRouter({
   defaultPreload: "intent",
   defaultStaleTime: 5000,
   scrollRestoration: true,
+  defaultPendingComponent: () => <div>Loading...</div>,
 });
 
 export type {
   AddProductsLocationState,
   RecipeSelectionLocationState,
   RecipeFlowLocationState,
+  RootSearchParams,
 };

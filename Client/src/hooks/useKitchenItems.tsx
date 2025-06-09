@@ -23,8 +23,9 @@ export const useKitchenItems = () => {
           return dateB - dateA;
         });
       }
+      return [];
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching kitchen items:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -44,8 +45,9 @@ export const useKitchenItems = () => {
 
         return data;
       }
+      return [];
     } catch (error) {
-      console.error(error);
+      console.error("Error creating kitchen items:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -53,7 +55,10 @@ export const useKitchenItems = () => {
   const createItemsMutation = useMutation({
     mutationFn: (items: KitchenItem[]) => createKitchenItems(items),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+      // Use kitchen-specific query key
+      queryClient.invalidateQueries({
+        queryKey: ["kitchenItems", kitchen?.id],
+      });
     },
   });
 
@@ -70,7 +75,7 @@ export const useKitchenItems = () => {
 
       return data;
     } catch (error) {
-      console.error(error);
+      console.error("Error updating kitchen items:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -79,19 +84,22 @@ export const useKitchenItems = () => {
     mutationFn: (items: (KitchenItem | ShoppingListItem)[]) =>
       updateKitchenItem(items),
     onSuccess: () => {
+      // Use kitchen-specific query keys
       queryClient.invalidateQueries({
-        queryKey: ["kitchenItems"],
+        queryKey: ["kitchenItems", kitchen?.id],
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["shoppingListItems"],
+        queryKey: ["shoppingListItems", kitchen?.id],
       });
     },
   });
 
+  // Use kitchen-specific query key for proper invalidation
   const { data, isLoading } = useQuery({
-    queryKey: ["kitchenItems"],
+    queryKey: ["kitchenItems", kitchen?.id],
     queryFn: fetchKitchenItems,
+    enabled: !!kitchen?.id, // Only fetch when we have a kitchen
   });
 
   const categorizedItems = useMemo(() => {
@@ -160,7 +168,10 @@ export const useKitchenItems = () => {
   const consumeItemsMutation = useMutation({
     mutationFn: (items: KitchenItem[]) => consumeKitchenItem(items),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+      // Use kitchen-specific query key
+      queryClient.invalidateQueries({
+        queryKey: ["kitchenItems", kitchen?.id],
+      });
     },
     onError: (error) => {
       console.error("Consume mutation error:", error);
