@@ -5,26 +5,46 @@ import {
   JoinInventoryDto,
   LoginUserDto,
   UpdateUserDto,
+  CreateKitchenDto,
+  JoinKitchenDto,
 } from './user.dto';
 import { User } from './user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
+
+type UpdateUserSettingsDto = {
+  dietaryPreference: string;
+  sharedKitchenUsers: string[];
+  height?: number;
+  weight?: number;
+  notes?: string;
+  goal?: string;
+};
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get(':id/settings')
+  async getSettings(@Param('id') userId: string) {
+    return this.userService.getUserSettings(userId);
+  }
+
+  @Put(':id/settings')
+  async updateSettings(
+    @Param('id') userId: string,
+    @Body() body: UpdateUserSettingsDto,
+  ) {
+    return this.userService.updateUserSettings(userId, body);
+  }
+
   @Post()
-  async create(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<Omit<User, 'password'>> {
-    return this.userService.create(createUserDto);
+  async create(@Body() dto: CreateUserDto): Promise<Omit<User, 'password'>> {
+    return this.userService.create(dto);
   }
 
   @Put()
-  async update(
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<Omit<User, 'password'>> {
-    return this.userService.update(updateUserDto);
+  async update(@Body() dto: UpdateUserDto): Promise<Omit<User, 'password'>> {
+    return this.userService.update(dto);
   }
 
   @Get(':id')
@@ -33,21 +53,27 @@ export class UserController {
   }
 
   @Get(':userId/inventory')
-  async getInventoryByUserId(
-    @Param('userId') userId: string,
-  ): Promise<Inventory> {
+  async getInventoryByUserId(@Param('userId') userId: string): Promise<Inventory> {
     return this.userService.getInventoryByUserId(userId);
   }
 
   @Post('login')
-  async login(
-    @Body() loginUserDto: LoginUserDto,
-  ): Promise<Omit<User, 'password'>> {
-    return this.userService.login(loginUserDto);
+  async login(@Body() dto: LoginUserDto): Promise<Omit<User, 'password'>> {
+    return this.userService.login(dto);
   }
 
   @Post('join-to-inventory')
-  async joinToInventory(@Body() joinInventoryDto: JoinInventoryDto) {
-    return this.userService.joinToInventory(joinInventoryDto);
+  async joinToInventory(@Body() dto: JoinInventoryDto) {
+    return this.userService.joinToInventory(dto);
+  }
+
+  @Post('create-kitchen')
+  async createKitchen(@Body() dto: CreateKitchenDto) {
+    return this.userService.createKitchen(dto);
+  }
+
+  @Post('join-to-kitchen')
+  async joinToKitchen(@Body() dto: JoinKitchenDto) {
+    return this.userService.joinToKitchen(dto);
   }
 }

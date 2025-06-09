@@ -1,5 +1,12 @@
 import { Inventory } from 'src/Inventory/inventory.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Recipe } from 'src/Recipes/recipe.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -21,8 +28,23 @@ export class User {
   @Column({ type: 'text', array: true, default: [] })
   sensitivities: string[];
 
+  @Column({ type: 'float', nullable: true })
+  height: number;
+
+  @Column({ type: 'float', nullable: true })
+  weight: number;
+
+  @Column({ type: 'text', nullable: true })
+  goal: string;
+
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
   @ManyToOne(() => Inventory, (inventory) => inventory.users, {
     onDelete: 'CASCADE',
   })
   inventory: Inventory;
+
+  @OneToMany(() => Recipe, (recipe) => recipe.user)
+  recipes: Recipe[];
 }

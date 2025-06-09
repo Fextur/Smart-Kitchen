@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsNumber,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -49,6 +50,22 @@ export class UpdateUserDto {
   @IsArray()
   @IsOptional()
   sensitivities?: string[];
+
+  @IsNumber()
+  @IsOptional()
+  height?: number;
+
+  @IsNumber()
+  @IsOptional()
+  weight?: number;
+
+  @IsString()
+  @IsOptional()
+  goal?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class LoginUserDto {
@@ -69,4 +86,24 @@ export class JoinInventoryDto {
   @IsUUID()
   @IsNotEmpty()
   inventoryId: string;
+}
+
+export class CreateKitchenDto {
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+export class JoinKitchenDto {
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  kitchenName: string;
 }
