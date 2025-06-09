@@ -18,7 +18,7 @@ export type Kitchen = {
   id: string;
   description?: string;
   name?: string;
-  kitchenHash: string; // NEW: Add kitchenHash field
+  kitchenHash: string;
 };
 
 export type UserRes = {
