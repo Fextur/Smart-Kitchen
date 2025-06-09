@@ -39,6 +39,12 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
   } = useUserSettings();
   const { logout } = useUser();
 
+  // Track if form has changes
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalValues, setOriginalValues] = useState<UserSettingsForm | null>(
+    null
+  );
+
   const form = useForm({
     defaultValues: {
       kitchenName: "",
@@ -63,11 +69,38 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
     },
   });
 
-  // Track if form has changes
-  const [hasChanges, setHasChanges] = useState(false);
-  const [originalValues, setOriginalValues] = useState<UserSettingsForm | null>(
-    null
-  );
+  // Helper function to compare two UserSettingsForm objects
+  const areValuesEqual = (
+    a: UserSettingsForm,
+    b: UserSettingsForm
+  ): boolean => {
+    if (!a || !b) return false;
+
+    return (
+      a.kitchenName === b.kitchenName &&
+      a.weight === b.weight &&
+      a.height === b.height &&
+      a.goal === b.goal &&
+      a.notes === b.notes &&
+      a.dietaryPreference.length === b.dietaryPreference.length &&
+      a.dietaryPreference.every(
+        (pref, index) => pref === b.dietaryPreference[index]
+      )
+    );
+  };
+
+  // Subscribe to form state and check for changes
+  useEffect(() => {
+    const unsubscribe = form.store.subscribe(() => {
+      if (originalValues) {
+        const currentValues = form.store.state.values;
+        const changed = !areValuesEqual(currentValues, originalValues);
+        setHasChanges(changed);
+      }
+    });
+
+    return unsubscribe;
+  }, [originalValues, form.store]);
 
   useEffect(() => {
     if (userSettings && open) {
@@ -94,32 +127,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
       setHasChanges(false);
     }
   }, [userSettings, open]);
-
-  // Check for changes whenever form values change
-  useEffect(() => {
-    if (originalValues) {
-      const currentValues = {
-        kitchenName: form.getFieldValue("kitchenName"),
-        weight: form.getFieldValue("weight"),
-        height: form.getFieldValue("height"),
-        goal: form.getFieldValue("goal"),
-        dietaryPreference: form.getFieldValue("dietaryPreference"),
-        notes: form.getFieldValue("notes"),
-      };
-
-      const changed =
-        JSON.stringify(currentValues) !== JSON.stringify(originalValues);
-      setHasChanges(changed);
-    }
-  }, [
-    form.getFieldValue("kitchenName"),
-    form.getFieldValue("weight"),
-    form.getFieldValue("height"),
-    form.getFieldValue("goal"),
-    form.getFieldValue("dietaryPreference"),
-    form.getFieldValue("notes"),
-    originalValues,
-  ]);
 
   const handleJoinKitchen = () => {
     const kitchenName = form.getFieldValue("kitchenName");
@@ -149,7 +156,7 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
   };
 
   const handleDietaryPreferenceChange = (value: string, checked: boolean) => {
-    const currentPreferences = form.getFieldValue("dietaryPreference");
+    const currentPreferences = form.getFieldValue("dietaryPreference") || [];
     if (checked) {
       form.setFieldValue("dietaryPreference", [...currentPreferences, value]);
     } else {
