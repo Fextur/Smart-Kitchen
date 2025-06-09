@@ -42,7 +42,6 @@ export class RecipeService {
       const { userId, servings, searchQuery, useOnlyAvailable } =
         generateRecipeDto;
 
-      // Get user with all settings and inventory
       const user = await this.userRepository.findOne({
         where: { id: userId },
         relations: ['inventory', 'inventory.products'],
@@ -52,12 +51,10 @@ export class RecipeService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Build preferences and restrictions from user data
       const userPreferences = user.sensitivities || [];
       const userGoal = user.goal || '';
       const userNotes = user.notes || '';
 
-      // Get user's dietary preferences from their sensitivities
       const dietaryPreferences = userPreferences.join(', ');
       const searchQueryString = searchQuery
         ? `המשתמש מחפש היום: ${searchQuery}.`
@@ -72,7 +69,6 @@ export class RecipeService {
         .map((item) => `${item.size} ${item.measureUnit} של ${item.name}`)
         .join(', ');
 
-      // Build the AI prompt with user preferences
       let availabilityConstraint = '';
       if (useOnlyAvailable) {
         availabilityConstraint = `
@@ -224,19 +220,16 @@ export class RecipeService {
   private buildUserInfoSection(user: User): string {
     const sections: string[] = [];
 
-    // Dietary preferences/sensitivities
     if (user.sensitivities && user.sensitivities.length > 0) {
       sections.push(
         `העדפות תזונתיות ורגישויות: ${user.sensitivities.join(', ')}`,
       );
     }
 
-    // User goals
     if (user.goal) {
       sections.push(`יעדים תזונתיים: ${user.goal}`);
     }
 
-    // Body metrics for portion sizing
     if (user.height && user.weight) {
       const bmi = user.weight / Math.pow(user.height / 100, 2);
       let bmiCategory = '';
@@ -250,7 +243,6 @@ export class RecipeService {
       );
     }
 
-    // Allergies and special notes
     if (user.notes) {
       sections.push(`הערות חשובות ואלרגיות: ${user.notes}`);
     }

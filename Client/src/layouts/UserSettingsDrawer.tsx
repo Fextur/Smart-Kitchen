@@ -31,7 +31,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
   } = useUserSettings();
   const { logout } = useUser();
   const dietaryOptions = useDietaryOptions();
-  // Track if form has changes
   const [hasChanges, setHasChanges] = useState(false);
   const [originalValues, setOriginalValues] = useState<UserSettingsForm | null>(
     null
@@ -50,7 +49,7 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
       updateUserSettingsMutation.mutate(
         {
           ...value,
-          dietaryPreference: value.dietaryPreference.join(","), // Convert array to string for backend
+          dietaryPreference: value.dietaryPreference.join(","),
         },
         {
           onSuccess: () => {
@@ -61,7 +60,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
     },
   });
 
-  // Helper function to compare two UserSettingsForm objects
   const areValuesEqual = (
     a: UserSettingsForm,
     b: UserSettingsForm
@@ -81,7 +79,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
     );
   };
 
-  // Subscribe to form state and check for changes
   useEffect(() => {
     const unsubscribe = form.store.subscribe(() => {
       if (originalValues) {
@@ -200,7 +197,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
             form.handleSubmit();
           }}
         >
-          {/* Kitchen Section */}
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="body1"
@@ -265,7 +261,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
             </Box>
           </Box>
 
-          {/* Physical Info Section */}
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="body1"
@@ -345,7 +340,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
             </Box>
           </Box>
 
-          {/* Goals Section */}
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="body1"
@@ -374,7 +368,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
             </form.Field>
           </Box>
 
-          {/* Dietary Preferences */}
           <Box sx={{ mb: 2 }}>
             <form.Field name="dietaryPreference">
               {(field) => (
@@ -422,7 +415,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
             </form.Field>
           </Box>
 
-          {/* Allergies Section */}
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="body1"
@@ -455,7 +447,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
             </form.Field>
           </Box>
 
-          {/* Action Buttons */}
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               type="submit"

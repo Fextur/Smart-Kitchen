@@ -305,8 +305,6 @@ export class UserService {
 
     if (!user) throw new NotFoundException();
 
-    // Update user properties
-    // Convert comma-separated string back to array
     user.sensitivities = settings.dietaryPreference
       ? settings.dietaryPreference.split(',').filter(Boolean)
       : [];
@@ -315,7 +313,6 @@ export class UserService {
     user.goal = settings.goal;
     user.notes = settings.notes;
 
-    // Update kitchen name if provided
     if (settings.kitchenName && user.inventory) {
       user.inventory.name = settings.kitchenName;
       await this.inventoryRepository.save(user.inventory);

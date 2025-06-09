@@ -44,21 +44,6 @@ export type KitchenItem = {
   latestUpdateDate?: string;
 };
 
-export enum Preferences {
-  VEGETARIAN = "צמחוני",
-  VEGAN = "טבעוני",
-  GLUTEN_FREE = "ללא גלוטן",
-  DAIRY_FREE = "ללא חלב",
-  HEALTHY = "בריא",
-  QUICK = "מהיר",
-  BUDGET = "חסכוני",
-  GOURMET = "גורמה",
-  KIDS_FRIENDLY = "ידידותי לילדים",
-  LOW_CARB = "דל פחמימות",
-  HIGH_PROTEIN = "עתיר חלבון",
-  MEDITERRANEAN = "ים תיכוני",
-}
-
 export type ShoppingListItem = Omit<KitchenItem, "expirationDate"> & {
   isChecked: boolean;
 };

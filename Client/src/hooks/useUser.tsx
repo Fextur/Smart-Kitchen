@@ -59,7 +59,6 @@ export const useUser = () => {
         credential,
       });
 
-      // Save the token to localStorage - this was missing!
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
       }
