@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import {
@@ -273,57 +273,54 @@ export class UserService {
   async getUserSettings(userId: string): Promise<any> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['inventory', 'inventory.users'],
+      relations: ['inventory'],
     });
     if (!user) throw new NotFoundException();
 
-    const sharedUsers =
-      user.inventory?.users
-        ?.filter((u) => u.id !== user.id)
-        .map((u) => u.email) || [];
-
     return {
-      dietaryPreference: user.sensitivities?.[0] || 'none',
-      sharedKitchenUsers: sharedUsers,
-      height: user.height,
-      weight: user.weight,
-      goal: user.goal,
-      notes: user.notes,
+      kitchenName: user.inventory?.name || '',
+      weight: user.weight || 0,
+      height: user.height || 0,
+      goal: user.goal || '',
+      dietaryPreference: user.sensitivities?.join(',') || '',
+      notes: user.notes || '',
     };
   }
 
   async updateUserSettings(
     userId: string,
     settings: {
+      kitchenName: string;
+      weight: number;
+      height: number;
+      goal: string;
       dietaryPreference: string;
-      sharedKitchenUsers: string[];
-      height?: number;
-      weight?: number;
-      goal?: string;
-      notes?: string;
+      notes: string;
     },
   ) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['inventory', 'inventory.users'],
+      relations: ['inventory'],
     });
 
     if (!user) throw new NotFoundException();
 
-    user.sensitivities = [settings.dietaryPreference];
-    if (settings.height !== undefined) user.height = settings.height;
-    if (settings.weight !== undefined) user.weight = settings.weight;
-    if (settings.goal !== undefined) user.goal = settings.goal;
-    if (settings.notes !== undefined) user.notes = settings.notes;
+    // Update user properties
+    // Convert comma-separated string back to array
+    user.sensitivities = settings.dietaryPreference
+      ? settings.dietaryPreference.split(',').filter(Boolean)
+      : [];
+    user.height = settings.height;
+    user.weight = settings.weight;
+    user.goal = settings.goal;
+    user.notes = settings.notes;
 
-    const sharedUsers = await this.userRepository.findBy({
-      email: In(settings.sharedKitchenUsers),
-    });
+    // Update kitchen name if provided
+    if (settings.kitchenName && user.inventory) {
+      user.inventory.name = settings.kitchenName;
+      await this.inventoryRepository.save(user.inventory);
+    }
 
-    const filteredUsers = sharedUsers.filter((u) => u.id !== user.id);
-    user.inventory.users = [user, ...filteredUsers];
-
-    await this.inventoryRepository.save(user.inventory);
     await this.userRepository.save(user);
 
     const { password, ...rest } = user;

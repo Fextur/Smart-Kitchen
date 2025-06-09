@@ -6,7 +6,6 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import UserSettings from "@/components/UserSettings";
 import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home/Home";
 import Login from "@/pages/Login";
@@ -111,13 +110,6 @@ const notFoundRoute = createRoute({
   component: () => <Navigate to="/" />,
 });
 
-const userSettingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/settings",
-  component: UserSettings,
-});
-
-
 const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
@@ -126,7 +118,6 @@ const routeTree = rootRoute.addChildren([
   registerRoute,
   addProductsRoute,
   shoppingListRoute,
-  userSettingsRoute,
   notFoundRoute,
 ]);
 

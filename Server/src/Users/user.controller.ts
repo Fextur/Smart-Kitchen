@@ -11,13 +11,14 @@ import {
 import { User } from './user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
 
-type UpdateUserSettingsDto = {
+type UserSettingsDto = {
+  kitchenName: string;
+  weight: number;
+  height: number;
+  goal: string;
   dietaryPreference: string;
+  notes: string;
   sharedKitchenUsers: string[];
-  height?: number;
-  weight?: number;
-  notes?: string;
-  goal?: string;
 };
 
 @Controller('users')
@@ -32,7 +33,7 @@ export class UserController {
   @Put(':id/settings')
   async updateSettings(
     @Param('id') userId: string,
-    @Body() body: UpdateUserSettingsDto,
+    @Body() body: UserSettingsDto,
   ) {
     return this.userService.updateUserSettings(userId, body);
   }
@@ -53,7 +54,9 @@ export class UserController {
   }
 
   @Get(':userId/inventory')
-  async getInventoryByUserId(@Param('userId') userId: string): Promise<Inventory> {
+  async getInventoryByUserId(
+    @Param('userId') userId: string,
+  ): Promise<Inventory> {
     return this.userService.getInventoryByUserId(userId);
   }
 
@@ -82,5 +85,10 @@ export class UserController {
   @Post('join-to-kitchen')
   async joinToKitchen(@Body() dto: JoinKitchenDto) {
     return this.userService.joinToKitchen(dto);
+  }
+
+  @Post('logoutUser')
+  async logout() {
+    return { message: 'Logged out successfully' };
   }
 }

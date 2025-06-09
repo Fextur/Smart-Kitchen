@@ -6,9 +6,15 @@ interface DrawerProps {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
+  height?: string;
 }
 
-export const Drawer: FC<DrawerProps> = ({ open, onClose, children }) => {
+export const Drawer: FC<DrawerProps> = ({
+  open,
+  onClose,
+  children,
+  height = "50vh",
+}) => {
   const isMobile = useIsMobile();
   return (
     <SwipeableDrawer
@@ -18,7 +24,7 @@ export const Drawer: FC<DrawerProps> = ({ open, onClose, children }) => {
       onClose={onClose}
       sx={{
         "& .MuiDrawer-paper": {
-          height: "50vh",
+          height,
 
           ...(isMobile
             ? { width: "100%" }
