@@ -1,20 +1,23 @@
 import { FC, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
-import { ScanLine, Edit, Check } from "lucide-react";
+import { ScanLine, Edit, Check, ScrollText } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
-import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
+import { AddProductsDialog } from "@/pages/AddProducts/AddProductsDialog/AddProductsDialog";
+import { ShoppingListItem, KitchenItem } from "@/types";
 
 interface FinishShoppingListDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onFinish: () => void;
+  shoppingListItems: ShoppingListItem[];
 }
 
 export const FinishShoppingListDialog: FC<FinishShoppingListDialogProps> = ({
   isOpen,
   onClose,
   onFinish,
+  shoppingListItems,
 }) => {
   const navigate = useNavigate();
   const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);
@@ -28,6 +31,29 @@ export const FinishShoppingListDialog: FC<FinishShoppingListDialogProps> = ({
     onFinish();
     navigate({
       to: "/home",
+    });
+  };
+
+  const handleAutoAddToKitchen = () => {
+    const kitchenItems: KitchenItem[] = shoppingListItems.map(
+      (item, index) => ({
+        id: `shopping-${index}-${Date.now()}`,
+        name: item.name,
+        size: item.size,
+        measureUnit: item.measureUnit,
+        latestUpdateDate: new Date().toISOString().split("T")[0],
+      })
+    );
+
+    onClose();
+    onFinish();
+
+    (navigate as any)({
+      to: "/add-products",
+      state: {
+        items: kitchenItems,
+        isFromScan: false,
+      },
     });
   };
 
@@ -53,7 +79,7 @@ export const FinishShoppingListDialog: FC<FinishShoppingListDialogProps> = ({
               sx={{
                 py: 2,
                 borderColor: "primary.main",
-                color: "primary",
+                color: "primary.main",
                 display: "flex",
                 alignItems: "center",
                 gap: 1.5,
@@ -65,12 +91,31 @@ export const FinishShoppingListDialog: FC<FinishShoppingListDialogProps> = ({
               }}
               onClick={handleAddProducts}
             >
-              <ScanLine size={20} />
+              <ScanLine color="white" size={20} />
               <Typography variant="body1" color="white">
-                הוסף מוצרים למטבח
+                הוסף למטבח מקבלה או ידנית
               </Typography>
             </Button>
-
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{
+                py: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                bgcolor: "primary.main",
+                "&:hover": {
+                  bgcolor: "primary.dark",
+                },
+              }}
+              onClick={handleAutoAddToKitchen}
+            >
+              <ScrollText size={20} />
+              <Typography variant="body1" color="white">
+                הוסף את כל הרשימה למטבח{" "}
+              </Typography>
+            </Button>
             <Button
               variant="outlined"
               color="primary"

@@ -24,6 +24,7 @@ const AppLayout: FC = () => {
         backgroundColor: "#f8f9fa",
         position: "relative",
         overflow: "hidden",
+        direction: "rtl",
       }}
     >
       <Box
@@ -50,6 +51,7 @@ const AppLayout: FC = () => {
           height: `10vh`,
           position: "relative",
           zIndex: 1,
+          direction: "rtl",
         }}
       >
         <AppBar
@@ -63,6 +65,7 @@ const AppLayout: FC = () => {
             boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
             borderRadius: "32px",
             padding: "0 !important",
+            direction: "rtl",
           }}
         >
           <Toolbar
@@ -73,6 +76,7 @@ const AppLayout: FC = () => {
               width: "100%",
               position: "relative",
               padding: "0 !important",
+              direction: "rtl",
             }}
           >
             {user && (
@@ -82,7 +86,13 @@ const AppLayout: FC = () => {
                   aria-label="menu"
                   onClick={toggleDrawer(true)}
                   sx={{
-                    color: "primary.main",
+                    color: "#E49A61",
+                    "&:hover": {
+                      bgcolor: "rgba(228, 154, 97, 0.1)",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                      transform: "translateY(-1px)",
+                      transition: "all 0.2s ease",
+                    },
                   }}
                 >
                   <Menu size={28} />
@@ -90,7 +100,9 @@ const AppLayout: FC = () => {
               </div>
             )}
 
-            <Typography variant="h3">מטבחכם</Typography>
+            <Typography variant="h3" sx={{ direction: "rtl" }}>
+              מטבחכם
+            </Typography>
 
             {user && <Box sx={{ width: "59px" }} />}
           </Toolbar>
@@ -104,6 +116,7 @@ const AppLayout: FC = () => {
           height: `90vh`,
           position: "relative",
           zIndex: 1,
+          direction: "rtl",
         }}
       >
         <Outlet key={refreshKey} />

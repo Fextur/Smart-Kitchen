@@ -1,6 +1,6 @@
 import { TextField, Button, Typography } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { useUser } from "@/hooks/useUser";
 import { useNavigate } from "@tanstack/react-router";
@@ -9,7 +9,18 @@ const Login = () => {
   const [isGoogleErrorShown, setIsGoogleErrorShown] = useState(false);
 
   const navigate = useNavigate();
-  const { login, isLoggingIn, loginError, loginGoogle } = useUser();
+  const { login, loginByToken, isLoggingIn, loginError, loginGoogle } =
+    useUser();
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (accessToken) {
+      loginByToken(accessToken, {
+        onSuccess: () => navigate({ to: "/" }),
+      });
+    }
+  }, []);
 
   const form = useForm({
     defaultValues: {

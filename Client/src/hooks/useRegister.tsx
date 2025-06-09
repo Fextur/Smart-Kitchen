@@ -1,19 +1,21 @@
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { User } from "@/types";
+import { User, UserRes } from "@/types";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
 import { useUser } from "@/hooks/useUser";
+import { useKitchen } from "./useKitchen";
 
 export const useRegister = () => {
   const { setUser } = useUser();
+  const { setKitchen } = useKitchen();
 
   const registerUser = async (
     email: User["email"],
     name: User["name"],
     userName: User["userName"],
     password: string
-  ): Promise<User | null> => {
+  ): Promise<UserRes | null> => {
     try {
       const formData = new FormData();
       formData.append("email", email);
@@ -27,6 +29,8 @@ export const useRegister = () => {
         userName,
         password,
       });
+
+      localStorage.setItem("accessToken", data.accessToken);
 
       return data;
     } catch (error: unknown) {
@@ -54,7 +58,9 @@ export const useRegister = () => {
     }) => registerUser(email, name, userName, password),
     onSuccess: (user) => {
       if (user) {
-        setUser(user);
+        const { inventory, accessToken, ...userWithoutInventory } = user;
+        setUser(userWithoutInventory);
+        setKitchen(inventory);
       }
     },
   });

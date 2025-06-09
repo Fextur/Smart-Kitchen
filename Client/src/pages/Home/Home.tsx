@@ -1,16 +1,19 @@
 import { FC, useMemo, useCallback } from "react";
 import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import HomeFooter from "@/pages/Home/HomeFooter";
 import { KitchenItem } from "@/types";
 import { useUser } from "@/hooks/useUser";
-import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
+import { KitchenItemCard } from "@/components/KitchenItemCard/KitchenItemCard";
+import { useRecipe } from "@/hooks/useRecipe";
+import { RecipeCard } from "@/pages/Recipe/RecipeSelection/RecipeCard";
 
 const Home: FC = () => {
   const { items, isLoading, updateItemsMutation, categorizedItems } =
     useKitchenItems();
   const { user } = useUser();
+  const { usedRecipes } = useRecipe();
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -75,6 +78,23 @@ const Home: FC = () => {
             {greeting}, {user?.name || "משתמש"}!
           </Typography>
         </Box>
+        {usedRecipes && usedRecipes.length > 0 && (
+          <Box sx={{ px: 2 }}>
+            <ItemList
+              itemsCount={Math.min(usedRecipes.length, 4)}
+              title="מתכונים קודמים"
+              renderRow={(index) => (
+                <RecipeCard
+                  recipe={usedRecipes[index]}
+                  servings={0}
+                  showPreperationTime={false}
+                  showIngredients={false}
+                />
+              )}
+              maxHeight="400px"
+            />
+          </Box>
+        )}
 
         {items.length === 0 ? (
           <Box
@@ -103,8 +123,8 @@ const Home: FC = () => {
             }}
           >
             {categorizedItems && categorizedItems.expiringSoon.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <KitchenItemList
+              <Box>
+                <ItemList
                   itemsCount={categorizedItems.expiringSoon.length}
                   title="עומד להתקלקל"
                   renderRow={(itemIndex, isEditing) => (
@@ -118,8 +138,8 @@ const Home: FC = () => {
             )}
 
             {categorizedItems && categorizedItems.empty.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <KitchenItemList
+              <Box>
+                <ItemList
                   itemsCount={categorizedItems.empty.length}
                   title="נגמרו"
                   renderRow={(itemIndex, isEditing) => (
@@ -133,8 +153,8 @@ const Home: FC = () => {
             )}
 
             {categorizedItems && categorizedItems.inKitchen.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <KitchenItemList
+              <Box>
+                <ItemList
                   isEditToggable
                   itemsCount={categorizedItems.inKitchen.length}
                   title="במטבח"

@@ -63,10 +63,12 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
           sx={{
             p: 1,
             borderRadius: 1.5,
-            color: "primary.main",
+            color: "#E49A61",
             "&:hover": {
-              bgcolor: "primary.light",
-              color: "white",
+              bgcolor: "rgba(228, 154, 97, 0.1)",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              transform: "translateY(-1px)",
+              transition: "all 0.2s ease",
             },
           }}
         >
@@ -81,14 +83,17 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
           onClick={handleAccept}
           disabled={isDisabled || isLoading}
           sx={{
-            bgcolor: "primary.main",
+            bgcolor: "#E49A61",
             color: "white",
             width: 80,
             height: 80,
             transform: "translateY(-8px)",
-            boxShadow: "0 6px 16px rgba(249, 115, 22, 0.4)",
+            boxShadow: "0 6px 16px rgba(228, 154, 97, 0.4)",
             "&:hover": {
-              bgcolor: "primary.dark",
+              bgcolor: "#E49A61",
+              boxShadow: "0 8px 20px rgba(228, 154, 97, 0.5)",
+              transform: "translateY(-10px)",
+              transition: "all 0.2s ease",
             },
             "&:disabled": {
               bgcolor: "grey.300",
@@ -110,10 +115,12 @@ const ConfirmFooter: FC<ConfirmFooterProps> = ({
           sx={{
             p: 1,
             borderRadius: 1.5,
-            color: "primary.main",
+            color: "#E49A61",
             "&:hover": {
-              bgcolor: "primary.light",
-              color: "white",
+              bgcolor: "rgba(228, 154, 97, 0.1)",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              transform: "translateY(-1px)",
+              transition: "all 0.2s ease",
             },
           }}
         >

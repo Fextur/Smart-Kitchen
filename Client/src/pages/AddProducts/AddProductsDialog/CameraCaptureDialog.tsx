@@ -187,7 +187,12 @@ export const CameraCaptureDialog: FC<CameraCaptureDialogProps> = ({
                   size="small"
                   sx={{
                     bgcolor: "#E49A61",
-                    "&:hover": { bgcolor: "#ea580c" },
+                    "&:hover": {
+                      bgcolor: "#E49A61",
+                      boxShadow: "0 4px 12px rgba(228, 154, 97, 0.3)",
+                      transform: "translateY(-1px)",
+                      transition: "all 0.2s ease",
+                    },
                   }}
                 >
                   נסה שוב
@@ -220,6 +225,9 @@ export const CameraCaptureDialog: FC<CameraCaptureDialogProps> = ({
               zIndex: 3,
               "&:hover": {
                 bgcolor: "rgba(0, 0, 0, 0.8)",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                transform: "translateY(-1px)",
+                transition: "all 0.2s ease",
               },
             }}
           >
@@ -244,6 +252,11 @@ export const CameraCaptureDialog: FC<CameraCaptureDialogProps> = ({
               display: "flex",
               alignItems: "center",
               gap: 1,
+              "&:hover": {
+                boxShadow: "0 4px 12px rgba(228, 154, 97, 0.3)",
+                transform: "translateY(-1px)",
+                transition: "all 0.2s ease",
+              },
             }}
           >
             <Camera size={20} />
@@ -256,6 +269,15 @@ export const CameraCaptureDialog: FC<CameraCaptureDialogProps> = ({
             sx={{
               minWidth: 60,
               py: 1.5,
+              borderColor: "#E49A61",
+              color: "#E49A61",
+              "&:hover": {
+                borderColor: "#E49A61",
+                bgcolor: "rgba(228, 154, 97, 0.1)",
+                boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
+                transform: "translateY(-1px)",
+                transition: "all 0.2s ease",
+              },
             }}
           >
             <RotateCcw size={20} />

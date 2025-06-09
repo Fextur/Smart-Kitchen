@@ -1,5 +1,4 @@
 import { Product } from 'src/Products/product.entity';
-import { ShoppingList } from 'src/ShoppingList/shoppingList.entity';
 import { User } from 'src/Users/user.entity';
 import {
   Entity,
@@ -25,7 +24,4 @@ export class Inventory {
 
   @OneToMany(() => Product, (product) => product.inventory)
   products: Product[];
-
-  @OneToOne(() => ShoppingList, (shoppingList) => shoppingList.inventory)
-  shoppingList: ShoppingList;
 }

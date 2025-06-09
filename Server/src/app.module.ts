@@ -13,6 +13,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ReceiptScannerModule } from './ReceiptScanner/receiptScanner.module';
 import { InventoryModule } from './Inventory/inventory.module';
 import { AuthModule } from './Auth/auth.module';
+import { ProductMatchingModule } from 'src/ProductMatching/productMatching.module';
 import { ShoppingListModule } from './ShoppingList/shoppingList.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { ShoppingListModule } from './ShoppingList/shoppingList.module';
     RecipeModule,
     ReceiptScannerModule,
     AuthModule,
+    ProductMatchingModule,
     ShoppingListModule,
   ],
   controllers: [AppController],

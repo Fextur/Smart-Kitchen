@@ -2,10 +2,11 @@ import { FC, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { KitchenItem } from "@/types";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
-import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
+import { KitchenItemCard } from "@/components/KitchenItemCard/KitchenItemCard";
+import { AddProductsDialog } from "@/pages/AddProducts/AddProductsDialog/AddProductsDialog";
 
 interface AddProductsLocationState {
   items?: KitchenItem[];
@@ -16,6 +17,7 @@ const AddProducts: FC = () => {
   const navigate = useNavigate();
   const routerState = useRouterState();
   const { createItemsMutation } = useKitchenItems();
+  const [isAddProductsOpen, setIsAddProductsOpen] = useState(false);
 
   const locationState = routerState.location.state as
     | AddProductsLocationState
@@ -76,7 +78,6 @@ const AddProducts: FC = () => {
       <Box
         sx={{
           p: 2,
-          // bgcolor: "background.paper",
           borderBottom: "1px solid",
           borderColor: "grey.100",
           direction: "rtl",
@@ -116,7 +117,7 @@ const AddProducts: FC = () => {
           direction: "rtl",
         }}
       >
-        <KitchenItemList
+        <ItemList
           itemsCount={items.length}
           title="פריטים להוספה"
           isEditing
@@ -134,8 +135,13 @@ const AddProducts: FC = () => {
       <ConfirmFooter
         onAccept={handleAccept}
         onCancel={handleCancel}
+        onBack={() => setIsAddProductsOpen(true)}
         isLoading={false}
         isDisabled={items.length === 0}
+      />
+      <AddProductsDialog
+        isOpen={isAddProductsOpen}
+        onClose={() => setIsAddProductsOpen(false)}
       />
     </Box>
   );

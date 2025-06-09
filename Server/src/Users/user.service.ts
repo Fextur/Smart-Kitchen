@@ -15,8 +15,10 @@ import {
   UpdateUserDto,
   CreateKitchenDto,
   JoinKitchenDto,
+  UserWithToken,
 } from './user.dto';
 import { Inventory } from 'src/Inventory/inventory.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
@@ -26,28 +28,57 @@ export class UserService {
 
     @InjectRepository(Inventory)
     private inventoryRepository: Repository<Inventory>,
+
+    private jwtService: JwtService,
   ) {}
+  
+  async generateAccessToken(id: User['id'], userName: User['userName']) {
+    const payload = {
+      sub: id,
+      userName: userName,
+    };
 
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const { name, userName, email, password } = createUserDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const inventory = this.inventoryRepository.create({
-      name: `המטבח של ${name}`,
+    const accessToken = this.jwtService.sign(payload, {
+      secret: process.env.TOKEN_SECRET,
+      expiresIn: process.env.TOKEN_EXPIRES,
     });
-    const savedInventory = await this.inventoryRepository.save(inventory);
 
-    const user = this.userRepository.create({
-      name,
-      userName,
-      email,
-      password: hashedPassword,
-      inventory: savedInventory,
-    });
-    const savedUser = await this.userRepository.save(user);
+    return accessToken;
+  }
 
-    const { password: _, ...userWithoutPassword } = savedUser;
-    return userWithoutPassword;
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<Omit<UserWithToken, 'password'>> {
+    try {
+      const { name, userName, email, password } = createUserDto;
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const inventory = this.inventoryRepository.create({
+        name: `המטבח של ${name}`,
+      });
+
+      const savedInventory = await this.inventoryRepository.save(inventory);
+
+      const user = this.userRepository.create({
+        name,
+        userName,
+        email,
+        password: hashedPassword,
+        inventory: savedInventory,
+      });
+
+      const savedUser = await this.userRepository.save(user);
+      const accessToken = await this.generateAccessToken(
+        savedUser.id,
+        savedUser.userName,
+      );
+
+      const { password: _, ...userWithoutPassword } = savedUser;
+      return { ...userWithoutPassword, accessToken };
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Failed to create user');
+    }
   }
 
   async update(updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
@@ -95,15 +126,80 @@ export class UserService {
     return user.inventory;
   }
 
-  async login(loginUserDto: LoginUserDto): Promise<Omit<User, 'password'>> {
+  async findByEmail(email: string): Promise<Omit<User, 'password'> | null> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email },
+        relations: ['inventory'],
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to fetch user');
+    }
+  }
+
+  async login(
+    loginUserDto: LoginUserDto,
+  ): Promise<Omit<UserWithToken, 'password'>> {
     const { userName, password } = loginUserDto;
 
-    const user = await this.userRepository.findOne({
-      where: { userName },
-      relations: ['inventory'],
+    try {
+      const user = await this.userRepository.findOne({
+        where: { userName },
+        relations: ['inventory'],
+      });
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const passwordMatches = await bcrypt.compare(password, user.password);
+      if (!passwordMatches) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const accessToken = await this.generateAccessToken(
+        user.id,
+        user.userName,
+      );
+
+      const { password: _, ...userWithoutPassword } = user;
+
+      return { ...userWithoutPassword, accessToken };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      throw new InternalServerErrorException('Login failed');
+    }
+  }
+
+  async validateToken(accessToken: string): Promise<Omit<User, 'password'>> {
+    const payload = this.jwtService.verify(accessToken, {
+      secret: process.env.TOKEN_SECRET,
     });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+
+    const id = payload.sub;
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+        relations: ['inventory'],
+      });
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+
+      return userWithoutPassword;
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      throw new InternalServerErrorException('Login failed');
     }
 
     const { password: _, ...userWithoutPassword } = user;

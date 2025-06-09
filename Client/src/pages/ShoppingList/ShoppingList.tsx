@@ -1,15 +1,15 @@
 import { FC, useCallback, useMemo, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
-import Loader from "@/components/Loader";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRouter } from "@tanstack/react-router";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { SuggestedShoppingListItemCard } from "@/pages/ShoppingList/SuggestedShoppingListItemCard";
-import { KitchenItem, ShoppingListItem } from "@/types";
+import { ShoppingListItem } from "@/types";
 import { useShoppingListItems } from "@/hooks/useShoppingListItems";
 import { ShoppingListItemCard } from "@/pages/ShoppingList/ShoppingListItemCard";
 import { FinishShoppingListDialog } from "@/pages/ShoppingList/FinishShoppingListDialog";
+
 const ShoppingList: FC = () => {
   const { categorizedItems, isLoading, updateItemsMutation } =
     useKitchenItems();
@@ -17,16 +17,19 @@ const ShoppingList: FC = () => {
   const {
     items: shoppingListItems,
     isLoading: isShoppingListLoading,
-    updateItemsMutation: updateShoppingItemsMutation,
+    createItemsMutation: createShoppingItemsMutation,
     deleteItemsMutation: deleteShoppingItemsMutation,
     clearItemsMutation: clearShoppingListMutation,
+    transferIntoShoppingListMutation,
   } = useShoppingListItems();
   const router = useRouter();
   const [showFinishDialog, setShowFinishDialog] = useState(false);
 
-  const handleEditSuggestionItem = useCallback(
-    (item: KitchenItem) => {
-      updateItemsMutation.mutate([item]);
+  const handleEditItem = useCallback(
+    (item: ShoppingListItem) => {
+      updateItemsMutation.mutate([
+        { ...item, wantedSize: item.size, size: undefined },
+      ] as any);
     },
     [updateItemsMutation]
   );
@@ -38,13 +41,6 @@ const ShoppingList: FC = () => {
           !shoppingListItems.some((shoppingItem) => shoppingItem.id === item.id)
       ),
     [categorizedItems, shoppingListItems]
-  );
-
-  const handleEditShoppingItem = useCallback(
-    (item: ShoppingListItem) => {
-      updateShoppingItemsMutation.mutate([item]);
-    },
-    [updateShoppingItemsMutation]
   );
 
   if (isLoading || isShoppingListLoading) {
@@ -67,15 +63,16 @@ const ShoppingList: FC = () => {
   }
 
   const handleAddNewItem = (
-    newItem: Omit<ShoppingListItem, "id" | "latestUpdateDate">
+    newItem: Omit<ShoppingListItem, "id" | "latestUpdateDate" | "isChecked">
   ) => {
     const item: ShoppingListItem = {
       ...newItem,
       id: `temp-${Date.now()}`,
       latestUpdateDate: new Date().toISOString().split("T")[0],
+      isChecked: false,
     };
 
-    updateShoppingItemsMutation.mutate([item]);
+    createShoppingItemsMutation.mutate([item]);
   };
 
   return (
@@ -108,26 +105,24 @@ const ShoppingList: FC = () => {
           }}
         >
           <Box sx={{ mb: 2 }}>
-            <KitchenItemList
+            <ItemList
               itemsCount={shoppingListItems.length}
               title="ברשימה"
               onAddNewItem={(item) => {
-                if ("isChecked" in item) {
-                  handleAddNewItem(item);
-                }
+                handleAddNewItem(item);
               }}
               showExperationDateOnNewItem={false}
               renderRow={(itemIndex) => (
                 <ShoppingListItemCard
                   item={shoppingListItems[itemIndex]}
-                  onEdit={handleEditShoppingItem}
+                  onEdit={handleEditItem}
                   onDelete={() =>
                     deleteShoppingItemsMutation.mutate(
                       shoppingListItems[itemIndex].id
                     )
                   }
                   onLongPress={() => {
-                    updateShoppingItemsMutation.mutate([
+                    updateItemsMutation.mutate([
                       {
                         ...shoppingListItems[itemIndex],
                         isChecked: !shoppingListItems[itemIndex].isChecked,
@@ -139,7 +134,7 @@ const ShoppingList: FC = () => {
             />
           </Box>
           <Box sx={{ mb: 2 }}>
-            <KitchenItemList
+            <ItemList
               itemsCount={
                 !emptyKitchenItemsMissingFromShoppingList
                   ? 0
@@ -149,7 +144,9 @@ const ShoppingList: FC = () => {
               renderRow={(itemIndex) => (
                 <SuggestedShoppingListItemCard
                   item={emptyKitchenItemsMissingFromShoppingList![itemIndex]}
-                  onEdit={handleEditSuggestionItem}
+                  onEdit={(item) =>
+                    transferIntoShoppingListMutation.mutate(item)
+                  }
                 />
               )}
             />
@@ -170,9 +167,9 @@ const ShoppingList: FC = () => {
           setShowFinishDialog(false);
         }}
         onFinish={() => {
-          console.log("Shopping list finished");
           clearShoppingListMutation.mutate();
         }}
+        shoppingListItems={shoppingListItems}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import {
   IsUUID,
   IsNumber,
 } from 'class-validator';
+import { User } from './user.entity';
 
 export class CreateUserDto {
   @IsString()
@@ -106,4 +107,8 @@ export class JoinKitchenDto {
   @IsString()
   @IsNotEmpty()
   kitchenName: string;
+  
+}
+export class UserWithToken extends User {
+  accessToken: string;
 }

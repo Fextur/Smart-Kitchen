@@ -1,66 +1,264 @@
-import { useMutation } from "@tanstack/react-query";
-import { AxiosError } from "axios";
-import { RecipeResponse, User } from "../types";
-import api from "../axios/axios";
-import { API_ROUTES } from "../axios/apiRoutes";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { GenerateRecipeParams, Recipe, KitchenItem } from "@/types";
+import api from "@/axios/axios";
+import { API_ROUTES } from "@/axios/apiRoutes";
 import { useUser } from "./useUser";
 
 export const useRecipe = () => {
-  const [generatedRecipes, setGeneratedRecipes] = useState<RecipeResponse[]>(
-    []
-  );
+  const queryClient = useQueryClient();
   const { user } = useUser();
+  const [generatedRecipes, setGeneratedRecipes] = useState<Recipe[]>([]);
 
   const generateRecipe = async (
-    sensitivities: User["sensitivities"],
-    preferences: string[]
-  ) => {
+    params: GenerateRecipeParams
+  ): Promise<Recipe[]> => {
     try {
-      if (user) {
-        const { data } = await api.post<RecipeResponse[]>(
-          `${API_ROUTES.recipe}/generate`,
-          {
-            userId: user.id,
-            sensitivities,
-            preferences,
-          }
-        );
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
 
-        return data;
-      }
-    } catch (error: unknown) {
-      if (error instanceof AxiosError && error.response) {
-        const { message } = error.response.data;
-        console.error("Error creating user:", message);
-        throw new Error(message);
-      }
-      console.error("Error creating user:", error);
-      throw error;
+      const { data } = await api.post<Recipe[]>(
+        `${API_ROUTES.recipes}/generate`,
+        {
+          userId: user.id,
+          sensitivities: user.sensitivities || [],
+          preferences: params.preferences,
+          servings: params.servings,
+          searchQuery: params.searchQuery,
+        }
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Recipe generation error:", error);
+      throw new Error("Failed to generate recipes");
     }
   };
 
-  const generatingMutation = useMutation({
-    mutationFn: ({
-      sensitivities,
-      preferences,
-    }: {
-      sensitivities: User["sensitivities"];
-      preferences: string[];
-    }) => generateRecipe(sensitivities, preferences),
+  const generateRecipeMutation = useMutation({
+    mutationFn: generateRecipe,
     onSuccess: (data) => {
-      if (data) {
-        setGeneratedRecipes(data);
+      setGeneratedRecipes(data);
+    },
+    onError: (error) => {
+      console.error("Recipe generation error:", error);
+    },
+  });
+
+  const askQuestion = async (params: {
+    stepInstruction: string;
+    question: string;
+    servings: number;
+  }): Promise<string> => {
+    try {
+      const { data } = await api.post<{ answer: string }>(
+        `${API_ROUTES.recipes}/ask-question`,
+        {
+          stepInstruction: params.stepInstruction,
+          question: params.question,
+          servings: params.servings,
+        }
+      );
+
+      return data.answer;
+    } catch (error) {
+      console.error("Question answering error:", error);
+      throw new Error("Failed to get answer");
+    }
+  };
+
+  const askQuestionMutation = useMutation({
+    mutationFn: askQuestion,
+    onError: (error) => {
+      console.error("Question answering error:", error);
+    },
+  });
+
+  const fetchUsedRecipes = async (): Promise<Recipe[]> => {
+    try {
+      if (!user?.id) {
+        return [];
       }
+
+      const { data } = await api.get<Recipe[]>(
+        `${API_ROUTES.recipes}/history/${user.id}`
+      );
+
+      return data.sort((a, b) => {
+        const dateA = a.lastAccessedAt
+          ? new Date(a.lastAccessedAt).getTime()
+          : 0;
+        const dateB = b.lastAccessedAt
+          ? new Date(b.lastAccessedAt).getTime()
+          : 0;
+        return dateB - dateA;
+      });
+    } catch (error) {
+      console.error("Fetch used recipes error:", error);
+      return [];
+    }
+  };
+
+  const { data: usedRecipes, isLoading: isUsedRecipesLoading } = useQuery({
+    queryKey: ["usedRecipes", user?.id],
+    queryFn: fetchUsedRecipes,
+    enabled: !!user?.id,
+  });
+
+  const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
+    try {
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
+
+      const { data } = await api.post<Recipe>(`${API_ROUTES.recipes}/save`, {
+        ...recipe,
+        userId: user.id,
+      });
+
+      return data;
+    } catch (error) {
+      console.error("Save recipe error:", error);
+      throw new Error("Failed to save recipe");
+    }
+  };
+
+  const saveRecipeMutation = useMutation({
+    mutationFn: saveRecipe,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usedRecipes"] });
+    },
+    onError: (error) => {
+      console.error("Save recipe error:", error);
+    },
+  });
+
+  const consumeIngredients = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<{ message: string; updatedProducts: KitchenItem[] }> => {
+    try {
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
+
+      const { data } = await api.post<{
+        message: string;
+        updatedProducts: KitchenItem[];
+      }>(`${API_ROUTES.recipes}/consume-ingredients`, {
+        recipeId: params.recipeId,
+        servings: params.servings,
+        userId: user.id,
+      });
+
+      return data;
+    } catch (error) {
+      console.error("Consume ingredients error:", error);
+      throw new Error("Failed to consume ingredients");
+    }
+  };
+
+  const consumeIngredientsMutation = useMutation({
+    mutationFn: consumeIngredients,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+    },
+    onError: (error) => {
+      console.error("Consume ingredients error:", error);
+    },
+  });
+
+  const addMissingToShoppingList = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<{ message: string }> => {
+    try {
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
+
+      const { data } = await api.post<{ message: string }>(
+        `${API_ROUTES.recipes}/${params.recipeId}/add-missing-to-shopping-list`,
+        {
+          userId: user.id,
+          servings: params.servings,
+        }
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Add missing to shopping list error:", error);
+      throw new Error("Failed to add missing items to shopping list");
+    }
+  };
+
+  const addMissingToShoppingListMutation = useMutation({
+    mutationFn: addMissingToShoppingList,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+    },
+    onError: (error) => {
+      console.error("Add missing to shopping list error:", error);
+    },
+  });
+
+  const getMissingItems = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<KitchenItem[]> => {
+    try {
+      const { data } = await api.get<{ missingItems: KitchenItem[] }>(
+        `${API_ROUTES.recipes}/${params.recipeId}/missing-items/${params.servings}`
+      );
+
+      return data.missingItems;
+    } catch (error) {
+      console.error("Get missing items error:", error);
+      throw new Error("Failed to get missing items");
+    }
+  };
+
+  const getMissingItemsMutation = useMutation({
+    mutationFn: getMissingItems,
+    onError: (error) => {
+      console.error("Get missing items error:", error);
+    },
+  });
+
+  const getRecipeWithMissingItems = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<Recipe> => {
+    try {
+      const { data } = await api.get<Recipe>(
+        `${API_ROUTES.recipes}/${params.recipeId}/with-missing-items/${params.servings}`
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Get recipe with missing items error:", error);
+      throw new Error("Failed to get recipe with missing items");
+    }
+  };
+
+  const getRecipeWithMissingItemsMutation = useMutation({
+    mutationFn: getRecipeWithMissingItems,
+    onError: (error) => {
+      console.error("Get recipe with missing items error:", error);
     },
   });
 
   return {
-    recipes: generatedRecipes,
-    generateRecipe: generatingMutation.mutate,
-    isGenerating: generatingMutation.isPending,
-    generateError: generatingMutation.error
-      ? generatingMutation.error.message
-      : null,
+    generatedRecipes,
+    isUsedRecipesLoading,
+    usedRecipes,
+    generateRecipeMutation,
+    askQuestionMutation,
+    saveRecipeMutation,
+    consumeIngredientsMutation,
+    addMissingToShoppingListMutation,
+    getMissingItemsMutation,
+    getRecipeWithMissingItemsMutation,
   };
 };

@@ -12,20 +12,32 @@ import Home from "@/pages/Home/Home";
 import Login from "@/pages/Login";
 import { useEffect } from "react";
 import Register from "@/pages/Register";
-import RecipeGenerator from "./pages/RecipeGenerator";
-import { KitchenItem } from "@/types";
+import { KitchenItem, Recipe } from "@/types";
 import { useUser } from "@/hooks/useUser";
-import AddProducts from "@/pages/AddProducts";
+import AddProducts from "@/pages/AddProducts/AddProducts";
 import ShoppingList from "@/pages/ShoppingList/ShoppingList";
+import RecipeSelection from "@/pages/Recipe/RecipeSelection/RecipeSelection";
+import RecipeFlow from "@/pages/Recipe/RecipeFlow/RecipeFlow";
 
 interface AddProductsLocationState {
   items: KitchenItem[];
   isFromScan: boolean;
 }
 
+interface RecipeSelectionLocationState {
+  servings: number;
+}
+
+interface RecipeFlowLocationState {
+  servings: number;
+  recipe: Recipe;
+}
+
 declare module "@tanstack/react-router" {
   interface HistoryState {
     addProducts?: AddProductsLocationState;
+    recipeSelection?: RecipeSelectionLocationState;
+    recipeFlow?: RecipeFlowLocationState;
   }
 }
 
@@ -69,10 +81,16 @@ const loginRoute = createRoute({
   component: Login,
 });
 
-const recipeRoute = createRoute({
+const recipeSelectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/recipe",
-  component: RecipeGenerator,
+  component: RecipeSelection,
+});
+
+const recipeFlowRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/recipe/$recipeId",
+  component: RecipeFlow,
 });
 
 const registerRoute = createRoute({
@@ -103,7 +121,8 @@ const userSettingsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
-  recipeRoute,
+  recipeSelectionRoute,
+  recipeFlowRoute,
   registerRoute,
   addProductsRoute,
   shoppingListRoute,
@@ -118,4 +137,8 @@ export const router = createRouter({
   scrollRestoration: true,
 });
 
-export type { AddProductsLocationState };
+export type {
+  AddProductsLocationState,
+  RecipeSelectionLocationState,
+  RecipeFlowLocationState,
+};

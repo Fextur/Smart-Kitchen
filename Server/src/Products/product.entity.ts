@@ -1,19 +1,46 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { MeasureUnit } from 'src/types';
 import { Inventory } from 'src/Inventory/inventory.entity';
-import { ShoppingList } from 'src/ShoppingList/shoppingList.entity';
-import { Exclude } from 'class-transformer';
 
 @Entity('products')
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ManyToOne(() => Inventory, (inventory) => inventory.products, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  inventory: Inventory | null;
+
   @Column({ type: 'text', nullable: false })
   name: string;
 
-  @Column({ type: 'float', nullable: false })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value) || 0,
+    },
+  })
   size: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value) || 0,
+    },
+  })
+  wantedSize: number;
 
   @Column({ type: 'enum', enum: MeasureUnit, nullable: false })
   measureUnit: MeasureUnit;
@@ -21,20 +48,33 @@ export class Product {
   @Column({
     type: 'timestamptz',
     nullable: true,
+    default: null,
   })
-  expirationDate: Date;
+  expirationDate: Date | null;
 
   @Column({
     type: 'timestamptz',
   })
   latestUpdateDate: Date;
 
-  @ManyToOne(() => Inventory, (inventory) => inventory.products, {
+  @Column({
+    type: 'boolean',
     nullable: true,
+    default: false,
   })
-  inventory: Inventory;
+  isChecked: boolean;
 
-  @ManyToOne(() => ShoppingList, (shoppingList) => shoppingList.products)
-  @Exclude()
-  shoppingList: ShoppingList;
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    default: false,
+  })
+  isInShoppingList: boolean;
+
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    default: false,
+  })
+  isInInventory: boolean;
 }
