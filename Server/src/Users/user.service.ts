@@ -31,7 +31,7 @@ export class UserService {
 
     private jwtService: JwtService,
   ) {}
-  
+
   async generateAccessToken(id: User['id'], userName: User['userName']) {
     const payload = {
       sub: id,
@@ -82,12 +82,31 @@ export class UserService {
   }
 
   async update(updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
-    const { id, name, userName, email, sensitivities, height, weight, goal, notes } = updateUserDto;
+    const {
+      id,
+      name,
+      userName,
+      email,
+      sensitivities,
+      height,
+      weight,
+      goal,
+      notes,
+    } = updateUserDto;
 
     const user = await this.userRepository.findOneBy({ id });
     if (!user) throw new NotFoundException(`User with id ${id} not found`);
 
-    Object.assign(user, { name, userName, email, sensitivities, height, weight, goal, notes });
+    Object.assign(user, {
+      name,
+      userName,
+      email,
+      sensitivities,
+      height,
+      weight,
+      goal,
+      notes,
+    });
 
     const updatedUser = await this.userRepository.save(user);
     const { password: _, ...userWithoutPassword } = updatedUser;
@@ -100,14 +119,6 @@ export class UserService {
       relations: ['inventory'],
     });
     if (!user) throw new NotFoundException(`User with id ${id} not found`);
-
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  }
-
-  async findByEmail(email: string): Promise<Omit<User, 'password'> | null> {
-    const user = await this.userRepository.findOneBy({ email });
-    if (!user) return null;
 
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
@@ -201,16 +212,18 @@ export class UserService {
       if (error instanceof UnauthorizedException) throw error;
       throw new InternalServerErrorException('Login failed');
     }
-
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
   }
 
   async joinToInventory(joinDto: JoinInventoryDto): Promise<User> {
     const { userId, inventoryId } = joinDto;
 
-    const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['inventory'] });
-    const inventory = await this.inventoryRepository.findOneBy({ id: inventoryId });
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+    const inventory = await this.inventoryRepository.findOneBy({
+      id: inventoryId,
+    });
 
     if (!user || !inventory) throw new NotFoundException();
 
@@ -227,7 +240,10 @@ export class UserService {
     });
     if (!user) throw new NotFoundException(`User with id ${userId} not found`);
 
-    const newInventory = this.inventoryRepository.create({ name, users: [user] });
+    const newInventory = this.inventoryRepository.create({
+      name,
+      users: [user],
+    });
     const savedInventory = await this.inventoryRepository.save(newInventory);
 
     user.inventory = savedInventory;
@@ -261,9 +277,10 @@ export class UserService {
     });
     if (!user) throw new NotFoundException();
 
-    const sharedUsers = user.inventory?.users
-      ?.filter((u) => u.id !== user.id)
-      .map((u) => u.email) || [];
+    const sharedUsers =
+      user.inventory?.users
+        ?.filter((u) => u.id !== user.id)
+        .map((u) => u.email) || [];
 
     return {
       dietaryPreference: user.sensitivities?.[0] || 'none',
