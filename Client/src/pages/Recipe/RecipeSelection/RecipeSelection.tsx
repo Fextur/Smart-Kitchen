@@ -3,17 +3,14 @@ import {
   Box,
   TextField,
   Button,
-  Menu,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
   Typography,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
-import { ChevronDown } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import ConfirmFooter from "@/components/ConfirmFooter";
 import { useRecipe } from "@/hooks/useRecipe";
-import { Preferences, Recipe } from "@/types";
+import { Recipe } from "@/types";
 import { ServingsDialog } from "@/pages/Recipe/ServingsDialog";
 import { ItemList } from "@/components/ItemList";
 import { RecipeCard } from "./RecipeCard";
@@ -41,8 +38,7 @@ const RecipeSelection: FC = () => {
 
   const [showServingsDialog, setShowServingsDialog] = useState(!servings);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [useOnlyAvailable, setUseOnlyAvailable] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showMissingDialog, setShowMissingDialog] = useState(false);
 
@@ -50,9 +46,9 @@ const RecipeSelection: FC = () => {
     if (!servings) return;
 
     generateRecipeMutation.mutate({
-      preferences: selectedPreferences as Preferences[],
       servings,
       searchQuery,
+      useOnlyAvailable,
     });
   };
 
@@ -169,65 +165,33 @@ const RecipeSelection: FC = () => {
                 },
               }}
             />
-
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              endIcon={<ChevronDown size={20} />}
-              sx={{
-                mb: 2,
-                justifyContent: "space-between",
-                color:
-                  selectedPreferences.length > 0
-                    ? "primary.main"
-                    : "text.secondary",
-                borderColor: "grey.300",
-                textTransform: "none",
-              }}
-            >
-              <Typography>
-                {selectedPreferences.length > 0
-                  ? `${selectedPreferences.length} העדפות נבחרו`
-                  : "בחר העדפות"}
-              </Typography>
-            </Button>
-
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={() => setAnchorEl(null)}
-              PaperProps={{
-                sx: { width: anchorEl?.offsetWidth, maxHeight: 300 },
-              }}
-            >
-              {Object.values(Preferences).map((pref) => (
-                <MenuItem key={pref} sx={{ p: 0 }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={selectedPreferences.includes(pref)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedPreferences([
-                              ...selectedPreferences,
-                              pref,
-                            ]);
-                          } else {
-                            setSelectedPreferences(
-                              selectedPreferences.filter((p) => p !== pref)
-                            );
-                          }
-                        }}
-                      />
-                    }
-                    label={pref}
-                    sx={{ width: "100%", m: 0, px: 2 }}
+            <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useOnlyAvailable}
+                    onChange={(e) => setUseOnlyAvailable(e.target.checked)}
+                    sx={{
+                      color: "#E49A61",
+                      "&.Mui-checked": {
+                        color: "#E49A61",
+                      },
+                    }}
                   />
-                </MenuItem>
-              ))}
-            </Menu>
-
+                }
+                label={
+                  <Typography variant="body2" sx={{ fontSize: "14px" }}>
+                    השתדל להשתמש רק במה שיש לי במטבח{" "}
+                  </Typography>
+                }
+                sx={{
+                  m: 0,
+                  "& .MuiFormControlLabel-label": {
+                    color: "text.primary",
+                  },
+                }}
+              />
+            </Box>
             <Button
               fullWidth
               variant="contained"

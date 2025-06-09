@@ -90,8 +90,7 @@ export type Recipe = {
 };
 
 export type GenerateRecipeParams = {
-  preferences: string[];
   servings: number;
-  allIngredientsAvailable?: boolean;
   searchQuery?: string;
+  useOnlyAvailable?: boolean;
 };

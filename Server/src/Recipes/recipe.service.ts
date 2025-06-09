@@ -39,9 +39,10 @@ export class RecipeService {
     generateRecipeDto: GenerateRecipeDto,
   ): Promise<RecipeResponseDto[]> {
     try {
-      const { userId, sensitivities, preferences, servings, searchQuery } =
+      const { userId, servings, searchQuery, useOnlyAvailable } =
         generateRecipeDto;
 
+      // Get user with all settings and inventory
       const user = await this.userRepository.findOne({
         where: { id: userId },
         relations: ['inventory', 'inventory.products'],
@@ -51,27 +52,50 @@ export class RecipeService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      const preferencesString = preferences.join(', ');
-      const sensitivitiesString = sensitivities.join(', ');
+      // Build preferences and restrictions from user data
+      const userPreferences = user.sensitivities || [];
+      const userGoal = user.goal || '';
+      const userNotes = user.notes || '';
+
+      // Get user's dietary preferences from their sensitivities
+      const dietaryPreferences = userPreferences.join(', ');
       const searchQueryString = searchQuery
-        ? `המשתמש מחפש: ${searchQuery}.`
+        ? `המשתמש מחפש היום: ${searchQuery}.`
         : '';
 
       const allInventoryProducts = user.inventory.products;
+      const availableProducts = allInventoryProducts.filter(
+        (item) => item.isInInventory && item.size > 0,
+      );
 
-      const productsString = allInventoryProducts
-        .filter((item) => item.isInInventory && item.size > 0)
+      const productsString = availableProducts
         .map((item) => `${item.size} ${item.measureUnit} של ${item.name}`)
         .join(', ');
 
+      // Build the AI prompt with user preferences
+      let availabilityConstraint = '';
+      if (useOnlyAvailable) {
+        availabilityConstraint = `
+        **חשוב מאוד: השתמש רק במצרכים שיש במלאי!**
+        אל תוסיף מצרכים שלא נמצאים ברשימת המלאי.
+        `;
+      } else {
+        availabilityConstraint = `
+        השתמש במצרכים מהמלאי ככל האפשר, אבל מותר להוסיף מצרכים נוספים לפי הצורך.
+        `;
+      }
+
+      const userInfoSection = this.buildUserInfoSection(user);
+
       const content = `
-        אתה שף מקצועי שיוצר מתכונים מותאמים אישית.
+        אתה שף מקצועי שיוצר מתכונים מותאמים אישית על בסיס העדפות המשתמש.
         
-        רגישויות: ${sensitivitiesString || 'אין'}.
-        המצרכים במלאי: ${productsString}.
+        ${userInfoSection}
+        
+        המצרכים הזמינים במלאי: ${productsString || 'אין מצרכים במלאי'}.
         מספר מנות מבוקש: ${servings}.
-        העדפות: ${preferencesString || 'אין'}.
         ${searchQueryString}
+        ${availabilityConstraint}
         
         צור בדיוק 2 מתכונים שונים בפורמט JSON הבא:
         [
@@ -103,8 +127,9 @@ export class RecipeService {
         2. perServingAmount = כמות נוספת לכל מנה (למשל: 0.5 בצל לכל מנה נוספת)
         3. הוראות חייבות להיות קצרות מאוד - עד 15 מילים
         4. סמן isTimerStep=true רק כאשר יש זמן המתנה/בישול/אפייה ספציפי
-        5. השתמש במצרכים מהמלאי ככל האפשר
-        6. **שים לב ליחידות המידה במלאי וניסה להשתמש באותן יחידות**
+        5. **שים לב ליחידות המידה במלאי וניסה להשתמש באותן יחידות**
+        6. התאם את המתכונים להעדפות התזונתיות והיעדים של המשתמש
+        ${useOnlyAvailable ? '7. **אל תשתמש במצרכים שלא נמצאים ברשימת המלאי!**' : ''}
       `;
 
       const response = await this.openai.chat.completions.create({
@@ -194,6 +219,45 @@ export class RecipeService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  private buildUserInfoSection(user: User): string {
+    const sections: string[] = [];
+
+    // Dietary preferences/sensitivities
+    if (user.sensitivities && user.sensitivities.length > 0) {
+      sections.push(
+        `העדפות תזונתיות ורגישויות: ${user.sensitivities.join(', ')}`,
+      );
+    }
+
+    // User goals
+    if (user.goal) {
+      sections.push(`יעדים תזונתיים: ${user.goal}`);
+    }
+
+    // Body metrics for portion sizing
+    if (user.height && user.weight) {
+      const bmi = user.weight / Math.pow(user.height / 100, 2);
+      let bmiCategory = '';
+      if (bmi < 18.5) bmiCategory = 'משקל נמוך';
+      else if (bmi < 25) bmiCategory = 'משקל תקין';
+      else if (bmi < 30) bmiCategory = 'עודף משקל';
+      else bmiCategory = 'השמנה';
+
+      sections.push(
+        `נתוני גוף: גובה ${user.height}ס"מ, משקל ${user.weight}ק"ג (${bmiCategory})`,
+      );
+    }
+
+    // Allergies and special notes
+    if (user.notes) {
+      sections.push(`הערות חשובות ואלרגיות: ${user.notes}`);
+    }
+
+    return sections.length > 0
+      ? sections.join('\n')
+      : 'אין מידע נוסף על העדפות המשתמש.';
   }
 
   private async matchAndStandardizeIngredient(

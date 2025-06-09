@@ -22,10 +22,9 @@ export const useRecipe = () => {
         `${API_ROUTES.recipes}/generate`,
         {
           userId: user.id,
-          sensitivities: user.sensitivities || [],
-          preferences: params.preferences,
           servings: params.servings,
           searchQuery: params.searchQuery,
+          useOnlyAvailable: params.useOnlyAvailable,
         }
       );
 

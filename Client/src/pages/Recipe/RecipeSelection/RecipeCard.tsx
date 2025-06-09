@@ -89,7 +89,7 @@ export const RecipeCard: FC<RecipeCardProps> = ({
               color:
                 recipe.missingItems && recipe.missingItems.length > 0
                   ? "#ef4444"
-                  : "#E49A61",
+                  : "#878787",
               "&:hover": {
                 bgcolor:
                   recipe.missingItems && recipe.missingItems.length > 0

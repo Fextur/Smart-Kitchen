@@ -5,6 +5,7 @@ import { AlertTriangle, LogOut } from "lucide-react";
 import { Drawer } from "@/components/Drawer";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useUser } from "@/hooks/useUser";
+import { useDietaryOptions } from "@/hooks/useDietaryOptions";
 
 interface Props {
   open: boolean;
@@ -20,15 +21,6 @@ type UserSettingsForm = {
   notes: string;
 };
 
-const dietaryOptions = [
-  { value: "kosher", label: "כשר" },
-  { value: "vegan", label: "טבעוני" },
-  { value: "vegetarian", label: "צמחוני" },
-  { value: "gluten-free", label: "ללא גלוטן" },
-  { value: "keto", label: "קטוגני" },
-  { value: "halal", label: "חלאל" },
-];
-
 export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
   const {
     userSettings,
@@ -38,7 +30,7 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
     createKitchenMutation,
   } = useUserSettings();
   const { logout } = useUser();
-
+  const dietaryOptions = useDietaryOptions();
   // Track if form has changes
   const [hasChanges, setHasChanges] = useState(false);
   const [originalValues, setOriginalValues] = useState<UserSettingsForm | null>(
