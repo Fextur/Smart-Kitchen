@@ -14,15 +14,11 @@ export type User = {
   sensitivities: string[];
 };
 
-export type RecipeResponse = {
-  recipe: string;
-  extraProducts?: KitchenItem[];
-};
-
 export type Kitchen = {
   id: string;
   description?: string;
   name?: string;
+  kitchenHash: string; // NEW: Add kitchenHash field
 };
 
 export type UserRes = {

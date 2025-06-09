@@ -1,4 +1,3 @@
-// Server/src/Users/user.service.ts - Updated service
 import {
   Injectable,
   NotFoundException,
@@ -56,8 +55,11 @@ export class UserService {
       const { name, userName, email, password } = createUserDto;
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      const kitchenHash = await this.generateUniqueKitchenHash();
+
       const inventory = this.inventoryRepository.create({
         name: `המטבח של ${name}`,
+        kitchenHash,
       });
 
       const savedInventory = await this.inventoryRepository.save(inventory);
@@ -246,23 +248,21 @@ export class UserService {
     });
     if (!user) throw new NotFoundException(`User with id ${userId} not found`);
 
-    // Create new inventory
+    const kitchenHash = await this.generateUniqueKitchenHash();
+
     const newInventory = this.inventoryRepository.create({
       name,
+      kitchenHash,
       users: [user],
     });
     const savedInventory = await this.inventoryRepository.save(newInventory);
 
-    // Update user's inventory
     user.inventory = savedInventory;
     await this.userRepository.save(user);
 
-    // Generate hash for the new kitchen
-    const kitchenHash = KitchenHashUtils.generateKitchenHash(savedInventory.id);
-
     return {
       inventory: savedInventory,
-      kitchenHash,
+      kitchenHash: savedInventory.kitchenHash,
     };
   }
 
@@ -273,7 +273,6 @@ export class UserService {
   }> {
     const { userId, kitchenHash } = dto;
 
-    // Validate hash format
     if (!KitchenHashUtils.isValidHashFormat(kitchenHash)) {
       throw new BadRequestException('Invalid kitchen code format');
     }
@@ -287,13 +286,9 @@ export class UserService {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    // Find inventory by hash - we need to check all inventories
-    const allInventories = await this.inventoryRepository.find();
-
-    const targetInventory = allInventories.find(
-      (inventory) =>
-        KitchenHashUtils.generateKitchenHash(inventory.id) === kitchenHash,
-    );
+    const targetInventory = await this.inventoryRepository.findOne({
+      where: { kitchenHash },
+    });
 
     if (!targetInventory) {
       return {
@@ -302,7 +297,6 @@ export class UserService {
       };
     }
 
-    // Update user's inventory
     user.inventory = targetInventory;
     await this.userRepository.save(user);
 
@@ -325,10 +319,8 @@ export class UserService {
       throw new NotFoundException(`User or inventory not found`);
     }
 
-    const kitchenHash = KitchenHashUtils.generateKitchenHash(user.inventory.id);
-
     return {
-      kitchenHash,
+      kitchenHash: user.inventory.kitchenHash,
       kitchenName: user.inventory.name || 'Unnamed Kitchen',
     };
   }
@@ -340,13 +332,9 @@ export class UserService {
     });
     if (!user) throw new NotFoundException();
 
-    const kitchenHash = user.inventory
-      ? KitchenHashUtils.generateKitchenHash(user.inventory.id)
-      : '';
-
     return {
       kitchenName: user.inventory?.name || '',
-      kitchenHash,
+      kitchenHash: user.inventory?.kitchenHash || '',
       weight: user.weight || 0,
       height: user.height || 0,
       goal: user.goal || '',
@@ -372,7 +360,6 @@ export class UserService {
 
     if (!user) throw new NotFoundException();
 
-    // Update user properties
     user.sensitivities = settings.dietaryPreference
       ? settings.dietaryPreference.split(',').filter(Boolean)
       : [];
@@ -385,5 +372,28 @@ export class UserService {
 
     const { password, ...rest } = user;
     return rest;
+  }
+
+  private async generateUniqueKitchenHash(): Promise<string> {
+    const maxAttempts = 10;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const hash = KitchenHashUtils.generateRandomKitchenHash();
+
+      const existingInventory = await this.inventoryRepository.findOne({
+        where: { kitchenHash: hash },
+      });
+
+      if (!existingInventory) {
+        return hash;
+      }
+
+      attempts++;
+    }
+
+    throw new InternalServerErrorException(
+      'Failed to generate unique kitchen hash after multiple attempts',
+    );
   }
 }

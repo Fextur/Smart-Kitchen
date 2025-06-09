@@ -25,10 +25,9 @@ const Register = () => {
     onSubmit: async ({ value }) => {
       register(value, {
         onSuccess: () => {
-          // Preserve search params when navigating after successful registration
           navigate({
             to: "/",
-            search: search, // Keep join_kitchen param
+            search: search,
             replace: true,
           });
         },

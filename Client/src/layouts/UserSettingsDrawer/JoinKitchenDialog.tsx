@@ -32,7 +32,6 @@ export const JoinKitchenDialog: FC<JoinKitchenDialogProps> = ({
   };
 
   const handleHashChange = (value: string) => {
-    // Only allow alphanumeric characters and convert to uppercase
     const cleaned = value.replace(/[^A-Fa-f0-9]/g, "").toUpperCase();
     if (cleaned.length <= 7) {
       setKitchenHash(cleaned);

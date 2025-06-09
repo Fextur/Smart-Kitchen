@@ -101,7 +101,6 @@ export class CreateKitchenDto {
   name: string;
 }
 
-// Updated DTO for hash-based kitchen joining
 export class JoinKitchenByHashDto {
   @IsUUID()
   @IsNotEmpty()

@@ -101,11 +101,10 @@ export const useRecipe = () => {
     }
   };
 
-  // Use kitchen-specific query key for proper invalidation
   const { data: usedRecipes, isLoading: isUsedRecipesLoading } = useQuery({
     queryKey: ["usedRecipes", user?.id, kitchen?.id],
     queryFn: fetchUsedRecipes,
-    enabled: !!user?.id && !!kitchen?.id, // Only fetch when we have both user and kitchen
+    enabled: !!user?.id && !!kitchen?.id,
   });
 
   const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
@@ -129,7 +128,6 @@ export const useRecipe = () => {
   const saveRecipeMutation = useMutation({
     mutationFn: saveRecipe,
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["usedRecipes", user?.id, kitchen?.id],
       });
@@ -167,7 +165,6 @@ export const useRecipe = () => {
   const consumeIngredientsMutation = useMutation({
     mutationFn: consumeIngredients,
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["kitchenItems", kitchen?.id],
       });
@@ -204,7 +201,6 @@ export const useRecipe = () => {
   const addMissingToShoppingListMutation = useMutation({
     mutationFn: addMissingToShoppingList,
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["shoppingListItems", kitchen?.id],
       });

@@ -49,7 +49,6 @@ export const useShoppingListItems = () => {
   const createItemsMutation = useMutation({
     mutationFn: (items: ShoppingListItem[]) => createShoppingListItem(items),
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["shoppingListItems", kitchen?.id],
       });
@@ -69,7 +68,6 @@ export const useShoppingListItems = () => {
     mutationFn: (itemId: ShoppingListItem["id"]) =>
       deleteShoppingListItem(itemId),
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["shoppingListItems", kitchen?.id],
       });
@@ -90,7 +88,6 @@ export const useShoppingListItems = () => {
   const clearItemsMutation = useMutation({
     mutationFn: () => clearShoppingListItems(),
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["shoppingListItems", kitchen?.id],
       });
@@ -116,7 +113,6 @@ export const useShoppingListItems = () => {
   const transferIntoShoppingListMutation = useMutation({
     mutationFn: (item: KitchenItem) => transferIntoShoppingList(item),
     onSuccess: () => {
-      // Use kitchen-specific query keys
       queryClient.invalidateQueries({
         queryKey: ["kitchenItems", kitchen?.id],
       });
@@ -127,11 +123,10 @@ export const useShoppingListItems = () => {
     },
   });
 
-  // Use kitchen-specific query key for proper invalidation
   const { data, isLoading } = useQuery({
     queryKey: ["shoppingListItems", kitchen?.id],
     queryFn: fetchShoppingListItems,
-    enabled: !!kitchen?.id, // Only fetch when we have a kitchen
+    enabled: !!kitchen?.id,
   });
 
   return {

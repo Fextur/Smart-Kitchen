@@ -55,7 +55,6 @@ export const useKitchenItems = () => {
   const createItemsMutation = useMutation({
     mutationFn: (items: KitchenItem[]) => createKitchenItems(items),
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["kitchenItems", kitchen?.id],
       });
@@ -84,7 +83,6 @@ export const useKitchenItems = () => {
     mutationFn: (items: (KitchenItem | ShoppingListItem)[]) =>
       updateKitchenItem(items),
     onSuccess: () => {
-      // Use kitchen-specific query keys
       queryClient.invalidateQueries({
         queryKey: ["kitchenItems", kitchen?.id],
       });
@@ -95,11 +93,10 @@ export const useKitchenItems = () => {
     },
   });
 
-  // Use kitchen-specific query key for proper invalidation
   const { data, isLoading } = useQuery({
     queryKey: ["kitchenItems", kitchen?.id],
     queryFn: fetchKitchenItems,
-    enabled: !!kitchen?.id, // Only fetch when we have a kitchen
+    enabled: !!kitchen?.id,
   });
 
   const categorizedItems = useMemo(() => {
@@ -168,7 +165,6 @@ export const useKitchenItems = () => {
   const consumeItemsMutation = useMutation({
     mutationFn: (items: KitchenItem[]) => consumeKitchenItem(items),
     onSuccess: () => {
-      // Use kitchen-specific query key
       queryClient.invalidateQueries({
         queryKey: ["kitchenItems", kitchen?.id],
       });

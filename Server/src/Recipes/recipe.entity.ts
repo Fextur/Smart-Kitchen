@@ -29,13 +29,11 @@ export class Recipe {
   @Column({ default: 30 })
   totalTimeMinutes: number;
 
-  // Keep reference to user who created it for audit purposes
   @ManyToOne(() => User, { nullable: true })
   createdBy: User;
 
-  // Now recipes belong to kitchen/inventory instead of user
   @ManyToOne(() => Inventory, (inventory) => inventory.recipes, {
-    onDelete: 'CASCADE', // Delete recipes when kitchen is deleted
+    onDelete: 'CASCADE',
   })
   kitchen: Inventory;
 

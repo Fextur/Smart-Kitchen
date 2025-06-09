@@ -20,10 +20,9 @@ const Login = () => {
     if (accessToken) {
       loginByToken(accessToken, {
         onSuccess: () => {
-          // Preserve search params when navigating after successful token validation
           navigate({
             to: "/",
-            search: search, // Keep join_kitchen param
+            search: search,
             replace: true,
           });
         },
@@ -39,10 +38,9 @@ const Login = () => {
     onSubmit: async ({ value }) => {
       login(value, {
         onSuccess: () => {
-          // Preserve search params when navigating after successful login
           navigate({
             to: "/",
-            search: search, // Keep join_kitchen param
+            search: search,
             replace: true,
           });
         },
@@ -55,10 +53,9 @@ const Login = () => {
       { credential: credentialResponse.credential },
       {
         onSuccess: () => {
-          // Preserve search params when navigating after successful Google login
           navigate({
             to: "/",
-            search: search, // Keep join_kitchen param
+            search: search,
             replace: true,
           });
         },
@@ -160,7 +157,7 @@ const Login = () => {
           onClick={() =>
             navigate({
               to: "/register",
-              search: search, // Preserve search params when going to register
+              search: search,
             })
           }
         >

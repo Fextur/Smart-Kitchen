@@ -2,11 +2,18 @@ import * as crypto from 'crypto';
 
 export class KitchenHashUtils {
   /**
-   * Generate a 7-character hash from inventory ID
+   * Generate a random 7-character kitchen hash
    */
-  static generateKitchenHash(inventoryId: string): string {
-    const hash = crypto.createHash('sha256').update(inventoryId).digest('hex');
-    return hash.substring(0, 7).toUpperCase();
+  static generateRandomKitchenHash(): string {
+    const chars = 'ABCDEF0123456789';
+    let result = '';
+
+    for (let i = 0; i < 7; i++) {
+      const randomIndex = crypto.randomInt(0, chars.length);
+      result += chars[randomIndex];
+    }
+
+    return result;
   }
 
   /**

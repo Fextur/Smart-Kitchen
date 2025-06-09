@@ -19,13 +19,10 @@ const Home: FC = () => {
   const { usedRecipes } = useRecipe();
   const search = useSearch({ from: "__root__" }) as RootSearchParams;
 
-  // State for join kitchen dialog
   const [showJoinKitchenDialog, setShowJoinKitchenDialog] = useState(false);
 
-  // Check for join_kitchen parameter on component mount
   useEffect(() => {
     if (search?.join_kitchen && user) {
-      // Only show dialog if user is logged in and we have a kitchen hash
       setShowJoinKitchenDialog(true);
     }
   }, [search?.join_kitchen, user]);

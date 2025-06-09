@@ -1,4 +1,3 @@
-// Client/src/utils/kitchenUtils.ts
 export class KitchenUtils {
   /**
    * Validate if a kitchen hash matches the expected format
@@ -25,16 +24,12 @@ export class KitchenUtils {
       .substring(0, 7);
   }
 
-  /**
-   * Copy text to clipboard with fallback
-   */
   static async copyToClipboard(text: string): Promise<boolean> {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
         return true;
       } else {
-        // Fallback for older browsers
         const textArea = document.createElement("textarea");
         textArea.value = text;
         textArea.style.position = "fixed";

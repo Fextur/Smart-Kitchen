@@ -5,6 +5,7 @@ import { Dialog } from "@/components/Dialog";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useUser } from "@/hooks/useUser";
 import { useNavigate } from "@tanstack/react-router";
+import { KitchenUtils } from "@/utils/kitchenUtils";
 
 interface InvitationDialogProps {
   isOpen: boolean;
@@ -147,7 +148,7 @@ export const InvitationDialog: FC<InvitationDialogProps> = ({
               letterSpacing: "0.2em",
             }}
           >
-            {kitchenHash?.slice(0, 3)} {kitchenHash?.slice(3)}
+            {KitchenUtils.formatHashForDisplay(kitchenHash)}
           </Typography>
         </Box>
 

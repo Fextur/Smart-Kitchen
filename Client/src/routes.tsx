@@ -32,8 +32,6 @@ interface RecipeFlowLocationState {
   servings: number;
   recipe: Recipe;
 }
-
-// Define search params schema for root route
 interface RootSearchParams {
   join_kitchen?: string;
 }
@@ -58,10 +56,9 @@ const ProtectedLayout = () => {
       routerState.location.pathname !== "/login" &&
       routerState.location.pathname !== "/register"
     ) {
-      // Preserve search params when redirecting to login
       navigate({
         to: "/login",
-        search: search, // Keep the search params (including join_kitchen)
+        search: search,
         replace: true,
       });
     }
@@ -70,7 +67,6 @@ const ProtectedLayout = () => {
   return <AppLayout />;
 };
 
-// Root route with search params validation
 const rootRoute = createRootRoute({
   validateSearch: (search: Record<string, unknown>): RootSearchParams => ({
     join_kitchen: search?.join_kitchen as string | undefined,
@@ -90,7 +86,6 @@ const addProductsRoute = createRoute({
   component: AddProducts,
 });
 
-// Updated login route to preserve search params
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
@@ -109,7 +104,6 @@ const recipeFlowRoute = createRoute({
   component: RecipeFlow,
 });
 
-// Updated register route to preserve search params
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",

@@ -1,4 +1,3 @@
-// Updated useUserSettings hook with proper query invalidation
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
@@ -14,11 +13,11 @@ interface UserSettings {
   dietaryPreference: string;
   notes: string;
 }
-
 interface CreateKitchenResponse {
   inventory: {
     id: string;
     name: string;
+    kitchenHash: string;
   };
   kitchenHash: string;
 }
@@ -28,6 +27,7 @@ interface JoinKitchenResponse {
   inventory?: {
     id: string;
     name: string;
+    kitchenHash: string;
   };
   message: string;
 }
@@ -50,7 +50,6 @@ export const useUserSettings = () => {
       return data;
     } catch (error) {
       console.error("Error fetching user settings:", error);
-      // Return default values if no settings found
       return {
         kitchenName: "",
         kitchenHash: "",
@@ -180,17 +179,14 @@ export const useUserSettings = () => {
   const createKitchenMutation = useMutation({
     mutationFn: createKitchen,
     onSuccess: (data) => {
-      // Update kitchen context with new inventory
       setKitchen(data.inventory);
 
-      // Invalidate all kitchen-related queries with new inventory ID
       queryClient.invalidateQueries({ queryKey: ["userSettings"] });
       queryClient.removeQueries({ queryKey: ["kitchenItems"] });
       queryClient.removeQueries({ queryKey: ["shoppingListItems"] });
       queryClient.removeQueries({ queryKey: ["usedRecipes"] });
       queryClient.invalidateQueries({ queryKey: ["kitchenHash"] });
 
-      // Clear stale data and refetch with new kitchen context
       setTimeout(() => {
         queryClient.invalidateQueries({
           queryKey: ["kitchenItems"],
@@ -215,17 +211,14 @@ export const useUserSettings = () => {
     mutationFn: joinKitchenByHash,
     onSuccess: (data) => {
       if (data.success && data.inventory) {
-        // Update kitchen context with new inventory
         setKitchen(data.inventory);
 
-        // Invalidate all kitchen-related queries with new inventory ID
         queryClient.invalidateQueries({ queryKey: ["userSettings"] });
         queryClient.removeQueries({ queryKey: ["kitchenItems"] });
         queryClient.removeQueries({ queryKey: ["shoppingListItems"] });
         queryClient.removeQueries({ queryKey: ["usedRecipes"] });
         queryClient.invalidateQueries({ queryKey: ["kitchenHash"] });
 
-        // Clear stale data and refetch with new kitchen context
         setTimeout(() => {
           queryClient.invalidateQueries({
             queryKey: ["kitchenItems"],
@@ -250,7 +243,7 @@ export const useUserSettings = () => {
   const getKitchenHashQuery = useQuery({
     queryKey: ["kitchenHash", user?.id],
     queryFn: getKitchenHash,
-    enabled: false, // Only fetch when explicitly requested
+    enabled: false,
   });
 
   return {

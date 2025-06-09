@@ -1,4 +1,3 @@
-// Client/src/layouts/UserSettingsDrawer.tsx - Updated component
 import { FC, useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import {
@@ -44,13 +43,11 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
   const { logout } = useUser();
   const dietaryOptions = useDietaryOptions();
 
-  // Dialog states
   const [showCreateKitchenDialog, setShowCreateKitchenDialog] = useState(false);
   const [showJoinKitchenDialog, setShowJoinKitchenDialog] = useState(false);
   const [showShareKitchenDialog, setShowShareKitchenDialog] = useState(false);
   const [joinKitchenError, setJoinKitchenError] = useState<string | null>(null);
 
-  // Track if form has changes
   const [hasChanges, setHasChanges] = useState(false);
   const [originalValues, setOriginalValues] = useState<UserSettingsForm | null>(
     null
@@ -79,7 +76,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
     },
   });
 
-  // Helper function to compare two UserSettingsForm objects
   const areValuesEqual = (
     a: UserSettingsForm,
     b: UserSettingsForm
@@ -98,7 +94,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
     );
   };
 
-  // Subscribe to form state and check for changes
   useEffect(() => {
     const unsubscribe = form.store.subscribe(() => {
       if (originalValues) {
@@ -139,7 +134,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
     createKitchenMutation.mutate(kitchenName, {
       onSuccess: () => {
         setShowCreateKitchenDialog(false);
-        // Optionally show success message
       },
       onError: (error) => {
         console.error("Create kitchen error:", error);
@@ -153,7 +147,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
       onSuccess: (data) => {
         if (data.success) {
           setShowJoinKitchenDialog(false);
-          // Optionally show success message
         } else {
           setJoinKitchenError(data.message);
         }
@@ -342,7 +335,12 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
                         onChange={(e) =>
                           field.handleChange(Number(e.target.value) || 0)
                         }
-                        inputProps={{ min: 0, step: 0.1 }}
+                        slotProps={{
+                          htmlInput: {
+                            min: 0,
+                            step: 0.1,
+                          },
+                        }}
                         placeholder="משקל"
                       />
                       <Typography
@@ -373,7 +371,12 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
                         onChange={(e) =>
                           field.handleChange(Number(e.target.value) || 0)
                         }
-                        inputProps={{ min: 0, step: 1 }}
+                        slotProps={{
+                          htmlInput: {
+                            min: 0,
+                            step: 1,
+                          },
+                        }}
                         placeholder="גובה"
                       />
                       <Typography
@@ -543,6 +546,7 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
                   "&:hover": {
                     borderColor: "error.dark",
                     bgcolor: "error.light",
+                    color: "white",
                   },
                 }}
               >

@@ -1,4 +1,3 @@
-// Client/src/components/KitchenDialogs/ShareKitchenDialog.tsx
 import { FC, useState, useEffect } from "react";
 import { Box, Typography, IconButton, Alert } from "@mui/material";
 import { Share2, Copy, Check, MessageCircle, ExternalLink } from "lucide-react";
@@ -23,10 +22,8 @@ export const ShareKitchenDialog: FC<ShareKitchenDialogProps> = ({
   const [copiedHash, setCopiedHash] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Generate shareable link
   const shareableLink = `${window.location.origin}?join_kitchen=${kitchenHash}`;
 
-  // Generate WhatsApp message
   const whatsappMessage = encodeURIComponent(
     `היי! אני מזמין/ה אותך להצטרף למטבח המשותף שלנו "${kitchenName}" באפליקציית מטבחכם 🍽️\n\n` +
       `קוד המטבח: ${kitchenHash}\n\n` +
@@ -77,11 +74,9 @@ export const ShareKitchenDialog: FC<ShareKitchenDialogProps> = ({
           url: shareableLink,
         });
       } catch (error) {
-        // Fallback to copy link if share fails
         handleCopyLink();
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       handleCopyLink();
     }
   };
