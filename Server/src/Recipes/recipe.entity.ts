@@ -1,4 +1,3 @@
-
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from 'src/Users/user.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Entity()
 export class Recipe {
@@ -29,8 +29,15 @@ export class Recipe {
   @Column({ default: 30 })
   totalTimeMinutes: number;
 
-  @ManyToOne(() => User)
-  user: User;
+  // Keep reference to user who created it for audit purposes
+  @ManyToOne(() => User, { nullable: true })
+  createdBy: User;
+
+  // Now recipes belong to kitchen/inventory instead of user
+  @ManyToOne(() => Inventory, (inventory) => inventory.recipes, {
+    onDelete: 'CASCADE', // Delete recipes when kitchen is deleted
+  })
+  kitchen: Inventory;
 
   @CreateDateColumn()
   createdAt: Date;

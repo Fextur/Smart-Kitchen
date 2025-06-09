@@ -61,7 +61,7 @@ export const RecipeCard: FC<RecipeCardProps> = ({
             {!isNew && recipe.lastAccessedAt && (
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 לפני{" "}
-                {Math.ceil(
+                {Math.floor(
                   (new Date().getTime() -
                     new Date(recipe.lastAccessedAt).getTime()) /
                     (1000 * 60 * 60 * 24)

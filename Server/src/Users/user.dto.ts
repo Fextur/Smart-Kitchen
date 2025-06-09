@@ -6,6 +6,8 @@ import {
   IsString,
   IsUUID,
   IsNumber,
+  Length,
+  Matches,
 } from 'class-validator';
 import { User } from './user.entity';
 
@@ -99,16 +101,20 @@ export class CreateKitchenDto {
   name: string;
 }
 
-export class JoinKitchenDto {
+// Updated DTO for hash-based kitchen joining
+export class JoinKitchenByHashDto {
   @IsUUID()
   @IsNotEmpty()
   userId: string;
 
   @IsString()
-  @IsNotEmpty()
-  kitchenName: string;
-  
+  @Length(7, 7)
+  @Matches(/^[A-F0-9]{7}$/, {
+    message: 'Kitchen code must be 7 uppercase alphanumeric characters',
+  })
+  kitchenHash: string;
 }
+
 export class UserWithToken extends User {
   accessToken: string;
 }

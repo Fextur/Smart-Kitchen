@@ -100,7 +100,7 @@ export const useRecipe = () => {
   };
 
   const { data: usedRecipes, isLoading: isUsedRecipesLoading } = useQuery({
-    queryKey: ["usedRecipes", user?.id],
+    queryKey: ["usedRecipes"],
     queryFn: fetchUsedRecipes,
     enabled: !!user?.id,
   });

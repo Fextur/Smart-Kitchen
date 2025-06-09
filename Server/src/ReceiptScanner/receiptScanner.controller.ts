@@ -30,7 +30,7 @@ export class ReceiptScannerController {
     @Query('inventoryId') inventoryId?: string,
   ): Promise<ParsedProduct[]> {
     return this.receiptScannerService.scanReceipt(file, {
-      bypassScanning: true,
+      bypassScanning: false,
       inventoryId,
     });
   }

@@ -6,19 +6,17 @@ import {
   LoginUserDto,
   UpdateUserDto,
   CreateKitchenDto,
-  JoinKitchenDto,
+  JoinKitchenByHashDto,
 } from './user.dto';
 import { User } from './user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
 
 type UserSettingsDto = {
-  kitchenName: string;
   weight: number;
   height: number;
   goal: string;
   dietaryPreference: string;
   notes: string;
-  sharedKitchenUsers: string[];
 };
 
 @Controller('users')
@@ -82,9 +80,14 @@ export class UserController {
     return this.userService.createKitchen(dto);
   }
 
-  @Post('join-to-kitchen')
-  async joinToKitchen(@Body() dto: JoinKitchenDto) {
-    return this.userService.joinToKitchen(dto);
+  @Post('join-kitchen-by-hash')
+  async joinKitchenByHash(@Body() dto: JoinKitchenByHashDto) {
+    return this.userService.joinKitchenByHash(dto);
+  }
+
+  @Get(':userId/kitchen-hash')
+  async getKitchenHash(@Param('userId') userId: string) {
+    return this.userService.getKitchenHash(userId);
   }
 
   @Post('logoutUser')

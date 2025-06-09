@@ -1,8 +1,10 @@
+// Server/src/Users/user.service.ts - Updated service
 import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,11 +16,12 @@ import {
   LoginUserDto,
   UpdateUserDto,
   CreateKitchenDto,
-  JoinKitchenDto,
+  JoinKitchenByHashDto,
   UserWithToken,
 } from './user.dto';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { JwtService } from '@nestjs/jwt';
+import { KitchenHashUtils } from 'src/utils/kitchenHashUtils';
 
 @Injectable()
 export class UserService {
@@ -231,7 +234,10 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async createKitchen(dto: CreateKitchenDto): Promise<Inventory> {
+  async createKitchen(dto: CreateKitchenDto): Promise<{
+    inventory: Inventory;
+    kitchenHash: string;
+  }> {
     const { userId, name } = dto;
 
     const user = await this.userRepository.findOne({
@@ -240,34 +246,91 @@ export class UserService {
     });
     if (!user) throw new NotFoundException(`User with id ${userId} not found`);
 
+    // Create new inventory
     const newInventory = this.inventoryRepository.create({
       name,
       users: [user],
     });
     const savedInventory = await this.inventoryRepository.save(newInventory);
 
+    // Update user's inventory
     user.inventory = savedInventory;
     await this.userRepository.save(user);
 
-    return savedInventory;
+    // Generate hash for the new kitchen
+    const kitchenHash = KitchenHashUtils.generateKitchenHash(savedInventory.id);
+
+    return {
+      inventory: savedInventory,
+      kitchenHash,
+    };
   }
 
-  async joinToKitchen(dto: JoinKitchenDto): Promise<User> {
-    const { userId, kitchenName } = dto;
+  async joinKitchenByHash(dto: JoinKitchenByHashDto): Promise<{
+    success: boolean;
+    inventory?: Inventory;
+    message: string;
+  }> {
+    const { userId, kitchenHash } = dto;
 
-    const user = await this.userRepository.findOneBy({ id: userId });
-    const inventory = await this.inventoryRepository.findOne({
-      where: { name: kitchenName },
-      relations: ['users'],
+    // Validate hash format
+    if (!KitchenHashUtils.isValidHashFormat(kitchenHash)) {
+      throw new BadRequestException('Invalid kitchen code format');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
     });
 
-    if (!user || !inventory) throw new NotFoundException();
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
 
-    inventory.users.push(user);
-    await this.inventoryRepository.save(inventory);
+    // Find inventory by hash - we need to check all inventories
+    const allInventories = await this.inventoryRepository.find();
 
-    user.inventory = inventory;
-    return this.userRepository.save(user);
+    const targetInventory = allInventories.find(
+      (inventory) =>
+        KitchenHashUtils.generateKitchenHash(inventory.id) === kitchenHash,
+    );
+
+    if (!targetInventory) {
+      return {
+        success: false,
+        message: 'Kitchen not found. Please check the code and try again.',
+      };
+    }
+
+    // Update user's inventory
+    user.inventory = targetInventory;
+    await this.userRepository.save(user);
+
+    return {
+      success: true,
+      inventory: targetInventory,
+      message: `Successfully joined kitchen: ${targetInventory.name}`,
+    };
+  }
+
+  async getKitchenHash(
+    userId: string,
+  ): Promise<{ kitchenHash: string; kitchenName: string }> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+
+    if (!user || !user.inventory) {
+      throw new NotFoundException(`User or inventory not found`);
+    }
+
+    const kitchenHash = KitchenHashUtils.generateKitchenHash(user.inventory.id);
+
+    return {
+      kitchenHash,
+      kitchenName: user.inventory.name || 'Unnamed Kitchen',
+    };
   }
 
   async getUserSettings(userId: string): Promise<any> {
@@ -277,8 +340,13 @@ export class UserService {
     });
     if (!user) throw new NotFoundException();
 
+    const kitchenHash = user.inventory
+      ? KitchenHashUtils.generateKitchenHash(user.inventory.id)
+      : '';
+
     return {
       kitchenName: user.inventory?.name || '',
+      kitchenHash,
       weight: user.weight || 0,
       height: user.height || 0,
       goal: user.goal || '',
@@ -290,7 +358,6 @@ export class UserService {
   async updateUserSettings(
     userId: string,
     settings: {
-      kitchenName: string;
       weight: number;
       height: number;
       goal: string;
@@ -305,6 +372,7 @@ export class UserService {
 
     if (!user) throw new NotFoundException();
 
+    // Update user properties
     user.sensitivities = settings.dietaryPreference
       ? settings.dietaryPreference.split(',').filter(Boolean)
       : [];
@@ -312,11 +380,6 @@ export class UserService {
     user.weight = settings.weight;
     user.goal = settings.goal;
     user.notes = settings.notes;
-
-    if (settings.kitchenName && user.inventory) {
-      user.inventory.name = settings.kitchenName;
-      await this.inventoryRepository.save(user.inventory);
-    }
 
     await this.userRepository.save(user);
 

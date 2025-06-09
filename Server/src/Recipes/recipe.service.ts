@@ -1,3 +1,4 @@
+// Server/src/Recipes/recipe.service.ts - Updated for kitchen-based recipes
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -5,6 +6,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/Users/user.entity';
 import { Recipe } from './recipe.entity';
 import { Product } from 'src/Products/product.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
 import { UnitConverter } from 'src/utils/unitConversion';
 import {
@@ -28,6 +30,8 @@ export class RecipeService {
     private recipeRepository: Repository<Recipe>,
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
+    @InjectRepository(Inventory)
+    private inventoryRepository: Repository<Inventory>,
     private productMatchingService: ProductMatchingService,
   ) {
     this.openai = new OpenAI({
@@ -42,15 +46,20 @@ export class RecipeService {
       const { userId, servings, searchQuery, useOnlyAvailable } =
         generateRecipeDto;
 
+      // Get user with all settings and inventory
       const user = await this.userRepository.findOne({
         where: { id: userId },
         relations: ['inventory', 'inventory.products'],
       });
 
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      if (!user || !user.inventory) {
+        throw new HttpException(
+          'User or kitchen not found',
+          HttpStatus.NOT_FOUND,
+        );
       }
 
+      // Rest of the generation logic remains the same...
       const userPreferences = user.sensitivities || [];
       const userGoal = user.goal || '';
       const userNotes = user.notes || '';
@@ -217,6 +226,356 @@ export class RecipeService {
     }
   }
 
+  // Update getUserRecipeHistory to use kitchen instead of user
+  async getUserRecipeHistory(userId: string): Promise<RecipeResponseDto[]> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['inventory', 'inventory.products'],
+      });
+
+      if (!user || !user.inventory) {
+        return [];
+      }
+
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+      // Get recipes from the user's current kitchen
+      const recipes = await this.recipeRepository
+        .createQueryBuilder('recipe')
+        .where('recipe.kitchenId = :kitchenId', {
+          kitchenId: user.inventory.id,
+        })
+        .andWhere('recipe.lastAccessedAt IS NOT NULL')
+        .andWhere('recipe.lastAccessedAt >= :twoWeeksAgo', { twoWeeksAgo })
+        .orderBy('recipe.lastAccessedAt', 'DESC')
+        .limit(10)
+        .getMany();
+
+      if (recipes.length === 0) {
+        return [];
+      }
+
+      const inventoryProducts = user.inventory.products.filter(
+        (item) => item.isInInventory && item.size > 0,
+      );
+
+      const recipesWithMissingItems = recipes.map((recipe) => {
+        const missingItems: KitchenItemDto[] = [];
+        const defaultServings = 2;
+
+        for (const ingredient of recipe.ingredients) {
+          const requiredAmount =
+            ingredient.baseAmount +
+            ingredient.perServingAmount * defaultServings;
+
+          let availableAmount = 0;
+
+          if (ingredient.productId) {
+            const product = inventoryProducts.find(
+              (p) => p.id === ingredient.productId,
+            );
+
+            if (product) {
+              const conversionResult = UnitConverter.convertUnits(
+                product.size || 0,
+                product.measureUnit,
+                this.mapStringToMeasureUnit(ingredient.unit),
+                product.name,
+              );
+
+              availableAmount = conversionResult.success
+                ? conversionResult.convertedSize
+                : product.size || 0;
+            }
+          }
+
+          if (availableAmount < requiredAmount) {
+            missingItems.push({
+              name: ingredient.name,
+              size: requiredAmount - availableAmount,
+              measureUnit: ingredient.unit,
+            });
+          }
+        }
+
+        return {
+          id: recipe.id,
+          name: recipe.name,
+          description: recipe.description,
+          ingredients: recipe.ingredients,
+          steps: recipe.steps,
+          totalTimeMinutes: recipe.totalTimeMinutes,
+          lastAccessedAt: recipe.lastAccessedAt,
+          missingItems: missingItems.length > 0 ? missingItems : undefined,
+        };
+      });
+
+      return recipesWithMissingItems;
+    } catch (error) {
+      console.error('Get user recipe history error:', error);
+      throw new HttpException(
+        'Failed to get recipe history',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Update saveRecipe to save to kitchen instead of user
+  async saveRecipe(saveRecipeDto: SaveRecipeDto): Promise<RecipeResponseDto> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: saveRecipeDto.userId },
+        relations: ['inventory'],
+      });
+
+      if (!user || !user.inventory) {
+        throw new HttpException(
+          'User or kitchen not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const processedIngredients = await this.processRecipeIngredients(
+        saveRecipeDto.ingredients,
+        user.inventory.id,
+      );
+
+      const recipeData: any = {
+        name: saveRecipeDto.name,
+        description: saveRecipeDto.description,
+        ingredients: processedIngredients,
+        steps: saveRecipeDto.steps,
+        totalTimeMinutes: saveRecipeDto.totalTimeMinutes,
+        createdBy: user, // Keep track of who created it
+        kitchen: user.inventory, // But save it to the kitchen
+        lastAccessedAt: new Date(),
+      };
+
+      if (saveRecipeDto.id && this.isValidUUID(saveRecipeDto.id)) {
+        recipeData.id = saveRecipeDto.id;
+      }
+
+      const recipe = this.recipeRepository.create(recipeData);
+      const savedRecipe = await this.recipeRepository.save(recipe);
+
+      const recipeEntity = Array.isArray(savedRecipe)
+        ? savedRecipe[0]
+        : savedRecipe;
+
+      return {
+        id: recipeEntity.id,
+        name: recipeEntity.name,
+        description: recipeEntity.description,
+        ingredients: recipeEntity.ingredients,
+        steps: recipeEntity.steps,
+        totalTimeMinutes: recipeEntity.totalTimeMinutes,
+        lastAccessedAt: recipeEntity.lastAccessedAt,
+        missingItems: saveRecipeDto.missingItems,
+      };
+    } catch (error) {
+      console.error('Save recipe error:', error);
+      throw new HttpException(
+        'Failed to save recipe',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Update consumeIngredients to check kitchen ownership
+  async consumeIngredients(
+    consumeDto: ConsumeIngredientsDto,
+  ): Promise<{ message: string; updatedProducts: Product[] }> {
+    try {
+      const { recipeId, servings, userId } = consumeDto;
+
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['inventory'],
+      });
+
+      if (!user || !user.inventory) {
+        throw new HttpException(
+          'User or kitchen not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const recipe = await this.recipeRepository.findOne({
+        where: { id: recipeId },
+        relations: ['kitchen'],
+      });
+
+      if (!recipe) {
+        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Check if recipe belongs to user's current kitchen
+      if (recipe.kitchen.id !== user.inventory.id) {
+        throw new HttpException(
+          'Recipe not accessible from current kitchen',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const updatedProducts: Product[] = [];
+
+      for (const ingredient of recipe.ingredients) {
+        if (ingredient.productId) {
+          const product = await this.productRepository.findOne({
+            where: {
+              id: ingredient.productId,
+              inventory: { id: user.inventory.id }, // Ensure product is in current kitchen
+            },
+          });
+
+          if (product && product.isInInventory && product.size > 0) {
+            const amountToConsume =
+              ingredient.baseAmount + ingredient.perServingAmount * servings;
+
+            const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
+            const conversionResult = UnitConverter.convertUnits(
+              amountToConsume,
+              ingredientUnit,
+              product.measureUnit,
+              product.name,
+            );
+
+            const consumeInProductUnit = conversionResult.success
+              ? conversionResult.convertedSize
+              : amountToConsume;
+
+            const newSize = Math.max(0, product.size - consumeInProductUnit);
+            product.size = newSize;
+            product.latestUpdateDate = new Date();
+
+            const updatedProduct = await this.productRepository.save(product);
+            updatedProducts.push(updatedProduct);
+          }
+        }
+      }
+
+      recipe.lastAccessedAt = new Date();
+      await this.recipeRepository.save(recipe);
+
+      return {
+        message: `Successfully consumed ingredients for ${servings} servings`,
+        updatedProducts,
+      };
+    } catch (error) {
+      console.error('Consume ingredients error:', error);
+      throw new HttpException(
+        'Failed to consume ingredients',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Rest of the methods remain similar but with kitchen-based checks...
+  // I'll include the key ones that need updates:
+
+  async getRecipeWithMissingItems(
+    recipeId: string,
+    servings: number,
+  ): Promise<RecipeResponseDto> {
+    try {
+      const recipe = await this.recipeRepository.findOne({
+        where: { id: recipeId },
+        relations: ['kitchen', 'kitchen.products'],
+      });
+
+      if (!recipe) {
+        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
+      }
+
+      const missingItems = await this.recalculateMissingItems(
+        recipeId,
+        servings,
+      );
+
+      return {
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        steps: recipe.steps,
+        totalTimeMinutes: recipe.totalTimeMinutes,
+        lastAccessedAt: recipe.lastAccessedAt,
+        missingItems: missingItems.length > 0 ? missingItems : undefined,
+      };
+    } catch (error) {
+      console.error('Get recipe with missing items error:', error);
+      throw new HttpException(
+        'Failed to get recipe with missing items',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async recalculateMissingItems(
+    recipeId: string,
+    servings: number,
+  ): Promise<KitchenItemDto[]> {
+    try {
+      const recipe = await this.recipeRepository.findOne({
+        where: { id: recipeId },
+        relations: ['kitchen', 'kitchen.products'],
+      });
+
+      if (!recipe) {
+        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
+      }
+
+      const missingItems: KitchenItemDto[] = [];
+      const inventoryProducts = recipe.kitchen.products.filter(
+        (item) => item.isInInventory && item.size > 0,
+      );
+
+      for (const ingredient of recipe.ingredients) {
+        const requiredAmount =
+          ingredient.baseAmount + ingredient.perServingAmount * servings;
+
+        let availableAmount = 0;
+        if (ingredient.productId) {
+          const product = inventoryProducts.find(
+            (p) => p.id === ingredient.productId,
+          );
+
+          if (product) {
+            const conversionResult = UnitConverter.convertUnits(
+              product.size || 0,
+              product.measureUnit,
+              this.mapStringToMeasureUnit(ingredient.unit),
+              product.name,
+            );
+
+            availableAmount = conversionResult.success
+              ? conversionResult.convertedSize
+              : product.size || 0;
+          }
+        }
+
+        if (availableAmount < requiredAmount) {
+          missingItems.push({
+            name: ingredient.name,
+            size: requiredAmount - availableAmount,
+            measureUnit: ingredient.unit,
+          });
+        }
+      }
+
+      return missingItems;
+    } catch (error) {
+      console.error('Recalculate missing items error:', error);
+      throw new HttpException(
+        'Failed to recalculate missing items',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Private helper methods remain the same...
   private buildUserInfoSection(user: User): string {
     const sections: string[] = [];
 
@@ -316,185 +675,6 @@ export class RecipeService {
     };
   }
 
-  async askQuestion(
-    stepInstruction: string,
-    question: string,
-    servings: number,
-  ): Promise<string> {
-    const content = `
-      אתה עוזר בישול מקצועי. המשתמש נמצא בשלב: "${stepInstruction}"
-      מכין ${servings} מנות.
-      שאלה: ${question}
-      
-      תן תשובה קצרה וברורה (עד 40 מילים) שתעזור למשתמש להמשיך בבישול.
-    `;
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'system', content }],
-        max_tokens: 150,
-        temperature: 0.5,
-      });
-
-      return (
-        response.choices[0].message?.content?.trim() ||
-        'מצטער, לא הצלחתי להבין. אנא נסה לנסח את השאלה אחרת.'
-      );
-    } catch (error) {
-      console.error('Question answering error:', error);
-      return 'מצטער, אירעה שגיאה טכנית. נסה שוב בעוד רגע.';
-    }
-  }
-
-  async getUserRecipeHistory(userId: string): Promise<RecipeResponseDto[]> {
-    try {
-      const twoWeeksAgo = new Date();
-      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
-      const recipes = await this.recipeRepository
-        .createQueryBuilder('recipe')
-        .where('recipe.userId = :userId', { userId })
-        .andWhere('recipe.lastAccessedAt IS NOT NULL')
-        .andWhere('recipe.lastAccessedAt >= :twoWeeksAgo', { twoWeeksAgo })
-        .orderBy('recipe.lastAccessedAt', 'DESC')
-        .limit(10)
-        .getMany();
-
-      if (recipes.length === 0) {
-        return [];
-      }
-
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-        relations: ['inventory', 'inventory.products'],
-      });
-
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-
-      const inventoryProducts = user.inventory.products.filter(
-        (item) => item.isInInventory && item.size > 0,
-      );
-
-      const recipesWithMissingItems = recipes.map((recipe) => {
-        const missingItems: KitchenItemDto[] = [];
-        const defaultServings = 2;
-
-        for (const ingredient of recipe.ingredients) {
-          const requiredAmount =
-            ingredient.baseAmount +
-            ingredient.perServingAmount * defaultServings;
-
-          let availableAmount = 0;
-
-          if (ingredient.productId) {
-            const product = inventoryProducts.find(
-              (p) => p.id === ingredient.productId,
-            );
-
-            if (product) {
-              const conversionResult = UnitConverter.convertUnits(
-                product.size || 0,
-                product.measureUnit,
-                this.mapStringToMeasureUnit(ingredient.unit),
-                product.name,
-              );
-
-              availableAmount = conversionResult.success
-                ? conversionResult.convertedSize
-                : product.size || 0;
-            }
-          }
-
-          if (availableAmount < requiredAmount) {
-            missingItems.push({
-              name: ingredient.name,
-              size: requiredAmount - availableAmount,
-              measureUnit: ingredient.unit,
-            });
-          }
-        }
-
-        return {
-          id: recipe.id,
-          name: recipe.name,
-          description: recipe.description,
-          ingredients: recipe.ingredients,
-          steps: recipe.steps,
-          totalTimeMinutes: recipe.totalTimeMinutes,
-          lastAccessedAt: recipe.lastAccessedAt,
-          missingItems: missingItems.length > 0 ? missingItems : undefined,
-        };
-      });
-
-      return recipesWithMissingItems;
-    } catch (error) {
-      console.error('Get user recipe history error:', error);
-      throw new HttpException(
-        'Failed to get recipe history',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async saveRecipe(saveRecipeDto: SaveRecipeDto): Promise<RecipeResponseDto> {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { id: saveRecipeDto.userId },
-        relations: ['inventory'],
-      });
-
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-
-      const processedIngredients = await this.processRecipeIngredients(
-        saveRecipeDto.ingredients,
-        user.inventory.id,
-      );
-
-      const recipeData: any = {
-        name: saveRecipeDto.name,
-        description: saveRecipeDto.description,
-        ingredients: processedIngredients,
-        steps: saveRecipeDto.steps,
-        totalTimeMinutes: saveRecipeDto.totalTimeMinutes,
-        user,
-        lastAccessedAt: new Date(),
-      };
-
-      if (saveRecipeDto.id && this.isValidUUID(saveRecipeDto.id)) {
-        recipeData.id = saveRecipeDto.id;
-      }
-
-      const recipe = this.recipeRepository.create(recipeData);
-      const savedRecipe = await this.recipeRepository.save(recipe);
-
-      const recipeEntity = Array.isArray(savedRecipe)
-        ? savedRecipe[0]
-        : savedRecipe;
-
-      return {
-        id: recipeEntity.id,
-        name: recipeEntity.name,
-        description: recipeEntity.description,
-        ingredients: recipeEntity.ingredients,
-        steps: recipeEntity.steps,
-        totalTimeMinutes: recipeEntity.totalTimeMinutes,
-        lastAccessedAt: recipeEntity.lastAccessedAt,
-        missingItems: saveRecipeDto.missingItems,
-      };
-    } catch (error) {
-      console.error('Save recipe error:', error);
-      throw new HttpException(
-        'Failed to save recipe',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   private async processRecipeIngredients(
     ingredients: any[],
     inventoryId: string,
@@ -545,75 +725,34 @@ export class RecipeService {
     return unitMappings[unit] || MeasureUnit.UNIT;
   }
 
-  async consumeIngredients(
-    consumeDto: ConsumeIngredientsDto,
-  ): Promise<{ message: string; updatedProducts: Product[] }> {
-    try {
-      const { recipeId, servings, userId } = consumeDto;
+  async askQuestion(
+    stepInstruction: string,
+    question: string,
+    servings: number,
+  ): Promise<string> {
+    const content = `
+      אתה עוזר בישול מקצועי. המשתמש נמצא בשלב: "${stepInstruction}"
+      מכין ${servings} מנות.
+      שאלה: ${question}
+      
+      תן תשובה קצרה וברורה (עד 40 מילים) שתעזור למשתמש להמשיך בבישול.
+    `;
 
-      const recipe = await this.recipeRepository.findOne({
-        where: { id: recipeId },
-        relations: ['user'],
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'system', content }],
+        max_tokens: 150,
+        temperature: 0.5,
       });
 
-      if (!recipe) {
-        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
-      }
-
-      if (recipe.user.id !== userId) {
-        throw new HttpException(
-          'Unauthorized access to recipe',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      const updatedProducts: Product[] = [];
-
-      for (const ingredient of recipe.ingredients) {
-        if (ingredient.productId) {
-          const product = await this.productRepository.findOne({
-            where: { id: ingredient.productId },
-          });
-
-          if (product && product.isInInventory && product.size > 0) {
-            const amountToConsume =
-              ingredient.baseAmount + ingredient.perServingAmount * servings;
-
-            const ingredientUnit = this.mapStringToMeasureUnit(ingredient.unit);
-            const conversionResult = UnitConverter.convertUnits(
-              amountToConsume,
-              ingredientUnit,
-              product.measureUnit,
-              product.name,
-            );
-
-            const consumeInProductUnit = conversionResult.success
-              ? conversionResult.convertedSize
-              : amountToConsume;
-
-            const newSize = Math.max(0, product.size - consumeInProductUnit);
-            product.size = newSize;
-            product.latestUpdateDate = new Date();
-
-            const updatedProduct = await this.productRepository.save(product);
-            updatedProducts.push(updatedProduct);
-          }
-        }
-      }
-
-      recipe.lastAccessedAt = new Date();
-      await this.recipeRepository.save(recipe);
-
-      return {
-        message: `Successfully consumed ingredients for ${servings} servings`,
-        updatedProducts,
-      };
-    } catch (error) {
-      console.error('Consume ingredients error:', error);
-      throw new HttpException(
-        'Failed to consume ingredients',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+      return (
+        response.choices[0].message?.content?.trim() ||
+        'מצטער, לא הצלחתי להבין. אנא נסה לנסח את השאלה אחרת.'
       );
+    } catch (error) {
+      console.error('Question answering error:', error);
+      return 'מצטער, אירעה שגיאה טכנית. נסה שוב בעוד רגע.';
     }
   }
 
@@ -623,18 +762,31 @@ export class RecipeService {
     servings: number,
   ): Promise<{ message: string }> {
     try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['inventory'],
+      });
+
+      if (!user || !user.inventory) {
+        throw new HttpException(
+          'User or kitchen not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
       const recipe = await this.recipeRepository.findOne({
         where: { id: recipeId },
-        relations: ['user'],
+        relations: ['kitchen'],
       });
 
       if (!recipe) {
         throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
       }
 
-      if (recipe.user.id !== userId) {
+      // Check if recipe belongs to user's current kitchen
+      if (recipe.kitchen.id !== user.inventory.id) {
         throw new HttpException(
-          'Unauthorized access to recipe',
+          'Recipe not accessible from current kitchen',
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -648,7 +800,10 @@ export class RecipeService {
           ingredient.baseAmount + ingredient.perServingAmount * servings;
 
         const product = await this.productRepository.findOne({
-          where: { id: ingredient.productId },
+          where: {
+            id: ingredient.productId,
+            inventory: { id: user.inventory.id },
+          },
         });
 
         if (product) {
@@ -701,106 +856,6 @@ export class RecipeService {
       console.error('Add missing items to shopping list error:', error);
       throw new HttpException(
         'Failed to add missing items to shopping list',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async recalculateMissingItems(
-    recipeId: string,
-    servings: number,
-  ): Promise<KitchenItemDto[]> {
-    try {
-      const recipe = await this.recipeRepository.findOne({
-        where: { id: recipeId },
-        relations: ['user', 'user.inventory', 'user.inventory.products'],
-      });
-
-      if (!recipe) {
-        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
-      }
-
-      const missingItems: KitchenItemDto[] = [];
-      const inventoryProducts = recipe.user.inventory.products.filter(
-        (item) => item.isInInventory && item.size > 0,
-      );
-
-      for (const ingredient of recipe.ingredients) {
-        const requiredAmount =
-          ingredient.baseAmount + ingredient.perServingAmount * servings;
-
-        let availableAmount = 0;
-        if (ingredient.productId) {
-          const product = inventoryProducts.find(
-            (p) => p.id === ingredient.productId,
-          );
-
-          if (product) {
-            const conversionResult = UnitConverter.convertUnits(
-              product.size || 0,
-              product.measureUnit,
-              this.mapStringToMeasureUnit(ingredient.unit),
-              product.name,
-            );
-
-            availableAmount = conversionResult.success
-              ? conversionResult.convertedSize
-              : product.size || 0;
-          }
-        }
-
-        if (availableAmount < requiredAmount) {
-          missingItems.push({
-            name: ingredient.name,
-            size: requiredAmount - availableAmount,
-            measureUnit: ingredient.unit,
-          });
-        }
-      }
-
-      return missingItems;
-    } catch (error) {
-      console.error('Recalculate missing items error:', error);
-      throw new HttpException(
-        'Failed to recalculate missing items',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async getRecipeWithMissingItems(
-    recipeId: string,
-    servings: number,
-  ): Promise<RecipeResponseDto> {
-    try {
-      const recipe = await this.recipeRepository.findOne({
-        where: { id: recipeId },
-        relations: ['user', 'user.inventory', 'user.inventory.products'],
-      });
-
-      if (!recipe) {
-        throw new HttpException('Recipe not found', HttpStatus.NOT_FOUND);
-      }
-
-      const missingItems = await this.recalculateMissingItems(
-        recipeId,
-        servings,
-      );
-
-      return {
-        id: recipe.id,
-        name: recipe.name,
-        description: recipe.description,
-        ingredients: recipe.ingredients,
-        steps: recipe.steps,
-        totalTimeMinutes: recipe.totalTimeMinutes,
-        lastAccessedAt: recipe.lastAccessedAt,
-        missingItems: missingItems.length > 0 ? missingItems : undefined,
-      };
-    } catch (error) {
-      console.error('Get recipe with missing items error:', error);
-      throw new HttpException(
-        'Failed to get recipe with missing items',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

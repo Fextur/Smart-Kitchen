@@ -45,6 +45,7 @@ export class User {
   })
   inventory: Inventory;
 
-  @OneToMany(() => Recipe, (recipe) => recipe.user)
-  recipes: Recipe[];
+  // Updated to match the new Recipe entity field name
+  @OneToMany(() => Recipe, (recipe) => recipe.createdBy)
+  createdRecipes: Recipe[];
 }
