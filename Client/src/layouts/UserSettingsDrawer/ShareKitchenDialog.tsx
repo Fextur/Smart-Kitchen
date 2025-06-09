@@ -97,7 +97,6 @@ export const ShareKitchenDialog: FC<ShareKitchenDialogProps> = ({
           שתף את קוד המטבח או קישור ישיר להזמנת אנשים למטבח "{kitchenName}"
         </Typography>
 
-        {/* Kitchen Code Section */}
         <Box sx={{ mb: 1 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
             קוד המטבח:
@@ -144,7 +143,6 @@ export const ShareKitchenDialog: FC<ShareKitchenDialogProps> = ({
           </Box>
         </Box>
 
-        {/* Shareable Link Section with Share Icons */}
         <Box sx={{ mb: 1 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
             קישור ישיר:
@@ -176,7 +174,6 @@ export const ShareKitchenDialog: FC<ShareKitchenDialogProps> = ({
               {shareableLink}
             </Typography>
 
-            {/* Share Action Icons */}
             <IconButton
               size="small"
               onClick={handleCopyLink}
@@ -212,7 +209,6 @@ export const ShareKitchenDialog: FC<ShareKitchenDialogProps> = ({
           </Box>
         </Box>
 
-        {/* Compact Warning Alert */}
         <Alert
           severity="info"
           sx={{

@@ -219,7 +219,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
             הגדרות משתמש
           </Typography>
 
-          {/* Kitchen Section */}
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="body1"
@@ -233,7 +232,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
               המטבח שלי:
             </Typography>
 
-            {/* Kitchen Name Display with Share Button */}
             <Box
               sx={{
                 display: "flex",
@@ -266,7 +264,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
               </IconButton>
             </Box>
 
-            {/* Kitchen Action Buttons */}
             <Box sx={{ display: "flex", gap: 1 }}>
               <Button
                 fullWidth
@@ -309,7 +306,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
               form.handleSubmit();
             }}
           >
-            {/* Physical Info Section */}
             <Box sx={{ mb: 2 }}>
               <Typography
                 variant="body1"
@@ -399,7 +395,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
               </Box>
             </Box>
 
-            {/* Goals Section */}
             <Box sx={{ mb: 2 }}>
               <Typography
                 variant="body1"
@@ -428,7 +423,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
               </form.Field>
             </Box>
 
-            {/* Dietary Preferences */}
             <Box sx={{ mb: 2 }}>
               <form.Field name="dietaryPreference">
                 {(field) => (
@@ -478,7 +472,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
               </form.Field>
             </Box>
 
-            {/* Allergies Section */}
             <Box sx={{ mb: 2 }}>
               <Typography
                 variant="body1"
@@ -511,7 +504,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
               </form.Field>
             </Box>
 
-            {/* Action Buttons */}
             <Box sx={{ display: "flex", gap: 1 }}>
               <Button
                 type="submit"
@@ -557,7 +549,6 @@ export const UserSettingsDrawer: FC<Props> = ({ open, onClose }) => {
         </Box>
       </Drawer>
 
-      {/* Kitchen Dialogs */}
       <CreateKitchenDialog
         isOpen={showCreateKitchenDialog}
         onClose={() => setShowCreateKitchenDialog(false)}

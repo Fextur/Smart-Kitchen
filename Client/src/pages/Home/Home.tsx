@@ -175,7 +175,6 @@ const Home: FC = () => {
 
       <HomeFooter />
 
-      {/* Join Kitchen Dialog */}
       <InvitationDialog
         isOpen={showJoinKitchenDialog}
         onClose={handleCloseJoinDialog}

@@ -1,22 +1,13 @@
 export class KitchenUtils {
-  /**
-   * Validate if a kitchen hash matches the expected format
-   */
   static isValidHashFormat(hash: string): boolean {
     return /^[A-F0-9]{7}$/.test(hash);
   }
 
-  /**
-   * Format a kitchen hash for display (adds spaces for readability)
-   */
   static formatHashForDisplay(hash: string): string {
     if (!this.isValidHashFormat(hash)) return hash;
     return hash.substring(0, 3) + " " + hash.substring(3);
   }
 
-  /**
-   * Clean and format user input for kitchen hash
-   */
   static cleanHashInput(input: string): string {
     return input
       .replace(/[^A-Fa-f0-9]/g, "")
