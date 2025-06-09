@@ -1,9 +1,9 @@
 import { FC } from "react";
 import { Box, Typography } from "@mui/material";
 import { Drawer } from "@/components/Drawer";
-import { IngredientCard } from "./IngredientCard";
-import { Recipe, RecipeIngredient } from "@/types";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { IngredientCard } from "../IngredientCard";
+import { Recipe } from "@/types";
+import { ItemList } from "@/components/ItemList";
 import { getIngredientSize } from "@/utils/recipeUtils";
 
 interface IngredientsDrawerProps {
@@ -38,7 +38,7 @@ export const IngredientsDrawer: FC<IngredientsDrawerProps> = ({
       <Box sx={{ pr: 2, pl: 2 }}>
         {recipe.missingItems && recipe.missingItems.length > 0 && (
           <Box>
-            <KitchenItemList
+            <ItemList
               itemsCount={recipe.missingItems.length}
               title="חסרים במטבח"
               initialCollapsed={false}
@@ -58,7 +58,7 @@ export const IngredientsDrawer: FC<IngredientsDrawerProps> = ({
           </Box>
         )}
         <Box>
-          <KitchenItemList
+          <ItemList
             itemsCount={recipe.ingredients.length}
             title="כל המצרכים"
             initialCollapsed={false}

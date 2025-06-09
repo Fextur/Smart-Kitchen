@@ -2,7 +2,7 @@ import { FC, useState } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import { ShoppingListItem, SizeUnit } from "@/types";
 import { CircleCheck, Trash2 } from "lucide-react";
-import { AmountEditDialog } from "@/components/KitchenItemList/KitchenItemCard/AmountEditDialog";
+import { AmountEditDialog } from "@/components/KitchenItemCard/AmountEditDialog";
 import { useLongPress } from "@/hooks/useLongPress";
 
 interface ShoppingListItemCardProps {
@@ -77,7 +77,7 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
               borderRadius: 1,
               bgcolor: "transparent",
               border: "1px dashed",
-              borderColor: "primary.main",
+              borderColor: "#E49A61",
               transition: "all 0.2s",
             }}
           >
@@ -103,10 +103,12 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
           onClick={onDelete}
           size="small"
           sx={{
-            color: "error.main",
+            color: "#ef4444",
             "&:hover": {
-              bgcolor: "error.light",
-              color: "white",
+              bgcolor: "rgba(239, 68, 68, 0.1)",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              transform: "translateY(-1px)",
+              transition: "all 0.2s ease",
             },
           }}
         >

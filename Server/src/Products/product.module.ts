@@ -4,9 +4,13 @@ import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { Product } from './product.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
+import { ProductMatchingModule } from 'src/ProductMatching/productMatching.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product, Inventory])],
+  imports: [
+    TypeOrmModule.forFeature([Product, Inventory]),
+    ProductMatchingModule,
+  ],
   controllers: [ProductController],
   providers: [ProductService],
   exports: [TypeOrmModule],

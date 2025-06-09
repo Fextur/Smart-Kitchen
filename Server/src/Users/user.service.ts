@@ -141,7 +141,11 @@ export class UserService {
 
   async findByEmail(email: string): Promise<Omit<User, 'password'> | null> {
     try {
-      const user = await this.userRepository.findOneBy({ email });
+      const user = await this.userRepository.findOne({
+        where: { email },
+        relations: ['inventory'],
+      });
+
       if (!user) {
         return null;
       }

@@ -2,7 +2,7 @@ import { FC, useState } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import { KitchenItem, SizeUnit } from "@/types";
 import { Plus } from "lucide-react";
-import { AmountEditDialog } from "@/components/KitchenItemList/KitchenItemCard/AmountEditDialog";
+import { AmountEditDialog } from "@/components/KitchenItemCard/AmountEditDialog";
 
 interface SuggestedShoppingListItemCardProps {
   item: KitchenItem;
@@ -54,10 +54,12 @@ export const SuggestedShoppingListItemCard: FC<
           onClick={() => {}}
           size="small"
           sx={{
-            color: "error.main",
+            color: "#E49A61",
             "&:hover": {
-              bgcolor: "error.light",
-              color: "white",
+              bgcolor: "rgba(228,154, 97, 0.1)",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              transform: "translateY(-1px)",
+              transition: "all 0.2s ease",
             },
           }}
         >

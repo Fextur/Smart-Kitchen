@@ -1,4 +1,4 @@
-import { isLoadingAtom, loadingCountAtom } from "@/atoms";
+import { isLoadingAtom, loadingCountAtom } from "@/atoms/atoms";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 

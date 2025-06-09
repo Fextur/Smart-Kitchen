@@ -19,8 +19,6 @@ const Login = () => {
       loginByToken(accessToken, {
         onSuccess: () => navigate({ to: "/" }),
       });
-    } else {
-      console.log("No access token found, prompting for login...");
     }
   }, []);
 

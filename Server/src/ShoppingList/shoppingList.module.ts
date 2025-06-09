@@ -1,13 +1,18 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ShoppingList } from './shoppingList.entity';
 import { ShoppingListService } from './shoppingList.service';
 import { ShoppingListController } from './shoppingList.controller';
-import { ProductModule } from 'src/Products/product.module';
+import { Product } from 'src/Products/product.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
+import { ProductMatchingModule } from 'src/ProductMatching/productMatching.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ShoppingList]), ProductModule],
+  imports: [
+    TypeOrmModule.forFeature([Product, Inventory]),
+    ProductMatchingModule,
+  ],
   providers: [ShoppingListService],
   controllers: [ShoppingListController],
+  exports: [ShoppingListService],
 })
 export class ShoppingListModule {}

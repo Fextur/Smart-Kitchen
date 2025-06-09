@@ -2,11 +2,11 @@ import { FC, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { KitchenItem } from "@/types";
-import { KitchenItemList } from "@/components/KitchenItemList/KitchenItemList";
+import { ItemList } from "@/components/ItemList";
 import { useKitchenItems } from "@/hooks/useKitchenItems";
 import ConfirmFooter from "@/components/ConfirmFooter";
-import { KitchenItemCard } from "@/components/KitchenItemList/KitchenItemCard/KitchenItemCard";
-import { AddProductsDialog } from "@/components/AddProductsDialog/AddProductsDialog";
+import { KitchenItemCard } from "@/components/KitchenItemCard/KitchenItemCard";
+import { AddProductsDialog } from "@/pages/AddProducts/AddProductsDialog/AddProductsDialog";
 
 interface AddProductsLocationState {
   items?: KitchenItem[];
@@ -78,7 +78,6 @@ const AddProducts: FC = () => {
       <Box
         sx={{
           p: 2,
-          // bgcolor: "background.paper",
           borderBottom: "1px solid",
           borderColor: "grey.100",
           direction: "rtl",
@@ -118,7 +117,7 @@ const AddProducts: FC = () => {
           direction: "rtl",
         }}
       >
-        <KitchenItemList
+        <ItemList
           itemsCount={items.length}
           title="פריטים להוספה"
           isEditing

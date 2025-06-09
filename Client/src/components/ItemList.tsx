@@ -3,9 +3,9 @@ import { Box, Typography, IconButton } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronUp, Edit3, Plus } from "lucide-react";
 import { KitchenItem, ShoppingListItem } from "@/types";
-import { AddNewItemDialog } from "@/components/KitchenItemList/AddNewItemDialog";
+import { AddNewItemDialog } from "@/components/AddNewItemDialog";
 
-interface KitchenItemListProps {
+interface ItemListProps {
   itemsCount: number;
   onAddNewItem?: (
     item:
@@ -22,7 +22,7 @@ interface KitchenItemListProps {
   cardHeight?: number;
 }
 
-export const KitchenItemList: FC<KitchenItemListProps> = ({
+export const ItemList: FC<ItemListProps> = ({
   itemsCount,
   onAddNewItem,
   title,
@@ -115,14 +115,31 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
                 sx={{
                   bgcolor: "transparent",
                   borderRadius: 1,
-                  color: "primary.main",
+                  color: "#E49A61",
+                  "&:hover": {
+                    bgcolor: "rgba(228, 154, 97, 0.1)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                    transform: "translateY(-1px)",
+                    transition: "all 0.2s ease",
+                  },
                 }}
               >
                 <Edit3 size={16} />
               </IconButton>
             )}
 
-            <IconButton size="small" sx={{ color: "text.secondary" }}>
+            <IconButton
+              size="small"
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  bgcolor: "rgba(0, 0, 0, 0.05)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                  transform: "translateY(-1px)",
+                  transition: "all 0.2s ease",
+                },
+              }}
+            >
               {isCollapsed ? (
                 <ChevronDown size={16} />
               ) : (
@@ -141,21 +158,27 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
             maxHeight: maxHeight,
             minHeight: itemsCount > 0 ? 100 : 0,
             "&::-webkit-scrollbar": {
-              width: 8,
+              width: "8px",
             },
             "&::-webkit-scrollbar-track": {
-              bgcolor: "grey.50",
-              borderRadius: 10,
+              background: "transparent",
+              borderRadius: "10px",
             },
             "&::-webkit-scrollbar-thumb": {
-              bgcolor: "grey.300",
-              borderRadius: 10,
+              background: "rgba(228, 154, 97, 0.3)",
+              borderRadius: "10px",
+              border: "2px solid transparent",
+              backgroundClip: "content-box",
               "&:hover": {
-                bgcolor: "grey.400",
+                background: "rgba(228, 154, 97, 0.5)",
+                backgroundClip: "content-box",
               },
             },
+            "&::-webkit-scrollbar-corner": {
+              background: "transparent",
+            },
             scrollbarWidth: "thin",
-            scrollbarColor: "grey.300 grey.50",
+            scrollbarColor: "rgba(228, 154, 97, 0.3) transparent",
           }}
         >
           <Box
@@ -187,7 +210,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
                         my: 1.5,
                         px: 2,
                         border: "2px dashed",
-                        borderColor: "primary.main",
+                        borderColor: "#E49A61",
                         direction: "rtl",
                         display: "flex",
                         alignItems: "center",
@@ -197,8 +220,9 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
                         cursor: "pointer",
                         transition: "all 0.2s",
                         "&:hover": {
-                          bgcolor: "primary.light",
-                          color: "white",
+                          bgcolor: "rgba(228, 154, 97, 0.1)",
+                          boxShadow: "0 4px 12px rgba(228, 154, 97, 0.2)",
+                          transform: "translateY(-1px)",
                         },
                       }}
                     >
@@ -207,10 +231,7 @@ export const KitchenItemList: FC<KitchenItemListProps> = ({
                           display: "flex",
                           alignItems: "center",
                           gap: 1,
-                          color: "primary.main",
-                          "&:hover": {
-                            color: "white",
-                          },
+                          color: "#E49A61",
                         }}
                       >
                         <Plus size={20} />

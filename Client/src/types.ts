@@ -40,7 +40,7 @@ export type KitchenItem = {
   name: string;
   size: number;
   measureUnit: SizeUnit;
-  expirationDate?: string;
+  expirationDate?: string | null;
   latestUpdateDate?: string;
 };
 
@@ -64,6 +64,7 @@ export type ShoppingListItem = Omit<KitchenItem, "expirationDate"> & {
 };
 
 export type RecipeIngredient = {
+  productId?: string;
   name: string;
   baseAmount: number;
   perServingAmount: number;

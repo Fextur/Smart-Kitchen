@@ -27,6 +27,13 @@ export class ProductController {
     return this.productService.findByInventoryId(inventoryId);
   }
 
+  @Get('by-shopping-list/:inventoryId')
+  async getByShoppingList(
+    @Param('inventoryId') inventoryId: string,
+  ): Promise<Partial<Product>[]> {
+    return this.productService.findByShoppingList(inventoryId);
+  }
+
   @Post('updateBulk')
   async update(@Body() updateProductsDto: UpdateProductsDto) {
     return this.productService.updateBulk(updateProductsDto);

@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { OAuth2Client } from 'google-auth-library';
 import { UserService } from 'src/Users/user.service';
+import { JwtService } from '@nestjs/jwt';
 
 const client = new OAuth2Client();
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService, // Add JwtService injection
+  ) {}
 
   async googleLogin(credential: string) {
     const ticket = await client.verifyIdToken({
@@ -17,22 +21,30 @@ export class AuthService {
     const payload = ticket.getPayload();
 
     if (payload && payload.email) {
-      const user = await this.userService.findByEmail(payload.email);
+      let user = await this.userService.findByEmail(payload.email);
 
-      if (user) {
-        return user;
-      } else {
-        const newUser = await this.userService.create({
+      if (!user) {
+        // Create new user if doesn't exist
+        const newUserData = await this.userService.create({
           email: payload.email,
           name: payload.name!,
           userName: payload.name!,
           password: 'google_sign',
         });
 
-        return newUser;
+        // The create method already returns user with accessToken
+        return newUserData;
+      } else {
+        // Generate JWT token for existing user
+        const accessToken = await this.userService.generateAccessToken(
+          user.id,
+          user.userName,
+        );
+
+        return { ...user, accessToken };
       }
     } else {
-      throw NotFoundException;
+      throw new NotFoundException('Invalid Google credentials');
     }
   }
 }

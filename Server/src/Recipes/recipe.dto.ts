@@ -1,4 +1,3 @@
-// recipe.dto.ts
 import {
   IsArray,
   IsNotEmpty,
@@ -6,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsBoolean,
+  IsUUID,
 } from 'class-validator';
 
 export class GenerateRecipeDto {
@@ -71,7 +71,24 @@ export class SaveRecipeDto {
   missingItems?: KitchenItemDto[];
 }
 
+export class ConsumeIngredientsDto {
+  @IsNotEmpty()
+  @IsString()
+  recipeId: string;
+
+  @IsNumber()
+  servings: number;
+
+  @IsNotEmpty()
+  @IsString()
+  userId: string;
+}
+
 export class RecipeIngredientDto {
+  @IsOptional()
+  @IsUUID()
+  productId?: string;
+
   @IsNotEmpty()
   @IsString()
   name: string;
@@ -128,8 +145,6 @@ export class KitchenItemDto {
   @IsString()
   latestUpdateDate?: string;
 }
-
-// Response DTOs
 export class RecipeResponseDto {
   id?: string;
   name: string;

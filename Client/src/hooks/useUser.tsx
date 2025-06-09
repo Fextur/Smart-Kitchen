@@ -5,7 +5,7 @@ import { User, UserRes } from "@/types";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
 import { useAtom } from "jotai";
-import { userAtom } from "@/atoms";
+import { userAtom } from "@/atoms/atoms";
 import { useKitchen } from "./useKitchen";
 
 export const useUser = () => {
@@ -57,13 +57,17 @@ export const useUser = () => {
         credential,
       });
 
+      // Save the token to localStorage - this was missing!
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+      }
+
       return data;
     } catch (error) {
       console.error("Invalid credentials ", error);
       throw error;
     }
   };
-
   const loginMutation = useMutation({
     mutationFn: ({
       userName,
@@ -75,7 +79,6 @@ export const useUser = () => {
     onSuccess: (user) => {
       if (user) {
         const { inventory, accessToken, ...userWithoutInventory } = user;
-        console.log({ userWithoutInventory });
 
         setUser(userWithoutInventory);
         setKitchen(inventory);
@@ -86,8 +89,6 @@ export const useUser = () => {
   const loginByTokenMutation = useMutation({
     mutationFn: (token: string) => loginByToken(token),
     onSuccess: (user) => {
-      console.log({ user });
-
       if (user) {
         const { inventory, accessToken, ...userWithoutInventory } = user;
 

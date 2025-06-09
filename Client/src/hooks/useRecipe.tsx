@@ -1,95 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { GenerateRecipeParams, Recipe, SizeUnit } from "@/types";
+import { GenerateRecipeParams, Recipe, KitchenItem } from "@/types";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
 import { useUser } from "./useUser";
-
-const STUB_OLD_RECIPES: Recipe[] = [
-  {
-    id: "old-1",
-    name: "פסטה ברוטב עגבניות",
-    description: "פסטה איטלקית קלאסית",
-    totalTimeMinutes: 25,
-    missingItems: [
-      {
-        id: "1",
-        name: "חרטה",
-        size: 1,
-        measureUnit: SizeUnit.UNIT,
-        latestUpdateDate: "2024-05-20",
-      },
-      {
-        id: "14",
-        name: "קאקא",
-        size: 1,
-        measureUnit: SizeUnit.UNIT,
-        latestUpdateDate: "2024-05-20",
-      },
-      {
-        id: "15",
-        name: "כיפה",
-        size: 1,
-        measureUnit: SizeUnit.UNIT,
-        latestUpdateDate: "2024-05-20",
-      },
-      {
-        id: "61",
-        name: "ילד",
-        size: 1,
-        measureUnit: SizeUnit.UNIT,
-        latestUpdateDate: "2024-05-20",
-      },
-    ],
-    ingredients: [
-      { name: "פסטה", baseAmount: 200, perServingAmount: 100, unit: "גרם" },
-      {
-        name: "רוטב עגבניות",
-        baseAmount: 200,
-        perServingAmount: 100,
-        unit: "מ״ל",
-      },
-      { name: "שום", baseAmount: 2, perServingAmount: 1, unit: "שיני" },
-      { name: "בזיליקום", baseAmount: 5, perServingAmount: 2, unit: "עלים" },
-    ],
-    steps: [
-      { stepNumber: 1, instruction: "הרתח סיר מים עם מלח", isTimerStep: false },
-      {
-        stepNumber: 2,
-        instruction: "בשל פסטה 10 דקות",
-        isTimerStep: true,
-        timerMinutes: 10,
-      },
-      { stepNumber: 3, instruction: "חמם רוטב במחבת", isTimerStep: false },
-      { stepNumber: 4, instruction: "ערבב פסטה עם רוטב", isTimerStep: false },
-    ],
-    lastAccessedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "old-2",
-    missingItems: [],
-    name: "סלט ירקות טרי",
-    description: "סלט בריא וצבעוני",
-    totalTimeMinutes: 15,
-    ingredients: [
-      { name: "חסה", baseAmount: 1, perServingAmount: 0.5, unit: "יחידות" },
-      { name: "עגבנייה", baseAmount: 2, perServingAmount: 1, unit: "יחידות" },
-      { name: "מלפפון", baseAmount: 1, perServingAmount: 0.5, unit: "יחידות" },
-      {
-        name: "לימון",
-        baseAmount: 0.5,
-        perServingAmount: 0.25,
-        unit: "יחידות",
-      },
-    ],
-    steps: [
-      { stepNumber: 1, instruction: "חתוך ירקות לקוביות", isTimerStep: false },
-      { stepNumber: 2, instruction: "סחט לימון", isTimerStep: false },
-      { stepNumber: 3, instruction: "ערבב הכל יחד", isTimerStep: false },
-    ],
-    lastAccessedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-  },
-];
 
 export const useRecipe = () => {
   const queryClient = useQueryClient();
@@ -163,7 +77,23 @@ export const useRecipe = () => {
 
   const fetchUsedRecipes = async (): Promise<Recipe[]> => {
     try {
-      return STUB_OLD_RECIPES;
+      if (!user?.id) {
+        return [];
+      }
+
+      const { data } = await api.get<Recipe[]>(
+        `${API_ROUTES.recipes}/history/${user.id}`
+      );
+
+      return data.sort((a, b) => {
+        const dateA = a.lastAccessedAt
+          ? new Date(a.lastAccessedAt).getTime()
+          : 0;
+        const dateB = b.lastAccessedAt
+          ? new Date(b.lastAccessedAt).getTime()
+          : 0;
+        return dateB - dateA;
+      });
     } catch (error) {
       console.error("Fetch used recipes error:", error);
       return [];
@@ -178,7 +108,16 @@ export const useRecipe = () => {
 
   const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
     try {
-      return recipe;
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
+
+      const { data } = await api.post<Recipe>(`${API_ROUTES.recipes}/save`, {
+        ...recipe,
+        userId: user.id,
+      });
+
+      return data;
     } catch (error) {
       console.error("Save recipe error:", error);
       throw new Error("Failed to save recipe");
@@ -195,6 +134,121 @@ export const useRecipe = () => {
     },
   });
 
+  const consumeIngredients = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<{ message: string; updatedProducts: KitchenItem[] }> => {
+    try {
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
+
+      const { data } = await api.post<{
+        message: string;
+        updatedProducts: KitchenItem[];
+      }>(`${API_ROUTES.recipes}/consume-ingredients`, {
+        recipeId: params.recipeId,
+        servings: params.servings,
+        userId: user.id,
+      });
+
+      return data;
+    } catch (error) {
+      console.error("Consume ingredients error:", error);
+      throw new Error("Failed to consume ingredients");
+    }
+  };
+
+  const consumeIngredientsMutation = useMutation({
+    mutationFn: consumeIngredients,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+    },
+    onError: (error) => {
+      console.error("Consume ingredients error:", error);
+    },
+  });
+
+  const addMissingToShoppingList = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<{ message: string }> => {
+    try {
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
+
+      const { data } = await api.post<{ message: string }>(
+        `${API_ROUTES.recipes}/${params.recipeId}/add-missing-to-shopping-list`,
+        {
+          userId: user.id,
+          servings: params.servings,
+        }
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Add missing to shopping list error:", error);
+      throw new Error("Failed to add missing items to shopping list");
+    }
+  };
+
+  const addMissingToShoppingListMutation = useMutation({
+    mutationFn: addMissingToShoppingList,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+    },
+    onError: (error) => {
+      console.error("Add missing to shopping list error:", error);
+    },
+  });
+
+  const getMissingItems = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<KitchenItem[]> => {
+    try {
+      const { data } = await api.get<{ missingItems: KitchenItem[] }>(
+        `${API_ROUTES.recipes}/${params.recipeId}/missing-items/${params.servings}`
+      );
+
+      return data.missingItems;
+    } catch (error) {
+      console.error("Get missing items error:", error);
+      throw new Error("Failed to get missing items");
+    }
+  };
+
+  const getMissingItemsMutation = useMutation({
+    mutationFn: getMissingItems,
+    onError: (error) => {
+      console.error("Get missing items error:", error);
+    },
+  });
+
+  const getRecipeWithMissingItems = async (params: {
+    recipeId: string;
+    servings: number;
+  }): Promise<Recipe> => {
+    try {
+      const { data } = await api.get<Recipe>(
+        `${API_ROUTES.recipes}/${params.recipeId}/with-missing-items/${params.servings}`
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Get recipe with missing items error:", error);
+      throw new Error("Failed to get recipe with missing items");
+    }
+  };
+
+  const getRecipeWithMissingItemsMutation = useMutation({
+    mutationFn: getRecipeWithMissingItems,
+    onError: (error) => {
+      console.error("Get recipe with missing items error:", error);
+    },
+  });
+
   return {
     generatedRecipes,
     isUsedRecipesLoading,
@@ -202,5 +256,9 @@ export const useRecipe = () => {
     generateRecipeMutation,
     askQuestionMutation,
     saveRecipeMutation,
+    consumeIngredientsMutation,
+    addMissingToShoppingListMutation,
+    getMissingItemsMutation,
+    getRecipeWithMissingItemsMutation,
   };
 };
