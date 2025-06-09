@@ -49,6 +49,7 @@ export const ServingsDialog: FC<ServingsDialogProps> = ({
               pattern: "[0-9]*",
               step: "0.1",
               min: "0",
+              dir: "ltr",
             },
           }}
           sx={{
@@ -58,6 +59,7 @@ export const ServingsDialog: FC<ServingsDialogProps> = ({
               fontSize: 16,
               fontWeight: 500,
               p: 1.75,
+              direction: "ltr",
             },
           }}
           placeholder="1"
