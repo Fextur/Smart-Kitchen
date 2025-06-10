@@ -4,10 +4,12 @@ import { GenerateRecipeParams, Recipe, KitchenItem } from "@/types";
 import api from "@/axios/axios";
 import { API_ROUTES } from "@/axios/apiRoutes";
 import { useUser } from "./useUser";
+import { useKitchen } from "./useKitchen";
 
 export const useRecipe = () => {
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { kitchen } = useKitchen();
   const [generatedRecipes, setGeneratedRecipes] = useState<Recipe[]>([]);
 
   const generateRecipe = async (
@@ -22,10 +24,9 @@ export const useRecipe = () => {
         `${API_ROUTES.recipes}/generate`,
         {
           userId: user.id,
-          sensitivities: user.sensitivities || [],
-          preferences: params.preferences,
           servings: params.servings,
           searchQuery: params.searchQuery,
+          useOnlyAvailable: params.useOnlyAvailable,
         }
       );
 
@@ -101,9 +102,9 @@ export const useRecipe = () => {
   };
 
   const { data: usedRecipes, isLoading: isUsedRecipesLoading } = useQuery({
-    queryKey: ["usedRecipes", user?.id],
+    queryKey: ["usedRecipes", user?.id, kitchen?.id],
     queryFn: fetchUsedRecipes,
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!kitchen?.id,
   });
 
   const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
@@ -127,7 +128,9 @@ export const useRecipe = () => {
   const saveRecipeMutation = useMutation({
     mutationFn: saveRecipe,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["usedRecipes"] });
+      queryClient.invalidateQueries({
+        queryKey: ["usedRecipes", user?.id, kitchen?.id],
+      });
     },
     onError: (error) => {
       console.error("Save recipe error:", error);
@@ -162,7 +165,9 @@ export const useRecipe = () => {
   const consumeIngredientsMutation = useMutation({
     mutationFn: consumeIngredients,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["kitchenItems", kitchen?.id],
+      });
     },
     onError: (error) => {
       console.error("Consume ingredients error:", error);
@@ -196,7 +201,9 @@ export const useRecipe = () => {
   const addMissingToShoppingListMutation = useMutation({
     mutationFn: addMissingToShoppingList,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["shoppingListItems", kitchen?.id],
+      });
     },
     onError: (error) => {
       console.error("Add missing to shopping list error:", error);

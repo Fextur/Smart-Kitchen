@@ -5,26 +5,45 @@ import {
   JoinInventoryDto,
   LoginUserDto,
   UpdateUserDto,
+  CreateKitchenDto,
+  JoinKitchenByHashDto,
 } from './user.dto';
 import { User } from './user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
+
+type UserSettingsDto = {
+  weight: number;
+  height: number;
+  goal: string;
+  dietaryPreference: string;
+  notes: string;
+};
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get(':id/settings')
+  async getSettings(@Param('id') userId: string) {
+    return this.userService.getUserSettings(userId);
+  }
+
+  @Put(':id/settings')
+  async updateSettings(
+    @Param('id') userId: string,
+    @Body() body: UserSettingsDto,
+  ) {
+    return this.userService.updateUserSettings(userId, body);
+  }
+
   @Post()
-  async create(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<Omit<User, 'password'>> {
-    return this.userService.create(createUserDto);
+  async create(@Body() dto: CreateUserDto): Promise<Omit<User, 'password'>> {
+    return this.userService.create(dto);
   }
 
   @Put()
-  async update(
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<Omit<User, 'password'>> {
-    return this.userService.update(updateUserDto);
+  async update(@Body() dto: UpdateUserDto): Promise<Omit<User, 'password'>> {
+    return this.userService.update(dto);
   }
 
   @Get(':id')
@@ -40,10 +59,8 @@ export class UserController {
   }
 
   @Post('login')
-  async login(
-    @Body() loginUserDto: LoginUserDto,
-  ): Promise<Omit<User, 'password'>> {
-    return this.userService.login(loginUserDto);
+  async login(@Body() dto: LoginUserDto): Promise<Omit<User, 'password'>> {
+    return this.userService.login(dto);
   }
 
   @Post('validate-token')
@@ -53,8 +70,23 @@ export class UserController {
     return this.userService.validateToken(accessToken);
   }
 
-  @Post('join-to-inventory')
-  async joinToInventory(@Body() joinInventoryDto: JoinInventoryDto) {
-    return this.userService.joinToInventory(joinInventoryDto);
+  @Post('create-kitchen')
+  async createKitchen(@Body() dto: CreateKitchenDto) {
+    return this.userService.createKitchen(dto);
+  }
+
+  @Post('join-kitchen-by-hash')
+  async joinKitchenByHash(@Body() dto: JoinKitchenByHashDto) {
+    return this.userService.joinKitchenByHash(dto);
+  }
+
+  @Get(':userId/kitchen-hash')
+  async getKitchenHash(@Param('userId') userId: string) {
+    return this.userService.getKitchenHash(userId);
+  }
+
+  @Post('logoutUser')
+  async logout() {
+    return { message: 'Logged out successfully' };
   }
 }

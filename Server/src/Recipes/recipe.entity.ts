@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from 'src/Users/user.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 
 @Entity()
 export class Recipe {
@@ -28,8 +29,13 @@ export class Recipe {
   @Column({ default: 30 })
   totalTimeMinutes: number;
 
-  @ManyToOne(() => User)
-  user: User;
+  @ManyToOne(() => User, { nullable: true })
+  createdBy: User;
+
+  @ManyToOne(() => Inventory, (inventory) => inventory.recipes, {
+    onDelete: 'CASCADE',
+  })
+  kitchen: Inventory;
 
   @CreateDateColumn()
   createdAt: Date;

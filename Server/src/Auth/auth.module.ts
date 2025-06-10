@@ -16,6 +16,6 @@ import { Inventory } from 'src/Inventory/inventory.entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserService, JwtService], // Add JwtService to providers
+  providers: [AuthService, UserService, JwtService],
 })
 export class AuthModule {}

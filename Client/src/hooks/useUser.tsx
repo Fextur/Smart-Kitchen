@@ -7,10 +7,12 @@ import { API_ROUTES } from "@/axios/apiRoutes";
 import { useAtom } from "jotai";
 import { userAtom } from "@/atoms/atoms";
 import { useKitchen } from "./useKitchen";
+import { useNavigate } from "@tanstack/react-router";
 
 export const useUser = () => {
   const [user, setUser] = useAtom(userAtom);
   const { setKitchen } = useKitchen();
+  const navigate = useNavigate();
 
   const login = async (userName: User["userName"], password: string) => {
     try {
@@ -57,7 +59,6 @@ export const useUser = () => {
         credential,
       });
 
-      // Save the token to localStorage - this was missing!
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
       }
@@ -115,9 +116,9 @@ export const useUser = () => {
 
   const logout = async () => {
     try {
-      await api.post<User>(`${API_ROUTES.users}/logoutUser`);
       localStorage.removeItem("accessToken");
       setUser(null);
+      navigate({ to: "/login", replace: true });
     } catch (error) {
       console.error("Error in logout", error);
       throw error;

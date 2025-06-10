@@ -13,18 +13,16 @@ export class GenerateRecipeDto {
   @IsString()
   userId: string;
 
-  @IsArray()
-  sensitivities: string[];
-
-  @IsArray()
-  preferences: string[];
-
   @IsNumber()
   servings: number;
 
   @IsOptional()
   @IsString()
   searchQuery?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  useOnlyAvailable?: boolean;
 }
 
 export class AskQuestionDto {
@@ -145,6 +143,7 @@ export class KitchenItemDto {
   @IsString()
   latestUpdateDate?: string;
 }
+
 export class RecipeResponseDto {
   id?: string;
   name: string;

@@ -5,6 +5,9 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsNumber,
+  Length,
+  Matches,
 } from 'class-validator';
 import { User } from './user.entity';
 
@@ -50,6 +53,22 @@ export class UpdateUserDto {
   @IsArray()
   @IsOptional()
   sensitivities?: string[];
+
+  @IsNumber()
+  @IsOptional()
+  height?: number;
+
+  @IsNumber()
+  @IsOptional()
+  weight?: number;
+
+  @IsString()
+  @IsOptional()
+  goal?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class LoginUserDto {
@@ -70,6 +89,29 @@ export class JoinInventoryDto {
   @IsUUID()
   @IsNotEmpty()
   inventoryId: string;
+}
+
+export class CreateKitchenDto {
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+export class JoinKitchenByHashDto {
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsString()
+  @Length(7, 7)
+  @Matches(/^[A-F0-9]{7}$/, {
+    message: 'Kitchen code must be 7 uppercase alphanumeric characters',
+  })
+  kitchenHash: string;
 }
 
 export class UserWithToken extends User {

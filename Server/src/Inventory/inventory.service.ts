@@ -2,11 +2,13 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inventory } from './inventory.entity';
 import { CreateInventoryDto, UpdateInventoryDto } from './inventory.dto';
+import { KitchenHashUtils } from 'src/utils/kitchenHashUtils';
 
 @Injectable()
 export class InventoryService {
@@ -17,17 +19,30 @@ export class InventoryService {
 
   async findById(id: string): Promise<Inventory> {
     try {
-      const inventory = await this.inventoryRepository.find({
+      const inventory = await this.inventoryRepository.findOne({
         where: { id },
         relations: ['users', 'products'],
       });
       if (!inventory) {
         throw new NotFoundException(`Inventory with id ${id} not found`);
       }
-      return inventory[0];
+      return inventory;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Failed to fetch inventory');
+    }
+  }
+
+  async findByKitchenHash(kitchenHash: string): Promise<Inventory | null> {
+    try {
+      return await this.inventoryRepository.findOne({
+        where: { kitchenHash },
+        relations: ['users', 'products'],
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to fetch inventory by hash',
+      );
     }
   }
 
@@ -65,9 +80,20 @@ export class InventoryService {
 
   async create(createInventoryDto: CreateInventoryDto): Promise<Inventory> {
     try {
-      const inventory = this.inventoryRepository.create(createInventoryDto);
+      const kitchenHash = await this.generateUniqueKitchenHash();
+
+      const inventory = this.inventoryRepository.create({
+        ...createInventoryDto,
+        kitchenHash,
+      });
+
       return await this.inventoryRepository.save(inventory);
     } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException(
+          'Kitchen hash collision occurred, please try again',
+        );
+      }
       throw new InternalServerErrorException('Failed to create inventory item');
     }
   }
@@ -101,5 +127,28 @@ export class InventoryService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Failed to delete inventory');
     }
+  }
+
+  private async generateUniqueKitchenHash(): Promise<string> {
+    const maxAttempts = 10;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const hash = KitchenHashUtils.generateRandomKitchenHash();
+
+      const existingInventory = await this.inventoryRepository.findOne({
+        where: { kitchenHash: hash },
+      });
+
+      if (!existingInventory) {
+        return hash;
+      }
+
+      attempts++;
+    }
+
+    throw new InternalServerErrorException(
+      'Failed to generate unique kitchen hash after multiple attempts',
+    );
   }
 }

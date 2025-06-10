@@ -5,11 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/Users/user.entity';
 import { Recipe } from './recipe.entity';
 import { Product } from 'src/Products/product.entity';
+import { Inventory } from 'src/Inventory/inventory.entity';
 import { ProductMatchingModule } from 'src/ProductMatching/productMatching.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Recipe, Product]),
+    TypeOrmModule.forFeature([User, Recipe, Product, Inventory]),
     ProductMatchingModule,
   ],
   controllers: [RecipeController],

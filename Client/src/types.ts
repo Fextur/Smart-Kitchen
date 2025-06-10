@@ -14,15 +14,11 @@ export type User = {
   sensitivities: string[];
 };
 
-export type RecipeResponse = {
-  recipe: string;
-  extraProducts?: KitchenItem[];
-};
-
 export type Kitchen = {
   id: string;
   description?: string;
   name?: string;
+  kitchenHash: string;
 };
 
 export type UserRes = {
@@ -43,21 +39,6 @@ export type KitchenItem = {
   expirationDate?: string | null;
   latestUpdateDate?: string;
 };
-
-export enum Preferences {
-  VEGETARIAN = "צמחוני",
-  VEGAN = "טבעוני",
-  GLUTEN_FREE = "ללא גלוטן",
-  DAIRY_FREE = "ללא חלב",
-  HEALTHY = "בריא",
-  QUICK = "מהיר",
-  BUDGET = "חסכוני",
-  GOURMET = "גורמה",
-  KIDS_FRIENDLY = "ידידותי לילדים",
-  LOW_CARB = "דל פחמימות",
-  HIGH_PROTEIN = "עתיר חלבון",
-  MEDITERRANEAN = "ים תיכוני",
-}
 
 export type ShoppingListItem = Omit<KitchenItem, "expirationDate"> & {
   isChecked: boolean;
@@ -90,8 +71,7 @@ export type Recipe = {
 };
 
 export type GenerateRecipeParams = {
-  preferences: string[];
   servings: number;
-  allIngredientsAvailable?: boolean;
   searchQuery?: string;
+  useOnlyAvailable?: boolean;
 };

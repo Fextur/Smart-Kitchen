@@ -5,6 +5,7 @@ import {
   Navigate,
   useNavigate,
   useRouterState,
+  useSearch,
 } from "@tanstack/react-router";
 import AppLayout from "@/layouts/AppLayout";
 import Home from "@/pages/Home/Home";
@@ -31,6 +32,9 @@ interface RecipeFlowLocationState {
   servings: number;
   recipe: Recipe;
 }
+interface RootSearchParams {
+  join_kitchen?: string;
+}
 
 declare module "@tanstack/react-router" {
   interface HistoryState {
@@ -44,6 +48,7 @@ const ProtectedLayout = () => {
   const { user } = useUser();
   const routerState = useRouterState();
   const navigate = useNavigate();
+  const search = useSearch({ from: "__root__" }) as RootSearchParams;
 
   useEffect(() => {
     if (
@@ -51,14 +56,21 @@ const ProtectedLayout = () => {
       routerState.location.pathname !== "/login" &&
       routerState.location.pathname !== "/register"
     ) {
-      navigate({ to: "/login", replace: true });
+      navigate({
+        to: "/login",
+        search: search,
+        replace: true,
+      });
     }
-  }, [user, routerState.location.pathname, navigate]);
+  }, [user, routerState.location.pathname, navigate, search]);
 
   return <AppLayout />;
 };
 
 const rootRoute = createRootRoute({
+  validateSearch: (search: Record<string, unknown>): RootSearchParams => ({
+    join_kitchen: search?.join_kitchen as string | undefined,
+  }),
   component: ProtectedLayout,
 });
 
@@ -126,10 +138,12 @@ export const router = createRouter({
   defaultPreload: "intent",
   defaultStaleTime: 5000,
   scrollRestoration: true,
+  defaultPendingComponent: () => <div>Loading...</div>,
 });
 
 export type {
   AddProductsLocationState,
   RecipeSelectionLocationState,
   RecipeFlowLocationState,
+  RootSearchParams,
 };

@@ -9,7 +9,7 @@ const client = new OAuth2Client();
 export class AuthService {
   constructor(
     private readonly userService: UserService,
-    private readonly jwtService: JwtService, // Add JwtService injection
+    private readonly jwtService: JwtService,
   ) {}
 
   async googleLogin(credential: string) {
@@ -24,7 +24,6 @@ export class AuthService {
       let user = await this.userService.findByEmail(payload.email);
 
       if (!user) {
-        // Create new user if doesn't exist
         const newUserData = await this.userService.create({
           email: payload.email,
           name: payload.name!,
@@ -32,10 +31,8 @@ export class AuthService {
           password: 'google_sign',
         });
 
-        // The create method already returns user with accessToken
         return newUserData;
       } else {
-        // Generate JWT token for existing user
         const accessToken = await this.userService.generateAccessToken(
           user.id,
           user.userName,

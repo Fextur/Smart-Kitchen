@@ -17,8 +17,9 @@ export const useShoppingListItems = () => {
 
         return data;
       }
+      return [];
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching shopping list items:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -38,8 +39,9 @@ export const useShoppingListItems = () => {
 
         return data;
       }
+      return [];
     } catch (error) {
-      console.error(error);
+      console.error("Error creating shopping list items:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -47,7 +49,9 @@ export const useShoppingListItems = () => {
   const createItemsMutation = useMutation({
     mutationFn: (items: ShoppingListItem[]) => createShoppingListItem(items),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["shoppingListItems", kitchen?.id],
+      });
     },
   });
 
@@ -55,7 +59,7 @@ export const useShoppingListItems = () => {
     try {
       await api.delete(`${API_ROUTES.products}/${itemId}`);
     } catch (error) {
-      console.error(error);
+      console.error("Error deleting shopping list item:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -64,7 +68,9 @@ export const useShoppingListItems = () => {
     mutationFn: (itemId: ShoppingListItem["id"]) =>
       deleteShoppingListItem(itemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["shoppingListItems", kitchen?.id],
+      });
     },
   });
 
@@ -74,7 +80,7 @@ export const useShoppingListItems = () => {
         await api.delete(`${API_ROUTES.shoppingList}/${kitchen.id}`);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error clearing shopping list:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -82,7 +88,9 @@ export const useShoppingListItems = () => {
   const clearItemsMutation = useMutation({
     mutationFn: () => clearShoppingListItems(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["shoppingListItems", kitchen?.id],
+      });
     },
   });
 
@@ -97,7 +105,7 @@ export const useShoppingListItems = () => {
         );
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error transferring to shopping list:", error);
       throw new Error("An unexpected error occurred");
     }
   };
@@ -105,15 +113,20 @@ export const useShoppingListItems = () => {
   const transferIntoShoppingListMutation = useMutation({
     mutationFn: (item: KitchenItem) => transferIntoShoppingList(item),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kitchenItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["kitchenItems", kitchen?.id],
+      });
 
-      queryClient.invalidateQueries({ queryKey: ["shoppingListItems"] });
+      queryClient.invalidateQueries({
+        queryKey: ["shoppingListItems", kitchen?.id],
+      });
     },
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["shoppingListItems"],
+    queryKey: ["shoppingListItems", kitchen?.id],
     queryFn: fetchShoppingListItems,
+    enabled: !!kitchen?.id,
   });
 
   return {

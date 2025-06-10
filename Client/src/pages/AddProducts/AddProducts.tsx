@@ -30,13 +30,20 @@ const AddProducts: FC = () => {
   const [items, setItems] = useState<KitchenItem[]>(initialItems);
 
   const handleUpdateItem = (updatedItem: KitchenItem) => {
-    setItems((prevItems) =>
-      updatedItem.size === 0
+    setItems((prevItems) => {
+      const prevItemState = prevItems.find(
+        (item) => item.id === updatedItem.id
+      );
+      const isDeleted =
+        prevItemState &&
+        updatedItem.size === 0 &&
+        prevItemState.size !== updatedItem.size;
+      return isDeleted
         ? prevItems.filter((item) => item.id !== updatedItem.id)
         : prevItems.map((item) =>
             item.id === updatedItem.id ? updatedItem : item
-          )
-    );
+          );
+    });
   };
 
   const handleAddNewItem = (
@@ -51,14 +58,17 @@ const AddProducts: FC = () => {
   };
 
   const handleAccept = () => {
-    createItemsMutation.mutate(items, {
-      onSuccess: () => {
-        navigate({ to: "/" });
-      },
-      onError: (error) => {
-        console.error("Failed to save items:", error);
-      },
-    });
+    createItemsMutation.mutate(
+      items.filter((item) => item.size !== 0),
+      {
+        onSuccess: () => {
+          navigate({ to: "/" });
+        },
+        onError: (error) => {
+          console.error("Failed to save items:", error);
+        },
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -128,6 +138,7 @@ const AddProducts: FC = () => {
               item={items[itemIndex]}
               onEdit={handleUpdateItem}
               isEditing={isEditing}
+              allowNameEdit={true}
             />
           )}
         />

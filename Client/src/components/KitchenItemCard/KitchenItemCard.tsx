@@ -6,21 +6,25 @@ import { DateEditDialog } from "@/components/KitchenItemCard/DateEditDialog";
 import { formatDate, isExpiringSoon } from "@/utils/dateUtils";
 import { DeleteConfirmDialog } from "@/components/KitchenItemCard/DeleteConfirmDialog";
 import { AmountEditDialog } from "@/components/KitchenItemCard/AmountEditDialog";
+import { NameEditDialog } from "@/components/KitchenItemCard/NameEditDialog";
 
 interface KitchenItemCardProps {
   item: KitchenItem;
   onEdit?: (updatedItem: KitchenItem) => void;
   isEditing?: boolean;
+  allowNameEdit?: boolean;
 }
 
 export const KitchenItemCard: FC<KitchenItemCardProps> = ({
   item,
   onEdit,
   isEditing = false,
+  allowNameEdit = false,
 }) => {
   const [showAmountDialog, setShowAmountDialog] = useState(false);
   const [showDateDialog, setShowDateDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showNameDialog, setShowNameDialog] = useState(false);
 
   const handleAmountSave = (size: number, unit: SizeUnit) => {
     if (onEdit) {
@@ -38,6 +42,16 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
       onEdit({
         ...item,
         expirationDate: expirationDate,
+        latestUpdateDate: new Date().toISOString().split("T")[0],
+      });
+    }
+  };
+
+  const handleNameSave = (name: string) => {
+    if (onEdit) {
+      onEdit({
+        ...item,
+        name,
         latestUpdateDate: new Date().toISOString().split("T")[0],
       });
     }
@@ -104,7 +118,27 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
             </Typography>
           </Box>
 
-          <Box sx={{ pr: 1.25 }}>
+          <Box
+            onClick={() => setShowNameDialog(isEditing && allowNameEdit)}
+            sx={{
+              pr: 1.25,
+              cursor: isEditing && allowNameEdit ? "pointer" : "default",
+              p: isEditing && allowNameEdit ? 0.5 : 0,
+              borderRadius: 1,
+              bgcolor: "transparent",
+              border: isEditing && allowNameEdit ? "1px dashed" : "none",
+              borderColor: "#E49A61",
+              transition: "all 0.2s ease",
+              ...(isEditing &&
+                allowNameEdit && {
+                  "&:hover": {
+                    bgcolor: "rgba(228, 154, 97, 0.1)",
+                    boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
+                    transform: "translateY(-1px)",
+                  },
+                }),
+            }}
+          >
             <Typography
               variant="body2"
               sx={{ fontWeight: 500, color: "text.primary" }}
@@ -218,6 +252,13 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
         onClose={() => setShowDateDialog(false)}
         currentDate={item.expirationDate ?? ""}
         onSave={handleDateSave}
+      />
+
+      <NameEditDialog
+        isOpen={showNameDialog}
+        onClose={() => setShowNameDialog(false)}
+        currentName={item.name}
+        onSave={handleNameSave}
       />
 
       <DeleteConfirmDialog

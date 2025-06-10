@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,11 +14,13 @@ import {
   JoinInventoryDto,
   LoginUserDto,
   UpdateUserDto,
+  CreateKitchenDto,
+  JoinKitchenByHashDto,
   UserWithToken,
 } from './user.dto';
-import { UnauthorizedException } from '@nestjs/common';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { JwtService } from '@nestjs/jwt';
+import { KitchenHashUtils } from 'src/utils/kitchenHashUtils';
 
 @Injectable()
 export class UserService {
@@ -51,8 +55,11 @@ export class UserService {
       const { name, userName, email, password } = createUserDto;
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      const kitchenHash = await this.generateUniqueKitchenHash();
+
       const inventory = this.inventoryRepository.create({
         name: `המטבח של ${name}`,
+        kitchenHash,
       });
 
       const savedInventory = await this.inventoryRepository.save(inventory);
@@ -80,44 +87,46 @@ export class UserService {
   }
 
   async update(updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
-    try {
-      const { id, name, userName, email, sensitivities } = updateUserDto;
+    const {
+      id,
+      name,
+      userName,
+      email,
+      sensitivities,
+      height,
+      weight,
+      goal,
+      notes,
+    } = updateUserDto;
 
-      const user = await this.userRepository.findOneBy({ id });
-      if (!user) {
-        throw new NotFoundException(`User with id ${id} not found`);
-      }
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
 
-      if (name !== undefined) user.name = name;
-      if (userName !== undefined) user.userName = userName;
-      if (email !== undefined) user.email = email;
-      if (sensitivities !== undefined) user.sensitivities = sensitivities;
+    Object.assign(user, {
+      name,
+      userName,
+      email,
+      sensitivities,
+      height,
+      weight,
+      goal,
+      notes,
+    });
 
-      const updatedUser = await this.userRepository.save(user);
-
-      const { password: _, ...userWithoutPassword } = updatedUser;
-      return userWithoutPassword;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Failed to update user');
-    }
+    const updatedUser = await this.userRepository.save(user);
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
   }
 
   async findById(id: string): Promise<Omit<User, 'password'>> {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { id },
-        relations: ['inventory'],
-      });
-      if (!user) {
-        throw new NotFoundException(`User with id ${id} not found`);
-      }
-      const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Failed to fetch user');
-    }
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['inventory'],
+    });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   async getInventoryByUserId(userId: string): Promise<Inventory> {
@@ -126,14 +135,8 @@ export class UserService {
       relations: ['inventory'],
     });
 
-    if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
-
-    if (!user.inventory) {
-      throw new NotFoundException(
-        `User with id ${userId} is not assigned to any inventory`,
-      );
+    if (!user || !user.inventory) {
+      throw new NotFoundException(`Inventory for user ${userId} not found`);
     }
 
     return user.inventory;
@@ -216,26 +219,164 @@ export class UserService {
     }
   }
 
-  async joinToInventory(joinDto: JoinInventoryDto): Promise<User> {
-    const { userId, inventoryId } = joinDto;
+  async createKitchen(dto: CreateKitchenDto): Promise<{
+    inventory: Inventory;
+    kitchenHash: string;
+  }> {
+    const { userId, name } = dto;
 
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['inventory'],
     });
+    if (!user) throw new NotFoundException(`User with id ${userId} not found`);
+
+    const kitchenHash = await this.generateUniqueKitchenHash();
+
+    const newInventory = this.inventoryRepository.create({
+      name,
+      kitchenHash,
+      users: [user],
+    });
+    const savedInventory = await this.inventoryRepository.save(newInventory);
+
+    user.inventory = savedInventory;
+    await this.userRepository.save(user);
+
+    return {
+      inventory: savedInventory,
+      kitchenHash: savedInventory.kitchenHash,
+    };
+  }
+
+  async joinKitchenByHash(dto: JoinKitchenByHashDto): Promise<{
+    success: boolean;
+    inventory?: Inventory;
+    message: string;
+  }> {
+    const { userId, kitchenHash } = dto;
+
+    if (!KitchenHashUtils.isValidHashFormat(kitchenHash)) {
+      throw new BadRequestException('Invalid kitchen code format');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    const inventory = await this.inventoryRepository.findOneBy({
-      id: inventoryId,
+    const targetInventory = await this.inventoryRepository.findOne({
+      where: { kitchenHash },
     });
-    if (!inventory) {
-      throw new NotFoundException(`Inventory with id ${inventoryId} not found`);
+
+    if (!targetInventory) {
+      return {
+        success: false,
+        message: 'Kitchen not found. Please check the code and try again.',
+      };
     }
 
-    user.inventory = inventory;
+    user.inventory = targetInventory;
+    await this.userRepository.save(user);
 
-    return this.userRepository.save(user);
+    return {
+      success: true,
+      inventory: targetInventory,
+      message: `Successfully joined kitchen: ${targetInventory.name}`,
+    };
+  }
+
+  async getKitchenHash(
+    userId: string,
+  ): Promise<{ kitchenHash: string; kitchenName: string }> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+
+    if (!user || !user.inventory) {
+      throw new NotFoundException(`User or inventory not found`);
+    }
+
+    return {
+      kitchenHash: user.inventory.kitchenHash,
+      kitchenName: user.inventory.name || 'Unnamed Kitchen',
+    };
+  }
+
+  async getUserSettings(userId: string): Promise<any> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+    if (!user) throw new NotFoundException();
+
+    return {
+      kitchenName: user.inventory?.name || '',
+      kitchenHash: user.inventory?.kitchenHash || '',
+      weight: user.weight || 0,
+      height: user.height || 0,
+      goal: user.goal || '',
+      dietaryPreference: user.sensitivities?.join(',') || '',
+      notes: user.notes || '',
+    };
+  }
+
+  async updateUserSettings(
+    userId: string,
+    settings: {
+      weight: number;
+      height: number;
+      goal: string;
+      dietaryPreference: string;
+      notes: string;
+    },
+  ) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['inventory'],
+    });
+
+    if (!user) throw new NotFoundException();
+
+    user.sensitivities = settings.dietaryPreference
+      ? settings.dietaryPreference.split(',').filter(Boolean)
+      : [];
+    user.height = settings.height;
+    user.weight = settings.weight;
+    user.goal = settings.goal;
+    user.notes = settings.notes;
+
+    await this.userRepository.save(user);
+
+    const { password, ...rest } = user;
+    return rest;
+  }
+
+  private async generateUniqueKitchenHash(): Promise<string> {
+    const maxAttempts = 10;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const hash = KitchenHashUtils.generateRandomKitchenHash();
+
+      const existingInventory = await this.inventoryRepository.findOne({
+        where: { kitchenHash: hash },
+      });
+
+      if (!existingInventory) {
+        return hash;
+      }
+
+      attempts++;
+    }
+
+    throw new InternalServerErrorException(
+      'Failed to generate unique kitchen hash after multiple attempts',
+    );
   }
 }

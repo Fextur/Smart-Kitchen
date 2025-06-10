@@ -3,7 +3,7 @@ import { Outlet } from "@tanstack/react-router";
 import { AppBar, Toolbar, Box, Typography, IconButton } from "@mui/material";
 import { Menu } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
-import { UserSettingsDrawer } from "@/layouts/UserSettingsDrawer";
+import { UserSettingsDrawer } from "@/layouts/UserSettingsDrawer/UserSettingsDrawer";
 
 const AppLayout: FC = () => {
   const [refreshKey, _setRefreshKey] = useState(0);

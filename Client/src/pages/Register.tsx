@@ -1,9 +1,10 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { TextField, Button, Typography } from "@mui/material";
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useRegister } from "@/hooks/useRegister";
+import type { RootSearchParams } from "@/routes";
 
 const Register = () => {
   const [userNameError, setUsernameError] = useState("");
@@ -11,6 +12,7 @@ const Register = () => {
 
   const { register, isRegistering, registerError } = useRegister();
   const navigate = useNavigate();
+  const search = useSearch({ from: "__root__" }) as RootSearchParams;
 
   const form = useForm({
     defaultValues: {
@@ -22,12 +24,18 @@ const Register = () => {
     },
     onSubmit: async ({ value }) => {
       register(value, {
-        onSuccess: () => navigate({ to: "/" }),
+        onSuccess: () => {
+          navigate({
+            to: "/",
+            search: search,
+            replace: true,
+          });
+        },
         onError: (error: any) => {
           if (error.message.includes("Username is already taken")) {
             setUsernameError("השם משתמש הזה תפוס כבר");
           } else if (error.message.includes("Email is already in use")) {
-            setEmailError("המילל הזה תפוס כבר");
+            setEmailError("המייל הזה תפוס כבר");
           }
         },
       });
@@ -172,7 +180,7 @@ const Register = () => {
             <TextField
               fullWidth
               autoComplete="off"
-              label="הזנן סיסמה שנית"
+              label="הזן סיסמה שנית"
               type="password"
               onChange={(e) => field.handleChange(e.target.value)}
               error={!!field.state.meta.errors?.length}

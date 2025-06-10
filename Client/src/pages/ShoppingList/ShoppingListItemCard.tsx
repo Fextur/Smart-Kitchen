@@ -3,6 +3,7 @@ import { Box, IconButton, Typography } from "@mui/material";
 import { ShoppingListItem, SizeUnit } from "@/types";
 import { CircleCheck, Trash2 } from "lucide-react";
 import { AmountEditDialog } from "@/components/KitchenItemCard/AmountEditDialog";
+import { DeleteConfirmDialog } from "@/components/KitchenItemCard/DeleteConfirmDialog";
 import { useLongPress } from "@/hooks/useLongPress";
 
 interface ShoppingListItemCardProps {
@@ -19,6 +20,7 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
   onDelete,
 }) => {
   const [showAmountDialog, setShowAmountDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const longPressHandlers = useLongPress({
     onLongPress: onLongPress,
@@ -26,6 +28,23 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
     longPressDuration: 500,
     movementThreshold: 10,
   });
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    setShowDeleteDialog(false);
+    onDelete();
+  };
+
+  const handleAmountEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowAmountDialog(true);
+  };
 
   return (
     <>
@@ -67,7 +86,7 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
             />
           )}
           <Box
-            onClick={() => setShowAmountDialog(true)}
+            onClick={handleAmountEditClick}
             sx={{
               minWidth: 50,
               maxWidth: 50,
@@ -79,6 +98,11 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
               border: "1px dashed",
               borderColor: "#E49A61",
               transition: "all 0.2s",
+              "&:hover": {
+                bgcolor: "rgba(228, 154, 97, 0.1)",
+                boxShadow: "0 2px 8px rgba(228, 154, 97, 0.2)",
+                transform: "translateY(-1px)",
+              },
             }}
           >
             <Typography
@@ -100,10 +124,11 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
           </Box>
         </Box>
         <IconButton
-          onClick={onDelete}
+          onClick={handleDeleteClick}
           size="small"
           sx={{
             color: "#ef4444",
+            zIndex: 2,
             "&:hover": {
               bgcolor: "rgba(239, 68, 68, 0.1)",
               boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
@@ -115,6 +140,7 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
           <Trash2 size={20} />
         </IconButton>
       </Box>
+
       <AmountEditDialog
         isOpen={showAmountDialog}
         onClose={() => setShowAmountDialog(false)}
@@ -127,7 +153,15 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
             measureUnit: unit,
             latestUpdateDate: new Date().toISOString().split("T")[0],
           });
+          setShowAmountDialog(false);
         }}
+        itemName={item.name}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
         itemName={item.name}
       />
     </>

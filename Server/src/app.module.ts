@@ -6,6 +6,7 @@ import { ProductModule } from './Products/product.module';
 import { User } from './Users/user.entity';
 import { Product } from './Products/product.entity';
 import { UserModule } from './Users/user.module';
+import { Recipe } from './Recipes/recipe.entity'; 
 import 'dotenv/config';
 import { RecipeModule } from './Recipes/recipe.module';
 import { MulterModule } from '@nestjs/platform-express';
@@ -24,7 +25,7 @@ import { ShoppingListModule } from './ShoppingList/shoppingList.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DATABASE,
-      entities: [User, Product],
+      entities: [User, Product, Recipe], 
       synchronize: true,
       autoLoadEntities: true,
     }),
