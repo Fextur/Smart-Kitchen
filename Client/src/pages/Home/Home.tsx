@@ -145,7 +145,7 @@ const Home: FC = () => {
                   title="עומד להתקלקל"
                   renderRow={(itemIndex, isEditing) => (
                     <KitchenItemCard
-                      item={categorizedItems.empty[itemIndex]}
+                      item={categorizedItems.expiringSoon[itemIndex]}
                       isEditing={isEditing}
                     />
                   )}
@@ -163,6 +163,21 @@ const Home: FC = () => {
                     <KitchenItemCard
                       item={categorizedItems.inKitchen[itemIndex]}
                       onEdit={handleEditItem}
+                      isEditing={isEditing}
+                    />
+                  )}
+                />
+              </Box>
+            )}
+
+            {categorizedItems && categorizedItems.empty.length > 0 && (
+              <Box>
+                <ItemList
+                  itemsCount={categorizedItems.empty.length}
+                  title="נגמרו"
+                  renderRow={(itemIndex, isEditing) => (
+                    <KitchenItemCard
+                      item={categorizedItems.empty[itemIndex]}
                       isEditing={isEditing}
                     />
                   )}
