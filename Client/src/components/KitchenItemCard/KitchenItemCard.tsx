@@ -119,11 +119,7 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
           </Box>
 
           <Box
-            onClick={
-              isEditing && allowNameEdit
-                ? () => setShowNameDialog(true)
-                : undefined
-            }
+            onClick={() => setShowNameDialog(isEditing && allowNameEdit)}
             sx={{
               pr: 1.25,
               cursor: isEditing && allowNameEdit ? "pointer" : "default",

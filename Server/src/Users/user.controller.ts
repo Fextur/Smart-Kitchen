@@ -70,11 +70,6 @@ export class UserController {
     return this.userService.validateToken(accessToken);
   }
 
-  @Post('join-to-inventory')
-  async joinToInventory(@Body() dto: JoinInventoryDto) {
-    return this.userService.joinToInventory(dto);
-  }
-
   @Post('create-kitchen')
   async createKitchen(@Body() dto: CreateKitchenDto) {
     return this.userService.createKitchen(dto);

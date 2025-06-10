@@ -219,23 +219,6 @@ export class UserService {
     }
   }
 
-  async joinToInventory(joinDto: JoinInventoryDto): Promise<User> {
-    const { userId, inventoryId } = joinDto;
-
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['inventory'],
-    });
-    const inventory = await this.inventoryRepository.findOneBy({
-      id: inventoryId,
-    });
-
-    if (!user || !inventory) throw new NotFoundException();
-
-    user.inventory = inventory;
-    return this.userRepository.save(user);
-  }
-
   async createKitchen(dto: CreateKitchenDto): Promise<{
     inventory: Inventory;
     kitchenHash: string;
