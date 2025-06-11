@@ -17,8 +17,8 @@ import {
   Clock
 } from "lucide-react";
 import { Drawer } from "@/components/Drawer";
-import { useAlerts, Alert, AlertType } from "@/hooks/useAlerts";
-
+import { useAlerts, Alert } from "@/hooks/useAlerts";
+import { AlertType } from "@/types";
 interface AlertsDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -31,12 +31,12 @@ const getAlertIcon = (type: AlertType) => {
     case AlertType.EDIT_KITCHEN:
       return <Edit3 size={20} color="#E49A61" />;
     case AlertType.ADD_TO_SHOPPING_LIST:
-      return <ShoppingCart size={20} color="#4ade80" />;
-    case AlertType.EDIT_SHOPPING_LIST:
+      return <ShoppingCart size={20} color="#4ade80" />;    
+      case AlertType.EDIT_SHOPPING_LIST:
       return <Edit3 size={20} color="#4ade80" />;
-    case AlertType.GET_IN_KITCHEN:
+    case AlertType.USER_ENTERED_KITCHEN:
       return <UserPlus size={20} color="#3b82f6" />;
-    case AlertType.OUT_OF_KITCHEN:
+    case AlertType.USER_LEFT_KITCHEN:
       return <UserMinus size={20} color="#ef4444" />;
     default:
       return <Bell size={20} color="#E49A61" />;

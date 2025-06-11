@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-
-export enum AlertType {
-  ADD_KITCHEN = "add_kitchen",
-  EDIT_KITCHEN = "edit_kitchen",
-  ADD_TO_SHOPPING_LIST = "add_to_shopping_list",
-  EDIT_SHOPPING_LIST = "edit_shopping_list",
-  GET_IN_KITCHEN = "get_in_kitchen",
-  OUT_OF_KITCHEN = "out_of_kitchen",
-}
+import { AlertType } from "@/types";
 
 export type Alert = {
   id: string;
@@ -55,11 +47,10 @@ const generateDummyAlerts = (): Alert[] => [
     message: "הכמות של לחם השתנתה מ-2 ל-3 יחידות",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
     isRead: true,
-    data: { itemName: "לחם", oldQuantity: 2, newQuantity: 3 }
-  },
+    data: { itemName: "לחם", oldQuantity: 2, newQuantity: 3 }  },
   {
     id: "5",
-    type: AlertType.GET_IN_KITCHEN,
+    type: AlertType.USER_ENTERED_KITCHEN,
     title: "משתמש נכנס למטבח",
     message: "שרה נכנסה למטבח",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago
@@ -68,7 +59,7 @@ const generateDummyAlerts = (): Alert[] => [
   },
   {
     id: "6",
-    type: AlertType.OUT_OF_KITCHEN,
+    type: AlertType.USER_LEFT_KITCHEN,
     title: "משתמש יצא מהמטבח",
     message: "מיכל יצא מהמטבח",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(), // 12 hours ago
