@@ -73,10 +73,12 @@ export const useAlerts = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Simulate loading alerts
+    // Simulate loading alerts - only unread ones
     setIsLoading(true);
     const timer = setTimeout(() => {
-      setAlerts(generateDummyAlerts());
+      // Filter to only show unread alerts from dummy data
+      const unreadAlerts = generateDummyAlerts().filter(alert => !alert.isRead);
+      setAlerts(unreadAlerts);
       setIsLoading(false);
     }, 500);
 
@@ -84,17 +86,15 @@ export const useAlerts = () => {
   }, []);
 
   const markAsRead = (alertId: string) => {
+    // Remove the alert from the list when marked as read
     setAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId ? { ...alert, isRead: true } : alert
-      )
+      prev.filter(alert => alert.id !== alertId)
     );
   };
 
   const markAllAsRead = () => {
-    setAlerts(prev => 
-      prev.map(alert => ({ ...alert, isRead: true }))
-    );
+    // Clear all alerts when marking all as read
+    setAlerts([]);
   };
 
   const approveAlert = (alertId: string) => {
@@ -103,7 +103,7 @@ export const useAlerts = () => {
     markAsRead(alertId);
   };
 
-  const unreadCount = alerts.filter(alert => !alert.isRead).length;
+  const unreadCount = alerts.length; // Since we only show unread alerts
 
   return {
     alerts,

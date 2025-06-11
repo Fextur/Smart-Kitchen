@@ -1,11 +1,11 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { 
   Box, 
   Typography, 
-  Button, 
   Divider,
   Chip,
-  CircularProgress 
+  CircularProgress,
+  IconButton 
 } from "@mui/material";
 import { 
   Bell, 
@@ -14,7 +14,8 @@ import {
   ShoppingCart, 
   UserPlus, 
   UserMinus, 
-  Clock
+  Clock,
+  X
 } from "lucide-react";
 import { Drawer } from "@/components/Drawer";
 import { useAlerts, Alert } from "@/hooks/useAlerts";
@@ -58,37 +59,45 @@ const getTimeAgo = (timestamp: string): string => {
   return `לפני ${diffInDays} ימים`;
 };
 
-const AlertCard: FC<{ alert: Alert; onApprove: (alertId: string) => void; onMarkAsRead: (alertId: string) => void }> = ({ 
+const AlertCard: FC<{ alert: Alert; onDismiss: (alertId: string) => void }> = ({ 
   alert, 
-  onApprove, 
-  onMarkAsRead 
+  onDismiss 
 }) => {
-  const handleApprove = () => {
-    onApprove(alert.id);
-  };
+  const [isDismissing, setIsDismissing] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const handleCardClick = () => {
-    if (!alert.isRead) {
-      onMarkAsRead(alert.id);
-    }
+  const handleDismiss = async () => {
+    setIsDismissing(true);
+    setProgress(0);
+
+    // Progress bar animation for 1 second
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          onDismiss(alert.id); // Mark as read and remove from view
+          return 100;
+        }
+        return prev + 10; // 100ms intervals for 1 second
+      });
+    }, 100);
   };
 
   return (
     <Box
-      onClick={handleCardClick}
       sx={{
         p: 2,
         mb: 1.5,
-        bgcolor: alert.isRead ? "grey.50" : "background.paper",
+        bgcolor: "background.paper",
         borderRadius: 2,
         border: "1px solid",
-        borderColor: alert.isRead ? "grey.200" : "#E49A61",
-        boxShadow: alert.isRead ? "none" : "0 2px 8px rgba(228, 154, 97, 0.15)",
-        cursor: "pointer",
+        borderColor: "#E49A61",
+        boxShadow: "0 2px 8px rgba(228, 154, 97, 0.15)",
         transition: "all 0.2s ease",
+        opacity: isDismissing ? 0.6 : 1,
         "&:hover": {
           boxShadow: "0 4px 12px rgba(228, 154, 97, 0.2)",
-          transform: "translateY(-1px)",
+          transform: isDismissing ? "none" : "translateY(-1px)",
         },
         direction: "rtl"
       }}
@@ -104,69 +113,64 @@ const AlertCard: FC<{ alert: Alert; onApprove: (alertId: string) => void; onMark
               variant="subtitle2" 
               sx={{ 
                 fontWeight: 600,
-                color: alert.isRead ? "text.secondary" : "text.primary"
+                color: "text.primary"
               }}
             >
               {alert.title}
             </Typography>
             
-            {!alert.isRead && (
-              <Chip
+            {/* Dismiss Button with Progress */}
+            <Box sx={{ position: 'relative' }}>
+              <IconButton
                 size="small"
-                label="חדש"
+                onClick={handleDismiss}
+                disabled={isDismissing}
                 sx={{
-                  bgcolor: "#E49A61",
-                  color: "white",
-                  height: 20,
-                  fontSize: "10px",
-                  fontWeight: 600
+                  color: isDismissing ? 'grey.400' : 'grey.600',
+                  '&:hover': {
+                    bgcolor: 'error.light',
+                    color: 'error.main'
+                  },
+                  transition: 'all 0.2s ease'
                 }}
-              />
-            )}
+              >
+                <X size={16} />
+              </IconButton>
+              
+              {isDismissing && (
+                <CircularProgress
+                  variant="determinate"
+                  value={progress}
+                  size={32}
+                  thickness={4}
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    color: '#E49A61',
+                    zIndex: 1
+                  }}
+                />
+              )}
+            </Box>
           </Box>
           
           <Typography 
             variant="body2" 
             sx={{ 
               mb: 1.5,
-              color: alert.isRead ? "text.secondary" : "text.primary",
+              color: "text.primary",
               lineHeight: 1.4
             }}
           >
             {alert.message}
           </Typography>
           
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Clock size={14} color="#9ca3af" />
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {getTimeAgo(alert.timestamp)}
-              </Typography>
-            </Box>
-            
-            {!alert.isRead && (
-              <Button
-                size="small"
-                variant="contained"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleApprove();
-                }}
-                sx={{
-                  py: 0.5,
-                  px: 1.5,
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  bgcolor: "#E49A61",
-                  "&:hover": {
-                    bgcolor: "#D08A51",
-                  },
-                  minWidth: "60px"
-                }}
-              >
-                אשר
-              </Button>
-            )}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Clock size={14} color="#9ca3af" />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {getTimeAgo(alert.timestamp)}
+            </Typography>
           </Box>
         </Box>
       </Box>
@@ -175,7 +179,11 @@ const AlertCard: FC<{ alert: Alert; onApprove: (alertId: string) => void; onMark
 };
 
 export const AlertsDrawer: FC<AlertsDrawerProps> = ({ open, onClose }) => {
-  const { alerts, isLoading, unreadCount, markAsRead, markAllAsRead, approveAlert } = useAlerts();
+  const { alerts, isLoading, unreadCount, markAsRead } = useAlerts();
+  
+  const handleDismissAlert = (alertId: string) => {
+    markAsRead(alertId);
+  };
   
   if (isLoading) {
     return (
@@ -214,8 +222,7 @@ export const AlertsDrawer: FC<AlertsDrawerProps> = ({ open, onClose }) => {
         }}
       />
 
-      <Box sx={{ px: 3, pb: 3, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-        {/* Header */}
+      <Box sx={{ px: 3, pb: 3, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>        {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, flexShrink: 0 }}>
           <Typography
             variant="h6"
@@ -225,25 +232,8 @@ export const AlertsDrawer: FC<AlertsDrawerProps> = ({ open, onClose }) => {
               direction: "rtl"
             }}
           >
-            התראות
+            התראות ({unreadCount})
           </Typography>
-          
-          {unreadCount > 0 && (
-            <Button
-              size="small"
-              onClick={markAllAsRead}
-              sx={{
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "#E49A61",
-                "&:hover": {
-                  bgcolor: "rgba(228, 154, 97, 0.1)",
-                },
-              }}
-            >
-              סמן הכל כנקרא
-            </Button>
-          )}
         </Box>
 
         {/* Unread count indicator */}
@@ -293,14 +283,12 @@ export const AlertsDrawer: FC<AlertsDrawerProps> = ({ open, onClose }) => {
               <Typography variant="body1" sx={{ mt: 2, color: "text.secondary" }}>
                 אין התראות חדשות
               </Typography>
-            </Box>
-          ) : (
+            </Box>          ) : (
             alerts.map((alert) => (
               <AlertCard
                 key={alert.id}
                 alert={alert}
-                onApprove={approveAlert}
-                onMarkAsRead={markAsRead}
+                onDismiss={handleDismissAlert}
               />
             ))
           )}

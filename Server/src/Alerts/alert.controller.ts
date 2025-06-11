@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Put } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Put, Query } from '@nestjs/common';
 import { AlertService } from './alert.service';
 import { Alert } from './alert.entity';
 import { CreateAlertDto, MarkAlertAsReadDto, ApproveAlertDto, MarkAllAsReadDto } from './alert.dto';
@@ -8,8 +8,12 @@ export class AlertController {
   constructor(private readonly alertService: AlertService) {}
 
   @Get('user/:id')
-  async getUserAlerts(@Param('id') userId: string): Promise<Alert[]> {
-    return this.alertService.getUserAlerts(userId);
+  async getUserAlerts(
+    @Param('id') userId: string,
+    @Query('includeRead') includeRead?: string
+  ): Promise<Alert[]> {
+    const shouldIncludeRead = includeRead === 'true';
+    return this.alertService.getUserAlerts(userId, shouldIncludeRead);
   }
 
   @Get('user/:id/unread-count')

@@ -11,10 +11,13 @@ export class AlertService {
     @InjectRepository(Alert)
     private alertRepository: Repository<Alert>,
   ) {}
+  async getUserAlerts(userId: string, includeRead: boolean = false): Promise<Alert[]> {
+    const whereCondition = includeRead 
+      ? { userId } 
+      : { userId, isRead: false }; // Only unread alerts by default
 
-  async getUserAlerts(userId: string): Promise<Alert[]> {
     return this.alertRepository.find({
-      where: { userId },
+      where: whereCondition,
       order: { createdAt: 'DESC' },
       relations: ['user'],
     });
