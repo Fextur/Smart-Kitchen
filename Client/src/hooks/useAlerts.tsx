@@ -16,12 +16,12 @@ export const useAlerts = () => {
   const queryClient = useQueryClient();
   const [user] = useAtom(userAtom);
 
-  // Fetch alerts for the current user (unread only by default)
-  const fetchAlerts = async (): Promise<Alert[]> => {
+  // Fetch all alerts for the current user
+  const fetchAllAlerts = async (): Promise<Alert[]> => {
     if (!user?.id) return [];
     
     try {
-      const { data } = await api.get(`${API_ROUTES.alerts}/user/${user.id}`);
+      const { data } = await api.get(`${API_ROUTES.alerts}/user/${user.id}?includeRead=true`);
       return data.map(transformAlert);
     } catch (error) {
       console.error("Error fetching alerts:", error);
@@ -29,40 +29,22 @@ export const useAlerts = () => {
     }
   };
 
-  // Fetch unread count
-  const fetchUnreadCount = async (): Promise<number> => {
-    if (!user?.id) return 0;
-    
-    try {
-      const { data } = await api.get(`${API_ROUTES.alerts}/user/${user.id}/unread-count`);
-      return data.count;
-    } catch (error) {
-      console.error("Error fetching unread count:", error);
-      return 0;
-    }
-  };
-
-  // React Query for alerts
+  // React Query for all alerts
   const { 
-    data: alerts = [], 
+    data: allAlerts = [], 
     isLoading,
     error 
   } = useQuery({
     queryKey: ['alerts', user?.id],
-    queryFn: fetchAlerts,
+    queryFn: fetchAllAlerts,
     enabled: !!user?.id,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // React Query for unread count
-  const { 
-    data: unreadCount = 0 
-  } = useQuery({
-    queryKey: ['alerts-unread-count', user?.id],
-    queryFn: fetchUnreadCount,
-    enabled: !!user?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
+  // Calculate counts from all alerts
+  const unreadAlerts = allAlerts.filter(alert => !alert.isRead);
+  const unreadCount = unreadAlerts.length;
+  const totalCount = allAlerts.length;
 
   // Mark alert as read mutation
   const markAsReadMutation = useMutation({
@@ -75,12 +57,12 @@ export const useAlerts = () => {
     onSuccess: () => {
       // Invalidate and refetch alerts
       queryClient.invalidateQueries({ queryKey: ['alerts', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['alerts-unread-count', user?.id] });
     },
     onError: (error) => {
       console.error("Error marking alert as read:", error);
     }
   });
+
   // Mark all as read mutation
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
@@ -94,12 +76,12 @@ export const useAlerts = () => {
     onSuccess: () => {
       // Invalidate and refetch alerts
       queryClient.invalidateQueries({ queryKey: ['alerts', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['alerts-unread-count', user?.id] });
     },
     onError: (error) => {
       console.error("Error marking all alerts as read:", error);
     }
   });
+
   // Helper functions
   const markAsRead = (alertId: string) => {
     markAsReadMutation.mutate(alertId);
@@ -110,10 +92,12 @@ export const useAlerts = () => {
   };
 
   return {
-    alerts,
+    allAlerts,
+    unreadAlerts,
     isLoading,
     error,
     unreadCount,
+    totalCount,
     markAsRead,
     markAllAsRead,
     isMarkingAsRead: markAsReadMutation.isPending,
