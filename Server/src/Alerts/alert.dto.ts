@@ -34,18 +34,9 @@ export class UpdateAlertDto {
   @IsOptional()
   @IsBoolean()
   isRead?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  isApproved?: boolean;
 }
 
 export class MarkAlertAsReadDto {
-  @IsUUID()
-  alertId: string;
-}
-
-export class ApproveAlertDto {
   @IsUUID()
   alertId: string;
 }

@@ -27,7 +27,6 @@ export class AlertService {
     const alert = this.alertRepository.create(dto);
     return this.alertRepository.save(alert);
   }
-
   async markAsRead(alertId: string): Promise<Alert> {
     const alert = await this.alertRepository.findOne({
       where: { id: alertId },
@@ -37,20 +36,6 @@ export class AlertService {
       throw new NotFoundException('Alert not found');
     }
 
-    alert.isRead = true;
-    return this.alertRepository.save(alert);
-  }
-
-  async approveAlert(alertId: string): Promise<Alert> {
-    const alert = await this.alertRepository.findOne({
-      where: { id: alertId },
-    });
-
-    if (!alert) {
-      throw new NotFoundException('Alert not found');
-    }
-
-    alert.isApproved = true;
     alert.isRead = true;
     return this.alertRepository.save(alert);
   }

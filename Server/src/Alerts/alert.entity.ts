@@ -15,12 +15,8 @@ export class Alert {
 
   @Column({ type: 'text', nullable: true })
   description: string;
-
   @Column({ default: false })
   isRead: boolean;
-
-  @Column({ default: false })
-  isApproved: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

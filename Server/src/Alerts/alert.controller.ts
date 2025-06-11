@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Post, Body, Put, Query } from '@nestjs/common';
 import { AlertService } from './alert.service';
 import { Alert } from './alert.entity';
-import { CreateAlertDto, MarkAlertAsReadDto, ApproveAlertDto, MarkAllAsReadDto } from './alert.dto';
+import { CreateAlertDto, MarkAlertAsReadDto, MarkAllAsReadDto } from './alert.dto';
 
 @Controller('alerts')
 export class AlertController {
@@ -26,15 +26,9 @@ export class AlertController {
   async createAlert(@Body() dto: CreateAlertDto): Promise<Alert> {
     return this.alertService.createAlert(dto);
   }
-
   @Put('mark-read')
   async markAsRead(@Body() dto: MarkAlertAsReadDto): Promise<Alert> {
     return this.alertService.markAsRead(dto.alertId);
-  }
-
-  @Put('approve')
-  async approveAlert(@Body() dto: ApproveAlertDto): Promise<Alert> {
-    return this.alertService.approveAlert(dto.alertId);
   }
 
   @Put('mark-all-read')

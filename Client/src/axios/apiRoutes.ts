@@ -4,4 +4,5 @@ export const API_ROUTES = {
   recipes: "/recipes",
   products: `/products`,
   shoppingList: `/shopping-list`,
+  alerts: `/alerts`,
 };

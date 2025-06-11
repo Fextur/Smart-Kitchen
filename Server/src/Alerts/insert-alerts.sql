@@ -1,13 +1,12 @@
 -- Insert mockup alerts data for user ID: 6bc3d746-aed9-4ec8-87d9-f874db230098
 -- Run this script in pgAdmin Query Tool
 
-INSERT INTO alerts (id, type, title, description, "isRead", "isApproved", "createdAt", "userId", "relatedUserId", "relatedUserName", metadata) VALUES
+INSERT INTO alerts (id, type, title, description, "isRead", "createdAt", "userId", "relatedUserId", "relatedUserName", metadata) VALUES
 (
     '550e8400-e29b-41d4-a716-446655440001',
     'add_kitchen',
     'מטבח חדש נוצר',
     'המטבח "מטבח משפחת כהן" נוצר בהצלחה',
-    false,
     false,
     NOW() - INTERVAL '30 minutes',
     '6bc3d746-aed9-4ec8-87d9-f874db230098',
@@ -21,7 +20,6 @@ INSERT INTO alerts (id, type, title, description, "isRead", "isApproved", "creat
     'המטבח עודכן',
     'שם המטבח השתנה ל''המטבח של המשפחה''',
     false,
-    false,
     NOW() - INTERVAL '2 hours',
     '6bc3d746-aed9-4ec8-87d9-f874db230098',
     NULL,
@@ -33,7 +31,6 @@ INSERT INTO alerts (id, type, title, description, "isRead", "isApproved", "creat
     'add_to_shopping_list',
     'פריט נוסף לרשימת קניות',
     'חלב נוסף לרשימת הקניות על ידי דני',
-    false,
     false,
     NOW() - INTERVAL '4 hours',
     '6bc3d746-aed9-4ec8-87d9-f874db230098',
@@ -47,7 +44,6 @@ INSERT INTO alerts (id, type, title, description, "isRead", "isApproved", "creat
     'רשימת קניות עודכנה',
     'הכמות של לחם השתנתה מ-2 ל-3 יחידות',
     false,
-    false,
     NOW() - INTERVAL '6 hours',
     '6bc3d746-aed9-4ec8-87d9-f874db230098',
     NULL,
@@ -60,7 +56,6 @@ INSERT INTO alerts (id, type, title, description, "isRead", "isApproved", "creat
     'משתמש נכנס למטבח',
     'שרה נכנסה למטבח',
     false,
-    false,
     NOW() - INTERVAL '8 hours',
     '6bc3d746-aed9-4ec8-87d9-f874db230098',
     '550e8400-e29b-41d4-a716-446655440099',
@@ -72,7 +67,6 @@ INSERT INTO alerts (id, type, title, description, "isRead", "isApproved", "creat
     'user_left_kitchen',
     'משתמש יצא מהמטבח',
     'מיכל יצא מהמטבח',
-    false,
     false,
     NOW() - INTERVAL '12 hours',
     '6bc3d746-aed9-4ec8-87d9-f874db230098',

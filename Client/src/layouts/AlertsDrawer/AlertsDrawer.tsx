@@ -18,8 +18,8 @@ import {
   X
 } from "lucide-react";
 import { Drawer } from "@/components/Drawer";
-import { useAlerts, Alert } from "@/hooks/useAlerts";
-import { AlertType } from "@/types";
+import { useAlerts } from "@/hooks/useAlerts";
+import { AlertType, Alert } from "@/types";
 interface AlertsDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -154,8 +154,7 @@ const AlertCard: FC<{ alert: Alert; onDismiss: (alertId: string) => void }> = ({
               )}
             </Box>
           </Box>
-          
-          <Typography 
+            <Typography 
             variant="body2" 
             sx={{ 
               mb: 1.5,
@@ -163,13 +162,13 @@ const AlertCard: FC<{ alert: Alert; onDismiss: (alertId: string) => void }> = ({
               lineHeight: 1.4
             }}
           >
-            {alert.message}
+            {alert.message || alert.description}
           </Typography>
           
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Clock size={14} color="#9ca3af" />
+            <Clock size={14} color="#9ca3af" />            
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {getTimeAgo(alert.timestamp)}
+              {getTimeAgo(alert.timestamp || alert.createdAt)}
             </Typography>
           </Box>
         </Box>

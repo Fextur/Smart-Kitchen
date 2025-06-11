@@ -1,116 +1,122 @@
-import { useState, useEffect } from "react";
-import { AlertType } from "@/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Alert } from "@/types";
+import api from "@/axios/axios";
+import { API_ROUTES } from "@/axios/apiRoutes";
+import { useAtom } from "jotai";
+import { userAtom } from "@/atoms/atoms";
 
-export type Alert = {
-  id: string;
-  type: AlertType;
-  title: string;
-  message: string;
-  timestamp: string;
-  isRead: boolean;
-  data?: any;
-};
-
-// Dummy data for demonstration
-const generateDummyAlerts = (): Alert[] => [
-  {
-    id: "1",
-    type: AlertType.ADD_KITCHEN,
-    title: "מטבח חדש נוצר",
-    message: "המטבח 'מטבח משפחת כהן' נוצר בהצלחה",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-    isRead: false,
-    data: { kitchenName: "מטבח משפחת כהן" }
-  },
-  {
-    id: "2",
-    type: AlertType.EDIT_KITCHEN,
-    title: "המטבח עודכן",
-    message: "שם המטבח השתנה ל'המטבח של המשפחה'",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-    isRead: false,
-    data: { oldName: "מטבח משפחת כהן", newName: "המטבח של המשפחה" }
-  },
-  {
-    id: "3",
-    type: AlertType.ADD_TO_SHOPPING_LIST,
-    title: "פריט נוסף לרשימת קניות",
-    message: "חלב נוסף לרשימת הקניות על ידי דני",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), // 4 hours ago
-    isRead: false,
-    data: { itemName: "חלב", addedBy: "דני" }
-  },
-  {
-    id: "4",
-    type: AlertType.EDIT_SHOPPING_LIST,
-    title: "רשימת קניות עודכנה",
-    message: "הכמות של לחם השתנתה מ-2 ל-3 יחידות",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
-    isRead: true,
-    data: { itemName: "לחם", oldQuantity: 2, newQuantity: 3 }  },
-  {
-    id: "5",
-    type: AlertType.USER_ENTERED_KITCHEN,
-    title: "משתמש נכנס למטבח",
-    message: "שרה נכנסה למטבח",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago
-    isRead: true,
-    data: { userName: "שרה" }
-  },
-  {
-    id: "6",
-    type: AlertType.USER_LEFT_KITCHEN,
-    title: "משתמש יצא מהמטבח",
-    message: "מיכל יצא מהמטבח",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(), // 12 hours ago
-    isRead: true,
-    data: { userName: "מיכל" }
-  }
-];
+// Transform backend alert to frontend format
+const transformAlert = (backendAlert: any): Alert => ({
+  ...backendAlert,
+  message: backendAlert.description || backendAlert.message,
+  timestamp: backendAlert.createdAt,
+});
 
 export const useAlerts = () => {
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const [user] = useAtom(userAtom);
 
-  useEffect(() => {
-    // Simulate loading alerts - only unread ones
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      // Filter to only show unread alerts from dummy data
-      const unreadAlerts = generateDummyAlerts().filter(alert => !alert.isRead);
-      setAlerts(unreadAlerts);
-      setIsLoading(false);
-    }, 500);
+  // Fetch alerts for the current user (unread only by default)
+  const fetchAlerts = async (): Promise<Alert[]> => {
+    if (!user?.id) return [];
+    
+    try {
+      const { data } = await api.get(`${API_ROUTES.alerts}/user/${user.id}`);
+      return data.map(transformAlert);
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
+      throw new Error("Failed to fetch alerts");
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, []);
+  // Fetch unread count
+  const fetchUnreadCount = async (): Promise<number> => {
+    if (!user?.id) return 0;
+    
+    try {
+      const { data } = await api.get(`${API_ROUTES.alerts}/user/${user.id}/unread-count`);
+      return data.count;
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      return 0;
+    }
+  };
 
+  // React Query for alerts
+  const { 
+    data: alerts = [], 
+    isLoading,
+    error 
+  } = useQuery({
+    queryKey: ['alerts', user?.id],
+    queryFn: fetchAlerts,
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // React Query for unread count
+  const { 
+    data: unreadCount = 0 
+  } = useQuery({
+    queryKey: ['alerts-unread-count', user?.id],
+    queryFn: fetchUnreadCount,
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Mark alert as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: async (alertId: string) => {
+      const { data } = await api.put(`${API_ROUTES.alerts}/mark-read`, {
+        alertId
+      });
+      return data;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch alerts
+      queryClient.invalidateQueries({ queryKey: ['alerts', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['alerts-unread-count', user?.id] });
+    },
+    onError: (error) => {
+      console.error("Error marking alert as read:", error);
+    }
+  });
+  // Mark all as read mutation
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("User not found");
+      
+      const { data } = await api.put(`${API_ROUTES.alerts}/mark-all-read`, {
+        userId: user.id
+      });
+      return data;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch alerts
+      queryClient.invalidateQueries({ queryKey: ['alerts', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['alerts-unread-count', user?.id] });
+    },
+    onError: (error) => {
+      console.error("Error marking all alerts as read:", error);
+    }
+  });
+  // Helper functions
   const markAsRead = (alertId: string) => {
-    // Remove the alert from the list when marked as read
-    setAlerts(prev => 
-      prev.filter(alert => alert.id !== alertId)
-    );
+    markAsReadMutation.mutate(alertId);
   };
 
   const markAllAsRead = () => {
-    // Clear all alerts when marking all as read
-    setAlerts([]);
+    markAllAsReadMutation.mutate();
   };
-
-  const approveAlert = (alertId: string) => {
-    // In a real implementation, this would send a request to the server
-    console.log(`Approving alert ${alertId}`);
-    markAsRead(alertId);
-  };
-
-  const unreadCount = alerts.length; // Since we only show unread alerts
 
   return {
     alerts,
     isLoading,
+    error,
     unreadCount,
     markAsRead,
     markAllAsRead,
-    approveAlert,
+    isMarkingAsRead: markAsReadMutation.isPending,
+    isMarkingAllAsRead: markAllAsReadMutation.isPending,
   };
 };

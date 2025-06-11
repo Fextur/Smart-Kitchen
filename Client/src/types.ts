@@ -15,6 +15,23 @@ export enum AlertType {
   USER_LEFT_KITCHEN = "user_left_kitchen",
 }
 
+export type Alert = {
+  id: string;
+  type: AlertType;
+  title: string;
+  description: string;
+  isRead: boolean;
+  isApproved: boolean;
+  createdAt: string;
+  userId: string;
+  relatedUserId?: string;
+  relatedUserName?: string;
+  metadata?: any;
+  // Keep message and timestamp for backward compatibility with UI
+  message: string;
+  timestamp: string;
+};
+
 export type User = {
   id: string;
   email: string;
