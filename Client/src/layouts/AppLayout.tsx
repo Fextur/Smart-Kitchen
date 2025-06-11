@@ -1,17 +1,25 @@
 import { FC, useState } from "react";
 import { Outlet } from "@tanstack/react-router";
-import { AppBar, Toolbar, Box, Typography, IconButton } from "@mui/material";
-import { Menu } from "lucide-react";
+import { AppBar, Toolbar, Box, Typography, IconButton, Badge } from "@mui/material";
+import { Menu, Bell } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
+import { useAlerts } from "@/hooks/useAlerts";
 import { UserSettingsDrawer } from "@/layouts/UserSettingsDrawer/UserSettingsDrawer";
+import { AlertsDrawer } from "@/layouts/AlertsDrawer/AlertsDrawer";
 
 const AppLayout: FC = () => {
   const [refreshKey, _setRefreshKey] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [alertsDrawerOpen, setAlertsDrawerOpen] = useState(false);
   const { user } = useUser();
+  const { unreadCount } = useAlerts();
 
   const toggleDrawer = (open: boolean) => () => {
     setDrawerOpen(open);
+  };
+
+  const toggleAlertsDrawer = (open: boolean) => () => {
+    setAlertsDrawerOpen(open);
   };
 
   return (
@@ -94,17 +102,49 @@ const AppLayout: FC = () => {
                       transition: "all 0.2s ease",
                     },
                   }}
-                >
-                  <Menu size={28} />
+                >                  <Menu size={28} />
                 </IconButton>
               </div>
             )}
-
+            
             <Typography variant="h3" sx={{ direction: "rtl" }}>
               מטבחכם
             </Typography>
 
-            {user && <Box sx={{ width: "59px" }} />}
+            {user && (
+              <div style={{ padding: "0 0 0 15px" }}>
+                <IconButton
+                  color="inherit"
+                  aria-label="alerts"
+                  onClick={toggleAlertsDrawer(true)}
+                  sx={{
+                    color: "#E49A61",
+                    "&:hover": {
+                      bgcolor: "rgba(228, 154, 97, 0.1)",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                      transform: "translateY(-1px)",
+                      transition: "all 0.2s ease",
+                    },
+                  }}
+                >
+                  <Badge 
+                    badgeContent={unreadCount} 
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        bgcolor: "#ef4444",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        minWidth: "18px",
+                        height: "18px"
+                      }
+                    }}
+                  >
+                    <Bell size={28} />
+                  </Badge>
+                </IconButton>
+              </div>
+            )}
           </Toolbar>
         </AppBar>
       </Box>
@@ -120,9 +160,8 @@ const AppLayout: FC = () => {
         }}
       >
         <Outlet key={refreshKey} />
-      </Box>
-
-      <UserSettingsDrawer open={drawerOpen} onClose={toggleDrawer(false)} />
+      </Box>      <UserSettingsDrawer open={drawerOpen} onClose={toggleDrawer(false)} />
+      <AlertsDrawer open={alertsDrawerOpen} onClose={toggleAlertsDrawer(false)} />
     </Box>
   );
 };
