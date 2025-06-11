@@ -21,7 +21,6 @@ export type Alert = {
   title: string;
   description: string;
   isRead: boolean;
-  isApproved: boolean;
   createdAt: string;
   userId: string;
   relatedUserId?: string;
