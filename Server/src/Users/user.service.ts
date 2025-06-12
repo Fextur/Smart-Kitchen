@@ -21,7 +21,7 @@ import {
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { JwtService } from '@nestjs/jwt';
 import { KitchenHashUtils } from 'src/utils/kitchenHashUtils';
-import { EventsService } from '../Events/events.service';
+import { EventsService, EventTypes } from '../Events/events.service';
 import { AlertType } from '../types';
 
 @Injectable()
@@ -82,9 +82,8 @@ export class UserService {
         savedUser.id,
         savedUser.userName,
       );
-      
-      // Emit kitchen creation event for new user's default kitchen
-      this.eventsService.emitKitchenAlert({
+        // Emit kitchen creation event for new user's default kitchen
+      this.eventsService.emitEvent(EventTypes.ADD_KITCHEN, {
         type: AlertType.ADD_KITCHEN,
         userId: savedUser.id,
         title: 'מטבח חדש נוצר',
@@ -259,9 +258,8 @@ export class UserService {
 
     user.inventory = savedInventory;
     await this.userRepository.save(user);
-    
-    // Emit kitchen creation event
-    this.eventsService.emitKitchenAlert({
+      // Emit kitchen creation event
+    this.eventsService.emitEvent(EventTypes.ADD_KITCHEN, {
       type: AlertType.ADD_KITCHEN,
       userId: user.id,
       title: 'מטבח חדש נוצר',
@@ -311,9 +309,8 @@ export class UserService {
 
     user.inventory = targetInventory;
     await this.userRepository.save(user);
-    
-    // Emit user entered kitchen event
-    this.eventsService.emitUserKitchenAlert({
+      // Emit user entered kitchen event
+    this.eventsService.emitEvent(EventTypes.USER_ENTERED_KITCHEN, {
       type: AlertType.USER_ENTERED_KITCHEN,
       userId, // Alert will be created for the user who joined
       title: 'נכנסת למטבח חדש',

@@ -15,33 +15,32 @@ export interface AlertEvent {
   kitchenId?: string;
 }
 
-// Event constants - focused on the 6 original alert types
+// Event constants - direct mapping to the 6 alert types
 export enum EventTypes {
-  KITCHEN_ALERT = 'kitchen.alert',          // For ADD_KITCHEN, EDIT_KITCHEN
-  SHOPPING_LIST_ALERT = 'shopping.list.alert', // For ADD_TO_SHOPPING_LIST, EDIT_SHOPPING_LIST
-  USER_KITCHEN_ALERT = 'user.kitchen.alert',   // For USER_ENTERED_KITCHEN, USER_LEFT_KITCHEN
+  ADD_KITCHEN = 'event.add_kitchen',
+  EDIT_KITCHEN = 'event.edit_kitchen',
+  ADD_TO_SHOPPING_LIST = 'event.add_to_shopping_list',
+  EDIT_SHOPPING_LIST = 'event.edit_shopping_list',
+  USER_ENTERED_KITCHEN = 'event.user_entered_kitchen',
+  USER_LEFT_KITCHEN = 'event.user_left_kitchen'
 }
 
 @Injectable()
-export class EventsService {
-  constructor(
+export class EventsService {  constructor(
     private eventEmitter: EventEmitter2,
     private alertService: AlertService,
   ) {
-    // Kitchen related events (ADD_KITCHEN, EDIT_KITCHEN)
-    this.eventEmitter.on(EventTypes.KITCHEN_ALERT, (payload: AlertEvent) => {
-      this.handleAlertEvent(payload);
-    });
+    // Kitchen related events
+    this.eventEmitter.on(EventTypes.ADD_KITCHEN, this.handleAddKitchenEvent.bind(this));
+    this.eventEmitter.on(EventTypes.EDIT_KITCHEN, this.handleEditKitchenEvent.bind(this));
 
-    // User in kitchen events (USER_ENTERED_KITCHEN, USER_LEFT_KITCHEN)
-    this.eventEmitter.on(EventTypes.USER_KITCHEN_ALERT, (payload: AlertEvent) => {
-      this.handleAlertEvent(payload);
-    });
+    // User in kitchen events
+    this.eventEmitter.on(EventTypes.USER_ENTERED_KITCHEN, this.handleUserEnteredKitchenEvent.bind(this));
+    this.eventEmitter.on(EventTypes.USER_LEFT_KITCHEN, this.handleUserLeftKitchenEvent.bind(this));
 
-    // Shopping list related events (ADD_TO_SHOPPING_LIST, EDIT_SHOPPING_LIST)
-    this.eventEmitter.on(EventTypes.SHOPPING_LIST_ALERT, (payload: AlertEvent) => {
-      this.handleAlertEvent(payload);
-    });
+    // Shopping list related events
+    this.eventEmitter.on(EventTypes.ADD_TO_SHOPPING_LIST, this.handleAddToShoppingListEvent.bind(this));
+    this.eventEmitter.on(EventTypes.EDIT_SHOPPING_LIST, this.handleEditShoppingListEvent.bind(this));
   }
 
   /**
@@ -51,50 +50,13 @@ export class EventsService {
    */
   emitEvent(eventName: EventTypes, payload: AlertEvent) {
     this.eventEmitter.emit(eventName, payload);
-  }
-  /**
-   * Create a kitchen-related alert (ADD_KITCHEN, EDIT_KITCHEN)
-   */
-  emitKitchenAlert(payload: AlertEvent) {
-    if (![AlertType.ADD_KITCHEN, AlertType.EDIT_KITCHEN].includes(payload.type)) {
-      console.warn(`Invalid alert type ${payload.type} for KITCHEN_ALERT`);
-      return;
-    }
-    console.log('[EventsService] Emitting KITCHEN_ALERT:', {
-      type: payload.type,
-      userId: payload.userId,
-      title: payload.title
-    });
-    this.eventEmitter.emit(EventTypes.KITCHEN_ALERT, payload);
-  }
+  }  /**
 
-  /**
-   * Create a user-kitchen alert (USER_ENTERED_KITCHEN, USER_LEFT_KITCHEN)
+    /**
+   * Handle ADD_KITCHEN event
    */
-  emitUserKitchenAlert(payload: AlertEvent) {
-    if (![AlertType.USER_ENTERED_KITCHEN, AlertType.USER_LEFT_KITCHEN].includes(payload.type)) {
-      console.warn(`Invalid alert type ${payload.type} for USER_KITCHEN_ALERT`);
-      return;
-    }
-    this.eventEmitter.emit(EventTypes.USER_KITCHEN_ALERT, payload);
-  }
-
-  /**
-   * Create a shopping list alert (ADD_TO_SHOPPING_LIST, EDIT_SHOPPING_LIST)
-   */
-  emitShoppingListAlert(payload: AlertEvent) {
-    if (![AlertType.ADD_TO_SHOPPING_LIST, AlertType.EDIT_SHOPPING_LIST].includes(payload.type)) {
-      console.warn(`Invalid alert type ${payload.type} for SHOPPING_LIST_ALERT`);
-      return;
-    }
-    this.eventEmitter.emit(EventTypes.SHOPPING_LIST_ALERT, payload);
-  }
-  /**
-   * Handle any alert event by creating an alert record
-   */
-  private async handleAlertEvent(payload: AlertEvent) {
-    console.log('[EventsService] Handling alert event:', {
-      type: payload.type,
+  private async handleAddKitchenEvent(payload: AlertEvent) {
+    console.log('[EventsService] Handling ADD_KITCHEN event:', {
       userId: payload.userId,
       title: payload.title
     });
@@ -112,9 +74,149 @@ export class EventsService {
           kitchenId: payload.kitchenId,
         },
       });
-      console.log('[EventsService] Successfully created alert:', alert.id);
+      console.log('[EventsService] Successfully created ADD_KITCHEN alert:', alert.id);
     } catch (error) {
-      console.error('[EventsService] Error creating alert:', error);
+      console.error('[EventsService] Error creating ADD_KITCHEN alert:', error);
+    }
+  }
+
+  /**
+   * Handle EDIT_KITCHEN event
+   */
+  private async handleEditKitchenEvent(payload: AlertEvent) {
+    console.log('[EventsService] Handling EDIT_KITCHEN event:', {
+      userId: payload.userId,
+      title: payload.title
+    });
+    
+    try {
+      const alert = await this.alertService.createAlert({
+        type: payload.type,
+        title: payload.title,
+        description: payload.description,
+        userId: payload.userId,
+        relatedUserId: payload.relatedUserId,
+        relatedUserName: payload.relatedUserName,
+        metadata: {
+          ...payload.metadata,
+          kitchenId: payload.kitchenId,
+        },
+      });
+      console.log('[EventsService] Successfully created EDIT_KITCHEN alert:', alert.id);
+    } catch (error) {
+      console.error('[EventsService] Error creating EDIT_KITCHEN alert:', error);
+    }
+  }
+
+  /**
+   * Handle USER_ENTERED_KITCHEN event
+   */
+  private async handleUserEnteredKitchenEvent(payload: AlertEvent) {
+    console.log('[EventsService] Handling USER_ENTERED_KITCHEN event:', {
+      userId: payload.userId,
+      title: payload.title
+    });
+    
+    try {
+      const alert = await this.alertService.createAlert({
+        type: payload.type,
+        title: payload.title,
+        description: payload.description,
+        userId: payload.userId,
+        relatedUserId: payload.relatedUserId,
+        relatedUserName: payload.relatedUserName,
+        metadata: {
+          ...payload.metadata,
+          kitchenId: payload.kitchenId,
+        },
+      });
+      console.log('[EventsService] Successfully created USER_ENTERED_KITCHEN alert:', alert.id);
+    } catch (error) {
+      console.error('[EventsService] Error creating USER_ENTERED_KITCHEN alert:', error);
+    }
+  }
+
+  /**
+   * Handle USER_LEFT_KITCHEN event
+   */
+  private async handleUserLeftKitchenEvent(payload: AlertEvent) {
+    console.log('[EventsService] Handling USER_LEFT_KITCHEN event:', {
+      userId: payload.userId,
+      title: payload.title
+    });
+    
+    try {
+      const alert = await this.alertService.createAlert({
+        type: payload.type,
+        title: payload.title,
+        description: payload.description,
+        userId: payload.userId,
+        relatedUserId: payload.relatedUserId,
+        relatedUserName: payload.relatedUserName,
+        metadata: {
+          ...payload.metadata,
+          kitchenId: payload.kitchenId,
+        },
+      });
+      console.log('[EventsService] Successfully created USER_LEFT_KITCHEN alert:', alert.id);
+    } catch (error) {
+      console.error('[EventsService] Error creating USER_LEFT_KITCHEN alert:', error);
+    }
+  }
+
+  /**
+   * Handle ADD_TO_SHOPPING_LIST event
+   */
+  private async handleAddToShoppingListEvent(payload: AlertEvent) {
+    console.log('[EventsService] Handling ADD_TO_SHOPPING_LIST event:', {
+      userId: payload.userId,
+      title: payload.title
+    });
+    
+    try {
+      const alert = await this.alertService.createAlert({
+        type: payload.type,
+        title: payload.title,
+        description: payload.description,
+        userId: payload.userId,
+        relatedUserId: payload.relatedUserId,
+        relatedUserName: payload.relatedUserName,
+        metadata: {
+          ...payload.metadata,
+          kitchenId: payload.kitchenId,
+        },
+      });
+      console.log('[EventsService] Successfully created ADD_TO_SHOPPING_LIST alert:', alert.id);
+    } catch (error) {
+      console.error('[EventsService] Error creating ADD_TO_SHOPPING_LIST alert:', error);
+    }
+  }
+
+  /**
+   * Handle EDIT_SHOPPING_LIST event
+   */
+  private async handleEditShoppingListEvent(payload: AlertEvent) {
+    console.log('[EventsService] Handling EDIT_SHOPPING_LIST event:', {
+      userId: payload.userId,
+      title: payload.title
+    });
+    
+    try {
+      const alert = await this.alertService.createAlert({
+        type: payload.type,
+        title: payload.title,
+        description: payload.description,
+        userId: payload.userId,
+        relatedUserId: payload.relatedUserId,
+        relatedUserName: payload.relatedUserName,
+        metadata: {
+          ...payload.metadata,
+          kitchenId: payload.kitchenId,
+        },
+      });
+      console.log('[EventsService] Successfully created EDIT_SHOPPING_LIST alert:', alert.id);
+    } catch (error) {
+      console.error('[EventsService] Error creating EDIT_SHOPPING_LIST alert:', error);
     }
   }
 }
