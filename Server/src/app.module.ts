@@ -17,9 +17,9 @@ import { ProductMatchingModule } from 'src/ProductMatching/productMatching.modul
 import { ShoppingListModule } from './ShoppingList/shoppingList.module';
 import { AlertModule } from './Alerts/alert.module';
 import { Alert } from './Alerts/alert.entity';
+import { EventsModule } from './Events/events.module';
 
-@Module({
-  imports: [
+@Module({  imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -45,6 +45,7 @@ import { Alert } from './Alerts/alert.entity';
     ProductMatchingModule,
     ShoppingListModule,
     AlertModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
