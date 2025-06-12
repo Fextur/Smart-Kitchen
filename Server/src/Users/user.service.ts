@@ -21,6 +21,8 @@ import {
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { JwtService } from '@nestjs/jwt';
 import { KitchenHashUtils } from 'src/utils/kitchenHashUtils';
+import { EventsService } from '../Events/events.service';
+import { AlertType } from '../types';
 
 @Injectable()
 export class UserService {
@@ -32,6 +34,8 @@ export class UserService {
     private inventoryRepository: Repository<Inventory>,
 
     private jwtService: JwtService,
+    
+    private eventsService: EventsService,
   ) {}
 
   async generateAccessToken(id: User['id'], userName: User['userName']) {
@@ -56,9 +60,10 @@ export class UserService {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const kitchenHash = await this.generateUniqueKitchenHash();
+      const kitchenName = `המטבח של ${name}`;
 
       const inventory = this.inventoryRepository.create({
-        name: `המטבח של ${name}`,
+        name: kitchenName,
         kitchenHash,
       });
 
@@ -77,6 +82,18 @@ export class UserService {
         savedUser.id,
         savedUser.userName,
       );
+      
+      // Emit kitchen creation event for new user's default kitchen
+      this.eventsService.emitKitchenAlert({
+        type: AlertType.ADD_KITCHEN,
+        userId: savedUser.id,
+        title: 'מטבח חדש נוצר',
+        description: `המטבח "${kitchenName}" נוצר בהצלחה`,
+        metadata: {
+          kitchenName,
+          kitchenHash: savedInventory.kitchenHash
+        }
+      });
 
       const { password: _, ...userWithoutPassword } = savedUser;
       return { ...userWithoutPassword, accessToken };
@@ -242,6 +259,18 @@ export class UserService {
 
     user.inventory = savedInventory;
     await this.userRepository.save(user);
+    
+    // Emit kitchen creation event
+    this.eventsService.emitKitchenAlert({
+      type: AlertType.ADD_KITCHEN,
+      userId: user.id,
+      title: 'מטבח חדש נוצר',
+      description: `המטבח "${name}" נוצר בהצלחה`,
+      metadata: {
+        kitchenName: name,
+        kitchenHash: savedInventory.kitchenHash
+      }
+    });
 
     return {
       inventory: savedInventory,
@@ -282,6 +311,20 @@ export class UserService {
 
     user.inventory = targetInventory;
     await this.userRepository.save(user);
+    
+    // Emit user entered kitchen event
+    this.eventsService.emitUserKitchenAlert({
+      type: AlertType.USER_ENTERED_KITCHEN,
+      userId, // Alert will be created for the user who joined
+      title: 'נכנסת למטבח חדש',
+      description: `נכנסת למטבח: ${targetInventory.name}`,
+      relatedUserId: userId,
+      relatedUserName: user.name,
+      metadata: {
+        kitchenName: targetInventory.name,
+        kitchenHash: targetInventory.kitchenHash
+      }
+    });
 
     return {
       success: true,

@@ -52,7 +52,6 @@ export class EventsService {
   emitEvent(eventName: EventTypes, payload: AlertEvent) {
     this.eventEmitter.emit(eventName, payload);
   }
-
   /**
    * Create a kitchen-related alert (ADD_KITCHEN, EDIT_KITCHEN)
    */
@@ -61,6 +60,11 @@ export class EventsService {
       console.warn(`Invalid alert type ${payload.type} for KITCHEN_ALERT`);
       return;
     }
+    console.log('[EventsService] Emitting KITCHEN_ALERT:', {
+      type: payload.type,
+      userId: payload.userId,
+      title: payload.title
+    });
     this.eventEmitter.emit(EventTypes.KITCHEN_ALERT, payload);
   }
 
@@ -85,22 +89,32 @@ export class EventsService {
     }
     this.eventEmitter.emit(EventTypes.SHOPPING_LIST_ALERT, payload);
   }
-
   /**
    * Handle any alert event by creating an alert record
    */
   private async handleAlertEvent(payload: AlertEvent) {
-    await this.alertService.createAlert({
+    console.log('[EventsService] Handling alert event:', {
       type: payload.type,
-      title: payload.title,
-      description: payload.description,
       userId: payload.userId,
-      relatedUserId: payload.relatedUserId,
-      relatedUserName: payload.relatedUserName,
-      metadata: {
-        ...payload.metadata,
-        kitchenId: payload.kitchenId,
-      },
+      title: payload.title
     });
+    
+    try {
+      const alert = await this.alertService.createAlert({
+        type: payload.type,
+        title: payload.title,
+        description: payload.description,
+        userId: payload.userId,
+        relatedUserId: payload.relatedUserId,
+        relatedUserName: payload.relatedUserName,
+        metadata: {
+          ...payload.metadata,
+          kitchenId: payload.kitchenId,
+        },
+      });
+      console.log('[EventsService] Successfully created alert:', alert.id);
+    } catch (error) {
+      console.error('[EventsService] Error creating alert:', error);
+    }
   }
 }
