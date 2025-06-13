@@ -14,7 +14,7 @@ import { AlertModule } from '../Alerts/alert.module';
       // For debugging purposes
       verboseMemoryLeak: true,
     }),
-    AlertModule,
+    AlertModule, // Import AlertModule (which imports UserModule)
   ],
   providers: [EventsService],
   exports: [EventsService],

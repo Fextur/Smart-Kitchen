@@ -5,7 +5,6 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { JwtModule } from '@nestjs/jwt';
-import { EventsModule } from '../Events/events.module';
 
 @Module({
   imports: [
@@ -14,9 +13,9 @@ import { EventsModule } from '../Events/events.module';
       secret: process.env.TOKEN_SECRET,
       signOptions: { expiresIn: process.env.TOKEN_EXPIRES },
     }),
-    EventsModule,
   ],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}
