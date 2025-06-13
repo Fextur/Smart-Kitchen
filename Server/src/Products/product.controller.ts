@@ -6,10 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { Product } from './product.entity';
+import { JwtAuthGuard } from 'src/Auth/jwt-auth.guard';
+import { CurrentUser } from 'src/Auth/current-user.decorator';
 
 @Controller('products')
 export class ProductController {
@@ -38,9 +41,12 @@ export class ProductController {
   async update(@Body() updateProductsDto: UpdateProductsDto) {
     return this.productService.updateBulk(updateProductsDto);
   }
-
   @Delete(':id')
-  async delete(@Param('id') id: string): Promise<void> {
-    return this.productService.delete(id);
+  @UseGuards(JwtAuthGuard)
+  async delete(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ): Promise<void> {
+    return this.productService.delete(id, user.id);
   }
 }

@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Product } from './product.entity';
 import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
 import { UnitConverter } from 'src/utils/unitConversion';
+import { AlertType } from 'src/types';
+import { getEventNameFromType } from 'src/utils/eventUtils';
 
 export interface CreateProductsResult {
   createdProducts: Product[];
@@ -27,7 +30,10 @@ export interface CreateProductsResult {
     conversionDetails?: string;
   }>;
 }
-
+export enum EventTypes {
+  ADD_TO_SHOPPING_LIST = 'event.add_to_shopping_list',
+  EDIT_SHOPPING_LIST = 'event.edit_shopping_list',
+}
 @Injectable()
 export class ProductService {
   constructor(
@@ -38,6 +44,7 @@ export class ProductService {
     private inventoryRepository: Repository<Inventory>,
 
     private productMatchingService: ProductMatchingService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -300,12 +307,40 @@ export class ProductService {
 
     return updatedProducts;
   }
-
-  async delete(id: string): Promise<void> {
+  async delete(id: string, userId: string): Promise<void> {
     try {
+      // First, find the product to check if it's in shopping list
+      const product = await this.productRepository.findOne({
+        where: { id },
+        relations: ['inventory']
+      });
+
+      if (!product) {
+        throw new NotFoundException(`product with id ${id} not found`);
+      }
+
+      const wasInShoppingList = product.isInShoppingList;
+      const productName = product.name;
+
+      // Delete the product
       const result = await this.productRepository.delete(id);
       if (result.affected === 0) {
         throw new NotFoundException(`product with id ${id} not found`);
+      }
+
+      // If the product was in the shopping list, emit an event
+      if (wasInShoppingList) {
+        console.log(`[ProductService] Product "${productName}" was in shopping list, emitting EDIT_SHOPPING_LIST event for userId: ${userId}`);
+          const eventName = getEventNameFromType(AlertType.EDIT_SHOPPING_LIST);
+        this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+          type: AlertType.EDIT_SHOPPING_LIST,
+          userId,
+          metadata: {
+            action: 'transferred-to-kitchen',
+            itemName: [productName]
+          },
+          broadcastToUserInventory: true,
+        });
       }
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

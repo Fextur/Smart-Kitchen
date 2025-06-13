@@ -97,13 +97,12 @@ export class ShoppingListService {
           productDto.size,
           productDto.measureUnit,
           existingProduct.name,
-        );
-
-        existingProduct.wantedSize = mergeResult.size;
+        );        existingProduct.wantedSize = mergeResult.size;
         existingProduct.isInShoppingList = true;
         existingProduct.latestUpdateDate = new Date();
 
         const savedProduct = await this.productRepository.save(existingProduct);
+        console.log(`[ShoppingList] Updated product ${savedProduct.name} - isInShoppingList: ${savedProduct.isInShoppingList}`);
         updatedProducts.push(savedProduct);
 
         matchingResults.push({
@@ -246,7 +245,13 @@ export class ShoppingListService {
     // Emit ADD_TO_SHOPPING_LIST event for all products added
     if (createdProducts.length > 0 || updatedProducts.length > 0) {
       const totalProductsAdded = createdProducts.length + updatedProducts.length;
-      const productNames = [
+      
+      // Log the final state of all products
+      console.log(`[ShoppingList] Final state check:`);
+      [...createdProducts, ...updatedProducts].forEach(product => {
+        console.log(`  Product: ${product.name}, isInShoppingList: ${product.isInShoppingList}, wantedSize: ${product.wantedSize}`);
+      });
+        const productNames = [
         ...createdProducts.map(p => p.name),
         ...updatedProducts.map(p => p.name)
       ].join(', ');
@@ -256,7 +261,7 @@ export class ShoppingListService {
         userId: user.id,
         metadata: {
           itemCount: totalProductsAdded,
-          itemNames: productNames,
+          itemName: productNames,
           inventoryId,
           userName: user.userName,
         },
@@ -271,8 +276,7 @@ export class ShoppingListService {
       createdProducts,
       matchingResults,
     };
-  }
-
+  }  
   async transferProductsToInventory(inventoryId: string): Promise<void> {
     const shoppingListProducts = await this.productRepository.find({
       where: {
@@ -322,25 +326,23 @@ export class ShoppingListService {
       0,
       (existingProduct.size || 0) - (product.size || 0),
     );    existingProduct.isInShoppingList = true;
-    existingProduct.latestUpdateDate = new Date();
+    existingProduct.latestUpdateDate = new Date();    await this.productRepository.save(existingProduct);
 
-    await this.productRepository.save(existingProduct);
-
-    // Emit ADD_TO_SHOPPING_LIST event for transferred product
-    this.eventEmitter.emit(EventTypes.ADD_TO_SHOPPING_LIST, {
-      type: AlertType.ADD_TO_SHOPPING_LIST,
+    // Emit EDIT_SHOPPING_LIST event for transferred product
+    this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+      type: AlertType.EDIT_SHOPPING_LIST,
       userId: user.id,
       metadata: {
         itemName: existingProduct.name,
         wantedSize: existingProduct.wantedSize,
         inventoryId,
         userName: user.userName,
-        action: 'transferred',
+        action: 'transferred_to_shopping_list',
       },
       broadcastToUserInventory: true, // Notify all users in the kitchen
     });
 
-    console.log(`[ShoppingListService] Emitted ADD_TO_SHOPPING_LIST event for transferred product: ${existingProduct.name}`);
+    console.log(`[ShoppingListService] Emitted EDIT_SHOPPING_LIST event for transferred product: ${existingProduct.name}`);
   }
 
   async clearShoppingList(inventoryId: string, user: AuthenticatedUser): Promise<void> {
@@ -348,8 +350,12 @@ export class ShoppingListService {
       where: {
         inventory: { id: inventoryId },
         isInShoppingList: true,
-      },
-    });    for (const product of shoppingListProducts) {
+      },    });
+
+    // Collect product names before clearing
+    const productNames = shoppingListProducts.map(p => p.name);
+
+    for (const product of shoppingListProducts) {
       product.isInShoppingList = false;
       product.wantedSize = 0;
       product.isChecked = false;
@@ -364,6 +370,7 @@ export class ShoppingListService {
         metadata: {
           action: 'cleared',
           itemCount: shoppingListProducts.length,
+          itemNames: productNames.join(', '), // Add item names
           inventoryId,
           userName: user.userName,
         },
@@ -443,11 +450,21 @@ export class ShoppingListService {
 
     return updatedProduct;
   }
-
   async removeProductFromShoppingList(productId: string, user: AuthenticatedUser): Promise<void> {
     const product = await this.productRepository.findOne({
       where: { id: productId, isInShoppingList: true },
-    });    if (!product) {
+      relations: ['inventory'], // Ensure inventory is loaded
+    });
+
+    console.log(`[ShoppingListService] Attempting to remove product with ID: ${productId}`);
+    console.log(`[ShoppingListService] Product found:`, product ? {
+      id: product.id,
+      name: product.name,
+      isInShoppingList: product.isInShoppingList,
+      inventoryId: product.inventory?.id
+    } : null);
+
+    if (!product) {
       throw new NotFoundException(
         `Product with id ${productId} not found in shopping list`,
       );
@@ -457,6 +474,8 @@ export class ShoppingListService {
     product.wantedSize = 0;
     product.isChecked = false;
     await this.productRepository.save(product);
+
+    console.log(`[ShoppingListService] About to emit EDIT_SHOPPING_LIST event for removed product: ${product.name}`);
 
     // Emit EDIT_SHOPPING_LIST event for product removal
     this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {

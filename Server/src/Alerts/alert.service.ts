@@ -77,22 +77,39 @@ export class AlertService {
       userId,
       metadata: { kitchenName }
     });
-  }
-
-  async createShoppingListAlert(userId: string, type: AlertType.ADD_TO_SHOPPING_LIST | AlertType.EDIT_SHOPPING_LIST, itemName: string) {
+  }  async createShoppingListAlert(userId: string, type: AlertType.ADD_TO_SHOPPING_LIST | AlertType.EDIT_SHOPPING_LIST, itemName: string, metadata?: any) {
     const title = type === AlertType.ADD_TO_SHOPPING_LIST ? 'נוסף לרשימת קניות' : 'רשימת קניות עודכנה';
-    const description = type === AlertType.ADD_TO_SHOPPING_LIST ? 
-      `"${itemName}" נוסף לרשימת הקניות` : 
-      `פריט "${itemName}" עודכן ברשימת הקניות`;
+    
+    let description: string;
+    if (type === AlertType.ADD_TO_SHOPPING_LIST) {
+      description = `"${itemName}" נוסף לרשימת הקניות`;
+    } else {
+      // Handle different EDIT actions
+      const action = metadata?.action;      
+      if (action === 'cleared') {
+        const itemNames = metadata?.itemNames || itemName;
+        const itemCount = metadata?.itemCount || 1;
+        description = itemCount === 1 
+          ? `הפריט "${itemNames}" הועבר למטבח`          : `${itemCount} פריטים הועברו למטבח: ${itemNames}`;
+      } else if (action === 'removed') {
+        description = `הפריט "${itemName}" הוסר מרשימת הקניות`;
+      } else if (action === 'transferred-to-kitchen') {
+        description = `הפריט "${itemName}" הועבר למטבח (מוצר נמחק)`;
+      } else if (action === 'transferred_to_shopping_list') {
+        description = `הפריט "${itemName}" הועבר לרשימת הקניות`;
+      } else {
+        description = `פריט "${itemName}" עודכן ברשימת הקניות`;
+      }
+    }
 
     return this.createAlert({
       type,
       title,
       description,
       userId,
-      metadata: { itemName }
+      metadata: { itemName, ...metadata }
     });
-  }  
+  }
 
   async createUserKitchenAlert(userId: string, type: AlertType.USER_ENTERED_KITCHEN | AlertType.USER_LEFT_KITCHEN, userName: string, kitchenName?: string) {
     const title = type === AlertType.USER_ENTERED_KITCHEN ? 'משתמש נכנס למטבח' : 'משתמש יצא מהמטבח';
@@ -126,12 +143,10 @@ export class AlertService {
       case AlertType.ADD_KITCHEN:
       case AlertType.EDIT_KITCHEN:
         const kitchenName = metadata?.kitchenName || 'Kitchen';
-        return this.createKitchenAlert(userId, type, kitchenName);
-
-      case AlertType.ADD_TO_SHOPPING_LIST:
+        return this.createKitchenAlert(userId, type, kitchenName);      case AlertType.ADD_TO_SHOPPING_LIST:
       case AlertType.EDIT_SHOPPING_LIST:
-        const itemName = metadata?.itemName || 'Item';
-        return this.createShoppingListAlert(userId, type, itemName);      case AlertType.USER_ENTERED_KITCHEN:
+        const itemName = metadata?.itemName || metadata?.itemNames || 'Item';
+        return this.createShoppingListAlert(userId, type, itemName, metadata);case AlertType.USER_ENTERED_KITCHEN:
       case AlertType.USER_LEFT_KITCHEN:
         const userName = metadata?.userName || 'User';
         const kitchenNameForUser = metadata?.kitchenName || '';

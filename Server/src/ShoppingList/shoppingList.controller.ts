@@ -45,8 +45,7 @@ export class ShoppingListController {
     );
     return {
       message: 'Product successfully transferred to the shopping list',
-    };
-  }
+    };  }
 
   @Delete(':inventoryId')
   async clearShoppingList(
