@@ -23,9 +23,7 @@ declare global {
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
-
-  canActivate(context: ExecutionContext): boolean {
+  constructor(private jwtService: JwtService) {}  canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request);
     
@@ -52,10 +50,9 @@ export class JwtAuthGuard implements CanActivate {
       console.error('[JwtAuthGuard] Token verification failed:', error.message);
       throw new UnauthorizedException('Invalid or expired token');
     }
-  }
-
-  private extractTokenFromHeader(request: Request): string | undefined {
+  }  private extractTokenFromHeader(request: Request): string | undefined {
     const authHeader = request.headers.authorization;
+    
     if (!authHeader) {
       return undefined;
     }

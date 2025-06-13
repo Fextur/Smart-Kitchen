@@ -19,13 +19,12 @@ import { JwtAuthGuard } from 'src/Auth/jwt-auth.guard';
 import { CurrentUser, AuthenticatedUser } from 'src/Auth/current-user.decorator';
 
 @Controller('shopping-list')
-@UseGuards(JwtAuthGuard) // Protect all shopping list routes
+@UseGuards(JwtAuthGuard) // Re-enable JWT protection
 export class ShoppingListController {
-  constructor(private readonly shoppingListService: ShoppingListService) {}
-  @Post()
+  constructor(private readonly shoppingListService: ShoppingListService) {}  @Post()
   async addProductsToShoppingList(
     @Body() createShoppingListDto: CreateShoppingListDto,
-    @CurrentUser() user: AuthenticatedUser, // Extract user from token
+    @CurrentUser() user: AuthenticatedUser, // User is required again
   ): Promise<ShoppingListResult> {
     return this.shoppingListService.addProductsToShoppingList(
       createShoppingListDto,
