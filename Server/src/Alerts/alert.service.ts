@@ -90,11 +90,15 @@ export class AlertService {
         const itemNames = metadata?.itemNames || itemName;
         const itemCount = metadata?.itemCount || 1;
         description = itemCount === 1 
-          ? `הפריט "${itemNames}" הועבר למטבח`          : `${itemCount} פריטים הועברו למטבח: ${itemNames}`;
-      } else if (action === 'removed') {
-        description = `הפריט "${itemName}" הוסר מרשימת הקניות`;
-      } else if (action === 'transferred-to-kitchen') {
-        description = `הפריט "${itemName}" הועבר למטבח (מוצר נמחק)`;
+          ? `הפריט "${itemNames}" הועבר למטבח`          : `${itemCount} פריטים הועברו למטבח: ${itemNames}`;      
+        } 
+        else if (action === 'removed-from-shopping-list') {
+        description = `הפריט "${itemName}" הוסר מרשימת הקניות`;      
+      } 
+        else if (action === 'product-deleted') {
+        description = `הפריט "${itemName}" הוסר מרשימת הקניות (מוצר נמחק)`;
+      } else if (action === 'transferred-shopping-to-kitchen') {
+        description = `הפריט "${itemName}" הועבר למטבח מרשימת הקניות`;
       } else if (action === 'transferred_to_shopping_list') {
         description = `הפריט "${itemName}" הועבר לרשימת הקניות`;
       } else {

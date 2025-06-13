@@ -336,7 +336,7 @@ export class ProductService {
           type: AlertType.EDIT_SHOPPING_LIST,
           userId,
           metadata: {
-            action: 'transferred-to-kitchen',
+            action: 'product-deleted',
             itemName: [productName]
           },
           broadcastToUserInventory: true,

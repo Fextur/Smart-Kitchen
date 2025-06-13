@@ -45,7 +45,17 @@ export class ShoppingListController {
     );
     return {
       message: 'Product successfully transferred to the shopping list',
-    };  }
+    };
+  }  @Post(':inventoryId/transfer-to-inventory')
+  async transferToInventory(
+    @Param('inventoryId') inventoryId: string,
+    @Body('itemIds') itemIds: string[],
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    // For now, transfer all items (ignore itemIds to keep method simple)
+    // TODO: Add itemIds support if needed later
+    return this.shoppingListService.transferProductsToInventory(inventoryId, user.id);
+  }
 
   @Delete(':inventoryId')
   async clearShoppingList(

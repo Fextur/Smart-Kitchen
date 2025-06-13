@@ -9,6 +9,7 @@ import { ProductMatchingService } from 'src/ProductMatching/productMatching.serv
 import { UnitConverter } from 'src/utils/unitConversion';
 import { MeasureUnit, AlertType } from 'src/types';
 import { AuthenticatedUser } from 'src/Auth/current-user.decorator';
+import { getEventNameFromType } from 'src/utils/eventUtils';
 
 // Event types for shopping list operations
 export enum EventTypes {
@@ -276,8 +277,7 @@ export class ShoppingListService {
       createdProducts,
       matchingResults,
     };
-  }  
-  async transferProductsToInventory(inventoryId: string): Promise<void> {
+  }  async transferProductsToInventory(inventoryId: string, userId?: string): Promise<void> {
     const shoppingListProducts = await this.productRepository.find({
       where: {
         inventory: { id: inventoryId },
@@ -302,7 +302,20 @@ export class ShoppingListService {
       product.isChecked = false;
       product.latestUpdateDate = new Date();
 
-      await this.productRepository.save(product);
+      await this.productRepository.save(product);      // Emit event for each transferred item if userId provided
+      if (userId) {
+        console.log(`[ShoppingListService] Product "${product.name}" transferred to kitchen, emitting EDIT_SHOPPING_LIST event for userId: ${userId}`);
+        
+        this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+          type: AlertType.EDIT_SHOPPING_LIST,
+          userId,
+          metadata: {
+            action: 'transferred-shopping-to-kitchen',
+            itemName: product.name
+          },
+          broadcastToUserInventory: true,
+        });
+      }
     }
   }
   async transferProductsToShoppingList(
@@ -483,7 +496,7 @@ export class ShoppingListService {
       userId: user.id,
       metadata: {
         itemName: product.name,
-        action: 'removed',
+        action: 'removed-from-shopping-list',
         inventoryId: product.inventory?.id,
         userName: user.userName,
       },
@@ -597,6 +610,5 @@ export class ShoppingListService {
 
     const commonWords = words1.filter((word) => words2.includes(word));
 
-    return commonWords.length >= Math.min(words1.length, words2.length) * 0.7;
-  }
+    return commonWords.length >= Math.min(words1.length, words2.length) * 0.7;  }
 }
