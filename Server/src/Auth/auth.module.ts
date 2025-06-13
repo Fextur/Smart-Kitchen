@@ -6,6 +6,7 @@ import { UserService } from 'src/Users/user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/Users/user.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Inventory } from 'src/Inventory/inventory.entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserService, JwtService],
+  providers: [AuthService, UserService, JwtService, JwtAuthGuard],
+  exports: [JwtService, JwtAuthGuard], // Export so other modules can use them
 })
 export class AuthModule {}
