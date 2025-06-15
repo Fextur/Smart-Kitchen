@@ -166,7 +166,9 @@ export class AlertService {
           metadata,
         });
     }
-  }  /**
+  }  
+  
+  /**
    * Create alerts for all users in the same inventory using the appropriate helper method
    */
   async createAlertForUserInventoryByType(

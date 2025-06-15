@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AlertService } from '../Alerts/alert.service';
-import { AlertType } from '../types';
+import { AlertType,EventTypes } from '../types';
 import { getEventNameFromType } from '../utils/eventUtils';
 
 // Define event payload interfaces
@@ -9,18 +9,9 @@ export interface AlertEvent {
   type: AlertType;
   userId: string;
   metadata?: any;
-  broadcastToUserInventory?: boolean; // Flag to indicate if we should send to all users in the same inventory as userId
+  broadcastToUserInventory?: boolean;
 }
 
-// Event constants - direct mapping to the 6 alert types
-export enum EventTypes {
-  ADD_KITCHEN = 'event.add_kitchen',
-  EDIT_KITCHEN = 'event.edit_kitchen',
-  ADD_TO_SHOPPING_LIST = 'event.add_to_shopping_list',
-  EDIT_SHOPPING_LIST = 'event.edit_shopping_list',
-  USER_ENTERED_KITCHEN = 'event.user_entered_kitchen',
-  USER_LEFT_KITCHEN = 'event.user_left_kitchen'
-}
 
 @Injectable()
 export class EventsService {  constructor(

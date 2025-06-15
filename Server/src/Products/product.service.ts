@@ -12,7 +12,7 @@ import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
 import { UnitConverter } from 'src/utils/unitConversion';
-import { AlertType } from 'src/types';
+import { AlertType,EventTypes } from 'src/types';
 import { getEventNameFromType } from 'src/utils/eventUtils';
 
 export interface CreateProductsResult {
@@ -30,10 +30,7 @@ export interface CreateProductsResult {
     conversionDetails?: string;
   }>;
 }
-export enum EventTypes {
-  ADD_TO_SHOPPING_LIST = 'event.add_to_shopping_list',
-  EDIT_SHOPPING_LIST = 'event.edit_shopping_list',
-}
+
 @Injectable()
 export class ProductService {
   constructor(

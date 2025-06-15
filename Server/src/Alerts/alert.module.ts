@@ -8,7 +8,7 @@ import { UserModule } from '../Users/user.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Alert]),
-    forwardRef(() => UserModule), // Import UserModule to access UserService
+    forwardRef(() => UserModule),
   ],
   controllers: [AlertController],
   providers: [AlertService],

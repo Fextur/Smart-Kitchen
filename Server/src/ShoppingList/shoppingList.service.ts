@@ -7,15 +7,10 @@ import { Inventory } from 'src/Inventory/inventory.entity';
 import { CreateShoppingListDto } from './shoppingList.dto';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
 import { UnitConverter } from 'src/utils/unitConversion';
-import { MeasureUnit, AlertType } from 'src/types';
+import { MeasureUnit, AlertType, EventTypes} from 'src/types';
 import { AuthenticatedUser } from 'src/Auth/current-user.decorator';
 import { getEventNameFromType } from 'src/utils/eventUtils';
 
-// Event types for shopping list operations
-export enum EventTypes {
-  ADD_TO_SHOPPING_LIST = 'event.add_to_shopping_list',
-  EDIT_SHOPPING_LIST = 'event.edit_shopping_list',
-}
 
 export interface ShoppingListResult {
   updatedProducts: Product[];

@@ -22,17 +22,8 @@ import {
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { JwtService } from '@nestjs/jwt';
 import { KitchenHashUtils } from 'src/utils/kitchenHashUtils';
-import { AlertType } from '../types';
+import { AlertType,EventTypes } from '../types';
 
-// Define event types for communication
-export enum EventTypes {
-  ADD_KITCHEN = 'event.add_kitchen',
-  EDIT_KITCHEN = 'event.edit_kitchen',
-  ADD_TO_SHOPPING_LIST = 'event.add_to_shopping_list',
-  EDIT_SHOPPING_LIST = 'event.edit_shopping_list',
-  USER_ENTERED_KITCHEN = 'event.user_entered_kitchen',
-  USER_LEFT_KITCHEN = 'event.user_left_kitchen'
-}
 
 @Injectable()
 export class UserService {  

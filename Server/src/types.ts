@@ -25,3 +25,12 @@ export enum AlertType {
   USER_ENTERED_KITCHEN = 'user_entered_kitchen',
   USER_LEFT_KITCHEN = 'user_left_kitchen'
 }
+
+export enum EventTypes {
+  ADD_KITCHEN = 'event.add_kitchen',
+  EDIT_KITCHEN = 'event.edit_kitchen',
+  ADD_TO_SHOPPING_LIST = 'event.add_to_shopping_list',
+  EDIT_SHOPPING_LIST = 'event.edit_shopping_list',
+  USER_ENTERED_KITCHEN = 'event.user_entered_kitchen',
+  USER_LEFT_KITCHEN = 'event.user_left_kitchen'
+}

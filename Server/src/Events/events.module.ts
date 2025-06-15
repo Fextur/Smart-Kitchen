@@ -7,11 +7,9 @@ import { AlertModule } from '../Alerts/alert.module';
 @Module({
   imports: [
     EventEmitterModule.forRoot({
-      // Set a higher value if you're handling large volumes
       maxListeners: 20,
       // This is important! Ensures we capture all events
       wildcard: true,
-      // For debugging purposes
       verboseMemoryLeak: true,
     }),
     AlertModule, // Import AlertModule (which imports UserModule)
