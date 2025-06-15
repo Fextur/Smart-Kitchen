@@ -63,21 +63,100 @@ export class AlertService {
 
 //---------------------- Helpers ----------------------//
   // Helper methods for creating specific alert types
+  async createKitchenAlert(userId: string, type: AlertType.ADD_KITCHEN | AlertType.EDIT_KITCHEN, kitchenName: string, metadata?: any) {
+    if (type === AlertType.ADD_KITCHEN) {
+      const title = 'מטבח חדש נוצר';
+      const description = `המטבח "${kitchenName}" נוצר בהצלחה`;
+      
+      return this.createAlert({
+        type,
+        title,
+        description,
+        userId,
+        metadata: { kitchenName }
+      });
+    } else {
+      // EDIT_KITCHEN - handle product operations
+      const action = metadata?.action;
+      
+      if (action && action.startsWith('product-')) {
+        return this.createKitchenProductAlert(userId, type, metadata);
+      } else {
+        // Generic kitchen update
+        const title = 'מטבח עודכן';
+        const description = `המטבח "${kitchenName}" עודכן`;
+        
+        return this.createAlert({
+          type,
+          title,
+          description,
+          userId,
+          metadata: { kitchenName }
+        });
+      }
+    }
+  }
 
-  async createKitchenAlert(userId: string, type: AlertType.ADD_KITCHEN | AlertType.EDIT_KITCHEN, kitchenName: string) {
-    const title = type === AlertType.ADD_KITCHEN ? 'מטבח חדש נוצר' : 'מטבח עודכן';
-    const description = type === AlertType.ADD_KITCHEN ? 
-      `המטבח "${kitchenName}" נוצר בהצלחה` : 
-      `המטבח "${kitchenName}" עודכן`;
-
+  async createKitchenProductAlert(userId: string, type: AlertType.EDIT_KITCHEN, metadata: any) {
+    const action = metadata?.action;
+    const itemNames = metadata?.itemName || [];
+    const itemName = Array.isArray(itemNames) ? itemNames[0] : itemNames;
+    
+    let title: string;
+    let description: string;
+    
+    switch (action) {
+      case 'product-created':
+        title = 'מוצר חדש נוסף למטבח';
+        description = `"${itemName}" נוסף למטבח`;
+        if (metadata?.size && metadata?.measureUnit) {
+          description += ` (${metadata.size} ${metadata.measureUnit})`;
+        }
+        break;
+        
+      case 'product-created-fallback':
+        title = 'מוצר חדש נוסף למטבח';
+        description = `"${itemName}" נוסף למטבח כמוצר חדש`;
+        break;
+        
+      case 'product-quantity-updated':
+        title = 'כמות מוצר עודכנה במטבח';
+        description = `כמות "${itemName}" עודכנה במטבח`;
+        if (metadata?.newSize && metadata?.newUnit) {
+          description += ` - כמות חדשה: ${metadata.newSize} ${metadata.newUnit}`;
+        }
+        break;
+        
+      case 'product-updated':
+        title = 'מוצר עודכן במטבח';
+        description = `"${itemName}" עודכן במטבח`;
+        break;
+          case 'product-deleted':
+        title = 'מוצר הוסר מהמטבח';
+        description = `"${itemName}" הוסר מהמטבח`;
+        break;
+        
+      case 'product-transferred-from-shopping':
+        title = 'מוצר הועבר מרשימת קניות למטבח';
+        description = `"${itemName}" הועבר מרשימת הקניות למטבח`;
+        if (metadata?.size && metadata?.measureUnit) {
+          description += ` (${metadata.size} ${metadata.measureUnit})`;
+        }
+        break;
+        
+      default:
+        title = 'מטבח עודכן';
+        description = `פעולה בוצעה במטבח`;
+    }
+    
     return this.createAlert({
       type,
       title,
       description,
       userId,
-      metadata: { kitchenName }
+      metadata
     });
-  }  async createShoppingListAlert(userId: string, type: AlertType.ADD_TO_SHOPPING_LIST | AlertType.EDIT_SHOPPING_LIST, itemName: string, metadata?: any) {
+  }async createShoppingListAlert(userId: string, type: AlertType.ADD_TO_SHOPPING_LIST | AlertType.EDIT_SHOPPING_LIST, itemName: string, metadata?: any) {
     const title = type === AlertType.ADD_TO_SHOPPING_LIST ? 'נוסף לרשימת קניות' : 'רשימת קניות עודכנה';
     
     let description: string;
@@ -143,11 +222,10 @@ export class AlertService {
   }): Promise<Alert> {
     const { type, userId, metadata } = payload;
 
-    switch (type) {
-      case AlertType.ADD_KITCHEN:
+    switch (type) {      case AlertType.ADD_KITCHEN:
       case AlertType.EDIT_KITCHEN:
         const kitchenName = metadata?.kitchenName || 'Kitchen';
-        return this.createKitchenAlert(userId, type, kitchenName);      case AlertType.ADD_TO_SHOPPING_LIST:
+        return this.createKitchenAlert(userId, type, kitchenName, metadata);case AlertType.ADD_TO_SHOPPING_LIST:
       case AlertType.EDIT_SHOPPING_LIST:
         const itemName = metadata?.itemName || metadata?.itemNames || 'Item';
         return this.createShoppingListAlert(userId, type, itemName, metadata);case AlertType.USER_ENTERED_KITCHEN:

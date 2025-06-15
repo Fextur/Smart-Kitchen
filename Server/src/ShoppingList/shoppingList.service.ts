@@ -295,9 +295,7 @@ export class ShoppingListService {
       product.isInInventory = true;
       product.isInShoppingList = false;
       product.isChecked = false;
-      product.latestUpdateDate = new Date();
-
-      await this.productRepository.save(product);      // Emit event for each transferred item if userId provided
+      product.latestUpdateDate = new Date();      await this.productRepository.save(product);      // Emit events for transferred item if userId provided
       if (userId) {
         console.log(`[ShoppingListService] Product "${product.name}" transferred to kitchen, emitting EDIT_SHOPPING_LIST event for userId: ${userId}`);
         
@@ -307,6 +305,21 @@ export class ShoppingListService {
           metadata: {
             action: 'transferred-shopping-to-kitchen',
             itemName: product.name
+          },
+          broadcastToUserInventory: true,
+        });
+
+        // Also emit EDIT_KITCHEN event since product is now in kitchen
+        console.log(`[ShoppingListService] Product "${product.name}" transferred to kitchen, emitting EDIT_KITCHEN event for userId: ${userId}`);
+        const eventName = getEventNameFromType(AlertType.EDIT_KITCHEN);
+        this.eventEmitter.emit(EventTypes.EDIT_KITCHEN, {
+          type: AlertType.EDIT_KITCHEN,
+          userId,
+          metadata: {
+            action: 'product-transferred-from-shopping',
+            itemName: [product.name],
+            size: product.size,
+            measureUnit: product.measureUnit,
           },
           broadcastToUserInventory: true,
         });

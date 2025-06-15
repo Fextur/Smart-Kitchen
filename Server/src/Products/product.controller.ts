@@ -17,10 +17,13 @@ import { CurrentUser } from 'src/Auth/current-user.decorator';
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
-
   @Post()
-  async create(@Body() createProductsDto: CreateProductsDto) {
-    return this.productService.create(createProductsDto);
+  @UseGuards(JwtAuthGuard)
+  async create(
+    @Body() createProductsDto: CreateProductsDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.productService.create(createProductsDto, user.id);
   }
 
   @Get('by-inventory/:inventoryId')
@@ -36,10 +39,13 @@ export class ProductController {
   ): Promise<Partial<Product>[]> {
     return this.productService.findByShoppingList(inventoryId);
   }
-
   @Post('updateBulk')
-  async update(@Body() updateProductsDto: UpdateProductsDto) {
-    return this.productService.updateBulk(updateProductsDto);
+  @UseGuards(JwtAuthGuard)
+  async update(
+    @Body() updateProductsDto: UpdateProductsDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.productService.updateBulk(updateProductsDto, user.id);
   }
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
