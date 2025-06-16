@@ -13,30 +13,49 @@ interface AlertsDrawerProps {
 
 export const AlertsDrawer: FC<AlertsDrawerProps> = ({ open, onClose }) => {
   const [showAllAlerts, setShowAllAlerts] = useState(false);
-  const { allAlerts, unreadAlerts, isLoading, unreadCount, totalCount, markAsRead } = useAlerts();
-  
+  const {
+    allAlerts,
+    unreadAlerts,
+    isLoading,
+    unreadCount,
+    totalCount,
+    markAsRead,
+    markAllAsRead,
+    isMarkingAllAsRead,
+  } = useAlerts();
+
   // Get the alerts to display based on toggle
   const alertsToDisplay = showAllAlerts ? allAlerts : unreadAlerts;
-  
+
   const handleDismissAlert = (alertId: string) => {
     markAsRead(alertId);
   };
 
   const handleToggleChange = (
     _event: React.MouseEvent<HTMLElement>,
-    newValue: string | null,
+    newValue: string | null
   ) => {
     if (newValue !== null) {
-      setShowAllAlerts(newValue === 'all');
+      setShowAllAlerts(newValue === "all");
     }
   };
-  
+
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
+  };
+
   if (isLoading) {
     return <LoadingState open={open} onClose={onClose} />;
   }
-  
+
   return (
-    <Drawer open={open} onClose={onClose} height="40vh" anchor="top" disableOverflow>
+    <Drawer
+      open={open}
+      onClose={onClose}
+      height="40vh"
+      anchor="top"
+      disableOverflow
+    >
       <Box
         sx={{
           width: 40,
@@ -47,17 +66,28 @@ export const AlertsDrawer: FC<AlertsDrawerProps> = ({ open, onClose }) => {
           flexShrink: 0,
         }}
       />
-      
-      <Box sx={{ px: 3, pb: 3, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+
+      <Box
+        sx={{
+          px: 3,
+          pb: 3,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
         <AlertsHeader
           showAllAlerts={showAllAlerts}
           unreadCount={unreadCount}
           totalCount={totalCount}
           onToggleChange={handleToggleChange}
+          onMarkAllAsRead={handleMarkAllAsRead}
+          isMarkingAllAsRead={isMarkingAllAsRead}
         />
-        
+
         <Divider sx={{ mb: 2, flexShrink: 0 }} />
-        
+
         <AlertsList
           alerts={alertsToDisplay}
           showAllAlerts={showAllAlerts}

@@ -27,13 +27,14 @@ export const AmountEditDialog: FC<AmountEditDialogProps> = ({
   const [unit, setUnit] = useState(currentUnit);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Fix: Only reset when dialog opens, not when currentSize/currentUnit change
   useEffect(() => {
     if (isOpen) {
       setSize(currentSize);
       setUnit(currentUnit);
       setShowDeleteConfirm(false);
     }
-  }, [isOpen, currentSize, currentUnit]);
+  }, [isOpen]); // Remove currentSize and currentUnit from dependencies
 
   const handleSave = () => {
     if (size === 0) {
@@ -52,8 +53,7 @@ export const AmountEditDialog: FC<AmountEditDialogProps> = ({
   };
 
   const handleClose = () => {
-    setSize(currentSize);
-    setUnit(currentUnit);
+    // Don't reset values on close - they'll be reset when dialog opens again
     setShowDeleteConfirm(false);
     onClose();
   };

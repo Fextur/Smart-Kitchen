@@ -20,19 +20,19 @@ interface AlertCardProps {
 const getAlertIcon = (type: AlertType) => {
   switch (type) {
     case AlertType.ADD_KITCHEN:
-      return <Plus size={20} color="#E49A61" />;
+      return <Plus size={16} color="#E49A61" />;
     case AlertType.EDIT_KITCHEN:
-      return <Edit3 size={20} color="#E49A61" />;
+      return <Edit3 size={16} color="#E49A61" />;
     case AlertType.ADD_TO_SHOPPING_LIST:
-      return <ShoppingCart size={20} color="#4ade80" />;
+      return <ShoppingCart size={16} color="#4ade80" />;
     case AlertType.EDIT_SHOPPING_LIST:
-      return <Edit3 size={20} color="#4ade80" />;
+      return <Edit3 size={16} color="#4ade80" />;
     case AlertType.USER_ENTERED_KITCHEN:
-      return <UserPlus size={20} color="#3b82f6" />;
+      return <UserPlus size={16} color="#3b82f6" />;
     case AlertType.USER_LEFT_KITCHEN:
-      return <UserMinus size={20} color="#ef4444" />;
+      return <UserMinus size={16} color="#ef4444" />;
     default:
-      return <Bell size={20} color="#E49A61" />;
+      return <Bell size={16} color="#E49A61" />;
   }
 };
 
@@ -44,10 +44,10 @@ const getTimeAgo = (timestamp: string): string => {
   );
 
   if (diffInMinutes < 1) return "כרגע";
-  if (diffInMinutes < 60) return `לפני ${diffInMinutes} דקות`;
+  if (diffInMinutes < 60) return `לפני ${diffInMinutes} דק'`;
 
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `לפני ${diffInHours} שעות`;
+  if (diffInHours < 24) return `לפני ${diffInHours} שע'`;
 
   const diffInDays = Math.floor(diffInHours / 24);
   return `לפני ${diffInDays} ימים`;
@@ -76,124 +76,151 @@ export const AlertCard: FC<AlertCardProps> = ({ alert, onDismiss }) => {
   return (
     <Box
       sx={{
-        p: 2,
-        mb: 1.5,
         bgcolor: "background.paper",
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: alert.isRead ? "#e0e0e0" : "#E49A61",
-        boxShadow: alert.isRead
-          ? "0 2px 8px rgba(224, 224, 224, 0.15)"
-          : "0 2px 8px rgba(228, 154, 97, 0.15)",
+        my: 1.5,
+        px: 2,
+        borderBottom: "1px solid",
+        borderColor: alert.isRead ? "grey.100" : "#E49A61",
+        direction: "rtl",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        minHeight: 60,
+        borderRadius: "50px",
         transition: "all 0.2s ease",
-        opacity: isDismissing ? 0.6 : alert.isRead ? 0.7 : 1,
+        opacity: isDismissing ? 0.6 : alert.isRead ? 0.8 : 1,
+        border: alert.isRead ? "1px solid #e0e0e0" : "1px solid #E49A61",
         "&:hover": {
           boxShadow: alert.isRead
-            ? "0 4px 12px rgba(224, 224, 224, 0.2)"
-            : "0 4px 12px rgba(228, 154, 97, 0.2)",
+            ? "0 2px 8px rgba(224, 224, 224, 0.2)"
+            : "0 2px 8px rgba(228, 154, 97, 0.2)",
           transform: isDismissing ? "none" : "translateY(-1px)",
         },
-        direction: "rtl",
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
-        <Box sx={{ mt: 0.5 }}>{getAlertIcon(alert.type)}</Box>
+      {/* Left side - Icon and content */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flexDirection: "row",
+          flex: 1,
+          gap: 1.5,
+        }}
+      >
+        {/* Icon */}
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {getAlertIcon(alert.type)}
+        </Box>
 
-        <Box sx={{ flex: 1 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 1,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  color: "text.primary",
-                }}
-              >
-                {alert.title}
-              </Typography>
-              {!alert.isRead && (
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    bgcolor: "#E49A61",
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-            </Box>
-            {!alert.isRead && (
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <IconButton
-                  size="small"
-                  onClick={handleDismiss}
-                  disabled={isDismissing}
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    color: isDismissing ? "grey.400" : "grey.600",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      bgcolor: "error.light",
-                      color: "error.main",
-                    },
-                  }}
-                >
-                  <X size={16} />
-                </IconButton>
-
-                {isDismissing && (
-                  <CircularProgress
-                    variant="determinate"
-                    value={progress}
-                    size={32}
-                    thickness={4}
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      color: "#E49A61",
-                      zIndex: 1,
-                      transform: "translate(0, 0)",
-                    }}
-                  />
-                )}
-              </Box>
-            )}
+        {/* Content */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: "text.primary",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flex: 1,
+              }}
+            >
+              {alert.title}
+            </Typography>
           </Box>
 
           <Typography
-            variant="body2"
+            variant="caption"
             sx={{
-              mb: 1.5,
-              color: "text.primary",
-              lineHeight: 1.4,
+              color: "text.secondary",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "block",
+              lineHeight: 1.2,
             }}
           >
             {alert.message || alert.description}
           </Typography>
+        </Box>
+      </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Clock size={14} color="#9ca3af" />
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {getTimeAgo(alert.timestamp || alert.createdAt)}
-            </Typography>
+      {/* Right side - Time and dismiss button */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-end",
+          flexDirection: "column",
+          gap: 0.5,
+          flexShrink: 0,
+          ml: 1,
+        }}
+      >
+        {!alert.isRead && (
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={handleDismiss}
+              disabled={isDismissing}
+              sx={{
+                width: 24,
+                height: 24,
+                color: isDismissing ? "grey.400" : "grey.500",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: "error.light",
+                  color: "white",
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              <X size={12} />
+            </IconButton>
+
+            {isDismissing && (
+              <CircularProgress
+                variant="determinate"
+                value={progress}
+                size={24}
+                thickness={6}
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  color: "#E49A61",
+                  zIndex: 1,
+                }}
+              />
+            )}
           </Box>
+        )}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Clock size={12} color="#9ca3af" />
+          <Typography
+            variant="caption"
+            sx={{ color: "text.secondary", fontSize: "10px" }}
+          >
+            {getTimeAgo(alert.timestamp || alert.createdAt)}
+          </Typography>
         </Box>
       </Box>
     </Box>
