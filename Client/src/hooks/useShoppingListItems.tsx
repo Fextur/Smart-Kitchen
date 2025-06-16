@@ -55,9 +55,42 @@ export const useShoppingListItems = () => {
     },
   });
 
+  // NEW: Update shopping list item using the shopping list endpoint
+  const updateShoppingListItem = async (item: ShoppingListItem) => {
+    try {
+      if (!item.id) {
+        throw new Error("Item ID is required for update");
+      }
+
+      const { data } = await api.patch<ShoppingListItem>(
+        `${API_ROUTES.shoppingList}/product/${item.id}`,
+        {
+          wantedSize: item.size, // Frontend 'size' maps to backend 'wantedSize'
+          measureUnit: item.measureUnit,
+          isChecked: item.isChecked,
+          name: item.name,
+        }
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Error updating shopping list item:", error);
+      throw new Error("An unexpected error occurred");
+    }
+  };
+
+  const updateItemMutation = useMutation({
+    mutationFn: (item: ShoppingListItem) => updateShoppingListItem(item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["shoppingListItems", kitchen?.id],
+      });
+    },
+  });
+
   const deleteShoppingListItem = async (itemId: ShoppingListItem["id"]) => {
     try {
-      await api.delete(`${API_ROUTES.products}/${itemId}`);
+      await api.delete(`${API_ROUTES.shoppingList}/product/${itemId}`);
     } catch (error) {
       console.error("Error deleting shopping list item:", error);
       throw new Error("An unexpected error occurred");
@@ -133,6 +166,7 @@ export const useShoppingListItems = () => {
     items: data || [],
     isLoading,
     createItemsMutation,
+    updateItemMutation, // NEW: Dedicated shopping list update
     deleteItemsMutation,
     clearItemsMutation,
     transferIntoShoppingListMutation,

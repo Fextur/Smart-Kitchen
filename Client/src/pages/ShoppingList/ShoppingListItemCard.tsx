@@ -146,11 +146,11 @@ export const ShoppingListItemCard: FC<ShoppingListItemCardProps> = ({
         onClose={() => setShowAmountDialog(false)}
         currentSize={item.size}
         currentUnit={item.measureUnit}
-        onSave={(size: number, unit: SizeUnit) => {
+        onSave={(newSize: number, newUnit: SizeUnit) => {
           onEdit({
             ...item,
-            size,
-            measureUnit: unit,
+            size: newSize, // This is the wantedSize for shopping list
+            measureUnit: newUnit,
             latestUpdateDate: new Date().toISOString().split("T")[0],
           });
           setShowAmountDialog(false);
