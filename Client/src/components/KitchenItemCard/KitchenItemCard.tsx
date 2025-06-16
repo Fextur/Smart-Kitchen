@@ -28,33 +28,45 @@ export const KitchenItemCard: FC<KitchenItemCardProps> = ({
 
   const handleAmountSave = (size: number, unit: SizeUnit) => {
     if (onEdit) {
-      onEdit({
+      const updatedItem = {
         ...item,
         size,
         measureUnit: unit,
         latestUpdateDate: new Date().toISOString().split("T")[0],
-      });
+      };
+
+      onEdit(updatedItem);
     }
+
+    setShowAmountDialog(false);
   };
 
   const handleDateSave = (expirationDate: string | null) => {
     if (onEdit) {
-      onEdit({
+      const updatedItem = {
         ...item,
         expirationDate: expirationDate,
         latestUpdateDate: new Date().toISOString().split("T")[0],
-      });
+      };
+
+      onEdit(updatedItem);
     }
+
+    setShowDateDialog(false);
   };
 
   const handleNameSave = (name: string) => {
     if (onEdit) {
-      onEdit({
+      const updatedItem = {
         ...item,
         name,
         latestUpdateDate: new Date().toISOString().split("T")[0],
-      });
+      };
+
+      onEdit(updatedItem);
     }
+
+    setShowNameDialog(false);
   };
 
   const handleDelete = () => {

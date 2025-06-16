@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Alert } from './alert.entity';
@@ -17,10 +22,11 @@ export class AlertService {
 
   //---------------------- DB handlers ----------------------//
 
-  async getUserAlerts(userId: string, includeRead: boolean = false): Promise<Alert[]> {
-    const whereCondition = includeRead 
-      ? { userId } 
-      : { userId, isRead: false }; // Only unread alerts by default
+  async getUserAlerts(
+    userId: string,
+    includeRead: boolean = false,
+  ): Promise<Alert[]> {
+    const whereCondition = includeRead ? { userId } : { userId, isRead: false }; // Only unread alerts by default
 
     return this.alertRepository.find({
       where: whereCondition,
@@ -50,7 +56,7 @@ export class AlertService {
   async markAllAsRead(userId: string): Promise<void> {
     await this.alertRepository.update(
       { userId, isRead: false },
-      { isRead: true }
+      { isRead: true },
     );
   }
 
@@ -60,51 +66,59 @@ export class AlertService {
     });
   }
 
-
-//---------------------- Helpers ----------------------//
+  //---------------------- Helpers ----------------------//
   // Helper methods for creating specific alert types
-  async createKitchenAlert(userId: string, type: AlertType.ADD_KITCHEN | AlertType.EDIT_KITCHEN, kitchenName: string, metadata?: any) {
+  async createKitchenAlert(
+    userId: string,
+    type: AlertType.ADD_KITCHEN | AlertType.EDIT_KITCHEN,
+    kitchenName: string,
+    metadata?: any,
+  ) {
     if (type === AlertType.ADD_KITCHEN) {
       const title = 'מטבח חדש נוצר';
       const description = `המטבח "${kitchenName}" נוצר בהצלחה`;
-      
+
       return this.createAlert({
         type,
         title,
         description,
         userId,
-        metadata: { kitchenName }
+        metadata: { kitchenName },
       });
     } else {
       // EDIT_KITCHEN - handle product operations
       const action = metadata?.action;
-      
+
       if (action && action.startsWith('product-')) {
         return this.createKitchenProductAlert(userId, type, metadata);
       } else {
         // Generic kitchen update
         const title = 'מטבח עודכן';
         const description = `המטבח "${kitchenName}" עודכן`;
-        
+
         return this.createAlert({
           type,
           title,
           description,
           userId,
-          metadata: { kitchenName }
+          metadata: { kitchenName },
         });
       }
     }
   }
 
-  async createKitchenProductAlert(userId: string, type: AlertType.EDIT_KITCHEN, metadata: any) {
+  async createKitchenProductAlert(
+    userId: string,
+    type: AlertType.EDIT_KITCHEN,
+    metadata: any,
+  ) {
     const action = metadata?.action;
     const itemNames = metadata?.itemName || [];
     const itemName = Array.isArray(itemNames) ? itemNames[0] : itemNames;
-    
+
     let title: string;
     let description: string;
-    
+
     switch (action) {
       case 'product-created':
         title = 'מוצר חדש נוסף למטבח';
@@ -113,12 +127,12 @@ export class AlertService {
           description += ` (${metadata.size} ${metadata.measureUnit})`;
         }
         break;
-        
+
       case 'product-created-fallback':
         title = 'מוצר חדש נוסף למטבח';
         description = `"${itemName}" נוסף למטבח כמוצר חדש`;
         break;
-        
+
       case 'product-quantity-updated':
         title = 'כמות מוצר עודכנה במטבח';
         description = `כמות "${itemName}" עודכנה במטבח`;
@@ -126,16 +140,16 @@ export class AlertService {
           description += ` - כמות חדשה: ${metadata.newSize} ${metadata.newUnit}`;
         }
         break;
-        
+
       case 'product-updated':
         title = 'מוצר עודכן במטבח';
         description = `"${itemName}" עודכן במטבח`;
         break;
-          case 'product-deleted':
+      case 'product-deleted':
         title = 'מוצר הוסר מהמטבח';
         description = `"${itemName}" הוסר מהמטבח`;
         break;
-        
+
       case 'product-transferred-from-shopping':
         title = 'מוצר הועבר מרשימת קניות למטבח';
         description = `"${itemName}" הועבר מרשימת הקניות למטבח`;
@@ -143,38 +157,48 @@ export class AlertService {
           description += ` (${metadata.size} ${metadata.measureUnit})`;
         }
         break;
-        
+
       default:
         title = 'מטבח עודכן';
         description = `פעולה בוצעה במטבח`;
     }
-    
+
     return this.createAlert({
       type,
       title,
       description,
       userId,
-      metadata
+      metadata,
     });
-  }async createShoppingListAlert(userId: string, type: AlertType.ADD_TO_SHOPPING_LIST | AlertType.EDIT_SHOPPING_LIST, itemName: string, metadata?: any) {
-    const title = type === AlertType.ADD_TO_SHOPPING_LIST ? 'נוסף לרשימת קניות' : 'רשימת קניות עודכנה';
-    
+  }
+
+  async createShoppingListAlert(
+    userId: string,
+    type: AlertType.ADD_TO_SHOPPING_LIST | AlertType.EDIT_SHOPPING_LIST,
+    itemName: string,
+    metadata?: any,
+  ) {
+    const title =
+      type === AlertType.ADD_TO_SHOPPING_LIST
+        ? 'נוסף לרשימת קניות'
+        : 'רשימת קניות עודכנה';
+
     let description: string;
     if (type === AlertType.ADD_TO_SHOPPING_LIST) {
       description = `"${itemName}" נוסף לרשימת הקניות`;
     } else {
       // Handle different EDIT actions
-      const action = metadata?.action;      
+      const action = metadata?.action;
       if (action === 'cleared') {
         const itemNames = metadata?.itemNames || itemName;
         const itemCount = metadata?.itemCount || 1;
-        description = itemCount === 1 
-          ? `הפריט "${itemNames}" הועבר למטבח`          : `${itemCount} פריטים הועברו למטבח: ${itemNames}`;      
-        } 
-        else if (action === 'removed-from-shopping-list') {
-        description = `הפריט "${itemName}" הוסר מרשימת הקניות`;      
-      } 
-        else if (action === 'product-deleted') {
+        description =
+          itemCount === 1
+            ? `הפריט "${itemNames}" הועבר למטבח`
+            : `${itemCount} פריטים הועברו למטבח: ${itemNames}`;
+      } else if (action === 'removed-from-shopping-list') {
+        description = `הפריט "${itemName}" הוסר מרשימת הקניות`;
+      } else if (action === 'product-deleted') {
         description = `הפריט "${itemName}" הוסר מרשימת הקניות (מוצר נמחק)`;
       } else if (action === 'transferred-shopping-to-kitchen') {
         description = `הפריט "${itemName}" הועבר למטבח מרשימת הקניות`;
@@ -190,16 +214,25 @@ export class AlertService {
       title,
       description,
       userId,
-      metadata: { itemName, ...metadata }
+      metadata: { itemName, ...metadata },
     });
   }
 
-  async createUserKitchenAlert(userId: string, type: AlertType.USER_ENTERED_KITCHEN | AlertType.USER_LEFT_KITCHEN, userName: string, kitchenName?: string) {
-    const title = type === AlertType.USER_ENTERED_KITCHEN ? 'משתמש נכנס למטבח' : 'משתמש יצא מהמטבח';
+  async createUserKitchenAlert(
+    userId: string,
+    type: AlertType.USER_ENTERED_KITCHEN | AlertType.USER_LEFT_KITCHEN,
+    userName: string,
+    kitchenName?: string,
+  ) {
+    const title =
+      type === AlertType.USER_ENTERED_KITCHEN
+        ? 'משתמש נכנס למטבח'
+        : 'משתמש יצא מהמטבח';
     const kitchenNameText = kitchenName ? `"${kitchenName}"` : '';
-    const description = type === AlertType.USER_ENTERED_KITCHEN ? 
-      `${userName} נכנס ${kitchenNameText} למטבח:` : 
-      `${userName} יצא ${kitchenNameText} מהמטבח:`;
+    const description =
+      type === AlertType.USER_ENTERED_KITCHEN
+        ? `${userName} נכנס ${kitchenNameText} למטבח:`
+        : `${userName} יצא ${kitchenNameText} מהמטבח:`;
 
     return this.createAlert({
       type,
@@ -209,9 +242,8 @@ export class AlertService {
     });
   }
 
+  //---------------------- Event Handlers ----------------------//
 
-//---------------------- Event Handlers ----------------------//
-  
   /**
    * Create alert using the appropriate helper method based on type
    */
@@ -222,17 +254,25 @@ export class AlertService {
   }): Promise<Alert> {
     const { type, userId, metadata } = payload;
 
-    switch (type) {      case AlertType.ADD_KITCHEN:
+    switch (type) {
+      case AlertType.ADD_KITCHEN:
       case AlertType.EDIT_KITCHEN:
         const kitchenName = metadata?.kitchenName || 'Kitchen';
-        return this.createKitchenAlert(userId, type, kitchenName, metadata);case AlertType.ADD_TO_SHOPPING_LIST:
+        return this.createKitchenAlert(userId, type, kitchenName, metadata);
+      case AlertType.ADD_TO_SHOPPING_LIST:
       case AlertType.EDIT_SHOPPING_LIST:
         const itemName = metadata?.itemName || metadata?.itemNames || 'Item';
-        return this.createShoppingListAlert(userId, type, itemName, metadata);case AlertType.USER_ENTERED_KITCHEN:
+        return this.createShoppingListAlert(userId, type, itemName, metadata);
+      case AlertType.USER_ENTERED_KITCHEN:
       case AlertType.USER_LEFT_KITCHEN:
         const userName = metadata?.userName || 'User';
         const kitchenNameForUser = metadata?.kitchenName || '';
-        return this.createUserKitchenAlert(userId, type, userName, kitchenNameForUser);
+        return this.createUserKitchenAlert(
+          userId,
+          type,
+          userName,
+          kitchenNameForUser,
+        );
 
       default:
         // Fallback to generic alert creation
@@ -244,52 +284,79 @@ export class AlertService {
           metadata,
         });
     }
-  }  
-  
+  }
+
   /**
-   * Create alerts for all users in the same inventory using the appropriate helper method
+   * Create alerts for all users in the same inventory EXCEPT the current user
    */
   async createAlertForUserInventoryByType(
-    userId: string,
+    currentUserId: string,
     alertPayload: {
       type: AlertType;
       metadata?: any;
     },
   ): Promise<Alert[]> {
     try {
-      console.log(`[AlertService] Creating alerts for all users in the same inventory as user: ${userId}`);
+      console.log(
+        `[AlertService] Creating alerts for all users in the same inventory as user: ${currentUserId}, excluding the current user`,
+      );
       console.log(`[AlertService] Alert type: ${alertPayload.type}`);
       console.log(`[AlertService] Metadata:`, alertPayload.metadata);
-      
+
       let inventoryId: string;
-      
+
       // For USER_LEFT_KITCHEN events, use the previous inventory ID from metadata
-      if (alertPayload.type === AlertType.USER_LEFT_KITCHEN && alertPayload.metadata?.previousInventoryId) {
+      if (
+        alertPayload.type === AlertType.USER_LEFT_KITCHEN &&
+        alertPayload.metadata?.previousInventoryId
+      ) {
         inventoryId = alertPayload.metadata.previousInventoryId;
-        console.log(`[AlertService] Using previous inventory ID for USER_LEFT_KITCHEN: ${inventoryId}`);
+        console.log(
+          `[AlertService] Using previous inventory ID for USER_LEFT_KITCHEN: ${inventoryId}`,
+        );
       } else {
         // For other events, get the user's current inventory
-        const userWithInventory = await this.userService.findById(userId);
+        const userWithInventory =
+          await this.userService.findById(currentUserId);
         if (!userWithInventory || !userWithInventory.inventory) {
-          console.warn(`[AlertService] User ${userId} not found or has no inventory`);
+          console.warn(
+            `[AlertService] User ${currentUserId} not found or has no inventory`,
+          );
           return [];
         }
         inventoryId = userWithInventory.inventory.id;
-        console.log(`[AlertService] Using current inventory ID: ${inventoryId}`);
+        console.log(
+          `[AlertService] Using current inventory ID: ${inventoryId}`,
+        );
       }
 
-      const inventoryUsers = await this.userService.getUsersByInventoryId(inventoryId);
-      console.log(`[AlertService] Found ${inventoryUsers.length} users in inventory ${inventoryId}`);
-      
-      if (!inventoryUsers.length) {
-        console.log(`[AlertService] No users found in inventory: ${inventoryId}`);
+      const inventoryUsers =
+        await this.userService.getUsersByInventoryId(inventoryId);
+      console.log(
+        `[AlertService] Found ${inventoryUsers.length} users in inventory ${inventoryId}`,
+      );
+
+      // FILTER OUT THE CURRENT USER - this is the key fix
+      const otherUsers = inventoryUsers.filter(
+        (user) => user.id !== currentUserId,
+      );
+      console.log(
+        `[AlertService] After excluding current user, ${otherUsers.length} users will receive alerts`,
+      );
+
+      if (!otherUsers.length) {
+        console.log(
+          `[AlertService] No other users found in inventory: ${inventoryId}`,
+        );
         return [];
       }
 
-      // Create alerts for each user using the type-specific method
+      // Create alerts for each user EXCEPT the current user
       const alerts = await Promise.all(
-        inventoryUsers.map(user => {
-          console.log(`[AlertService] Creating alert for user: ${user.id} (${user.name})`);
+        otherUsers.map((user) => {
+          console.log(
+            `[AlertService] Creating alert for user: ${user.id} (${user.name})`,
+          );
           return this.createAlertByType({
             ...alertPayload,
             userId: user.id,
@@ -297,10 +364,15 @@ export class AlertService {
         }),
       );
 
-      console.log(`[AlertService] Successfully created ${alerts.length} alerts for inventory users`);
+      console.log(
+        `[AlertService] Successfully created ${alerts.length} alerts for other inventory users`,
+      );
       return alerts;
     } catch (error) {
-      console.error(`[AlertService] Error creating alerts for user inventory:`, error);
+      console.error(
+        `[AlertService] Error creating alerts for user inventory:`,
+        error,
+      );
       throw error;
     }
   }
