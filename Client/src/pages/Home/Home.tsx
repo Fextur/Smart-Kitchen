@@ -174,7 +174,7 @@ const Home: FC = () => {
               <Box>
                 <ItemList
                   itemsCount={categorizedItems.empty.length}
-                  title="עומד להתקלקל"
+                  title="נגמרו"
                   renderRow={(itemIndex, isEditing) => (
                     <KitchenItemCard
                       item={categorizedItems.empty[itemIndex]}

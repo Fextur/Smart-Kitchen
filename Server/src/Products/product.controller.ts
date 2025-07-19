@@ -12,7 +12,10 @@ import { ProductService } from './product.service';
 import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { Product } from './product.entity';
 import { JwtAuthGuard } from 'src/Auth/jwt-auth.guard';
-import { CurrentUser } from 'src/Auth/current-user.decorator';
+import {
+  AuthenticatedUser,
+  CurrentUser,
+} from 'src/Auth/current-user.decorator';
 
 @Controller('products')
 export class ProductController {
@@ -21,7 +24,7 @@ export class ProductController {
   @UseGuards(JwtAuthGuard)
   async create(
     @Body() createProductsDto: CreateProductsDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.productService.create(createProductsDto, user.id);
   }
@@ -43,7 +46,7 @@ export class ProductController {
   @UseGuards(JwtAuthGuard)
   async update(
     @Body() updateProductsDto: UpdateProductsDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.productService.updateBulk(updateProductsDto, user.id);
   }
@@ -51,7 +54,7 @@ export class ProductController {
   @UseGuards(JwtAuthGuard)
   async delete(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
     return this.productService.delete(id, user.id);
   }
