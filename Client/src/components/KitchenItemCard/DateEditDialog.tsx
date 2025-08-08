@@ -39,7 +39,6 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
 
   const handleSave = () => {
     onSave(date);
-    handleClose();
   };
 
   const handleClose = () => {
@@ -49,7 +48,6 @@ export const DateEditDialog: FC<DateEditDialogProps> = ({
 
   const handleClearDate = () => {
     onSave(null);
-    handleClose();
   };
 
   return (

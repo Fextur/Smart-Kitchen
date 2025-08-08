@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Product } from 'src/Products/product.entity';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { CreateShoppingListDto } from './shoppingList.dto';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
 import { UnitConverter } from 'src/utils/unitConversion';
-import { MeasureUnit } from 'src/types';
+import { MeasureUnit, AlertType, EventTypes} from 'src/types';
+import { AuthenticatedUser } from 'src/Auth/current-user.decorator';
+import { getEventNameFromType } from 'src/utils/eventUtils';
+
 
 export interface ShoppingListResult {
   updatedProducts: Product[];
@@ -32,10 +36,12 @@ export class ShoppingListService {
     private inventoryRepository: Repository<Inventory>,
 
     private productMatchingService: ProductMatchingService,
-  ) {}
 
+    private eventEmitter: EventEmitter2, // Add EventEmitter2 for events
+  ) {}
   async addProductsToShoppingList(
     createShoppingListDto: CreateShoppingListDto,
+    user: AuthenticatedUser, // Add user parameter
   ): Promise<ShoppingListResult> {
     const { inventoryId, products } = createShoppingListDto;
 
@@ -87,13 +93,12 @@ export class ShoppingListService {
           productDto.size,
           productDto.measureUnit,
           existingProduct.name,
-        );
-
-        existingProduct.wantedSize = mergeResult.size;
+        );        existingProduct.wantedSize = mergeResult.size;
         existingProduct.isInShoppingList = true;
         existingProduct.latestUpdateDate = new Date();
 
         const savedProduct = await this.productRepository.save(existingProduct);
+        console.log(`[ShoppingList] Updated product ${savedProduct.name} - isInShoppingList: ${savedProduct.isInShoppingList}`);
         updatedProducts.push(savedProduct);
 
         matchingResults.push({
@@ -230,8 +235,36 @@ export class ShoppingListService {
             originalUnit: productDto.measureUnit,
             finalUnit: productDto.measureUnit,
           });
-        }
-      }
+        }      }
+    }
+
+    // Emit ADD_TO_SHOPPING_LIST event for all products added
+    if (createdProducts.length > 0 || updatedProducts.length > 0) {
+      const totalProductsAdded = createdProducts.length + updatedProducts.length;
+      
+      // Log the final state of all products
+      console.log(`[ShoppingList] Final state check:`);
+      [...createdProducts, ...updatedProducts].forEach(product => {
+        console.log(`  Product: ${product.name}, isInShoppingList: ${product.isInShoppingList}, wantedSize: ${product.wantedSize}`);
+      });
+        const productNames = [
+        ...createdProducts.map(p => p.name),
+        ...updatedProducts.map(p => p.name)
+      ].join(', ');
+
+      this.eventEmitter.emit(EventTypes.ADD_TO_SHOPPING_LIST, {
+        type: AlertType.ADD_TO_SHOPPING_LIST,
+        userId: user.id,
+        metadata: {
+          itemCount: totalProductsAdded,
+          itemName: productNames,
+          inventoryId,
+          userName: user.userName,
+        },
+        broadcastToUserInventory: true, // Notify all users in the kitchen
+      });
+
+      console.log(`[ShoppingListService] Emitted ADD_TO_SHOPPING_LIST event for user ${user.id} (${user.userName})`);
     }
 
     return {
@@ -239,9 +272,7 @@ export class ShoppingListService {
       createdProducts,
       matchingResults,
     };
-  }
-
-  async transferProductsToInventory(inventoryId: string): Promise<void> {
+  }  async transferProductsToInventory(inventoryId: string, userId?: string): Promise<void> {
     const shoppingListProducts = await this.productRepository.find({
       where: {
         inventory: { id: inventoryId },
@@ -264,15 +295,41 @@ export class ShoppingListService {
       product.isInInventory = true;
       product.isInShoppingList = false;
       product.isChecked = false;
-      product.latestUpdateDate = new Date();
+      product.latestUpdateDate = new Date();      await this.productRepository.save(product);      // Emit events for transferred item if userId provided
+      if (userId) {
+        console.log(`[ShoppingListService] Product "${product.name}" transferred to kitchen, emitting EDIT_SHOPPING_LIST event for userId: ${userId}`);
+        
+        this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+          type: AlertType.EDIT_SHOPPING_LIST,
+          userId,
+          metadata: {
+            action: 'transferred-shopping-to-kitchen',
+            itemName: product.name
+          },
+          broadcastToUserInventory: true,
+        });
 
-      await this.productRepository.save(product);
+        // Also emit EDIT_KITCHEN event since product is now in kitchen
+        console.log(`[ShoppingListService] Product "${product.name}" transferred to kitchen, emitting EDIT_KITCHEN event for userId: ${userId}`);
+        const eventName = getEventNameFromType(AlertType.EDIT_KITCHEN);
+        this.eventEmitter.emit(EventTypes.EDIT_KITCHEN, {
+          type: AlertType.EDIT_KITCHEN,
+          userId,
+          metadata: {
+            action: 'product-transferred-from-shopping',
+            itemName: [product.name],
+            size: product.size,
+            measureUnit: product.measureUnit,
+          },
+          broadcastToUserInventory: true,
+        });
+      }
     }
   }
-
   async transferProductsToShoppingList(
     inventoryId: string,
     product: Product,
+    user: AuthenticatedUser, // Add user parameter
   ): Promise<void> {
     const existingProduct = await this.productRepository.findOne({
       where: { id: product.id, inventory: { id: inventoryId } },
@@ -289,20 +346,35 @@ export class ShoppingListService {
     existingProduct.size = Math.max(
       0,
       (existingProduct.size || 0) - (product.size || 0),
-    );
-    existingProduct.isInShoppingList = true;
-    existingProduct.latestUpdateDate = new Date();
+    );    existingProduct.isInShoppingList = true;
+    existingProduct.latestUpdateDate = new Date();    await this.productRepository.save(existingProduct);
 
-    await this.productRepository.save(existingProduct);
+    // Emit EDIT_SHOPPING_LIST event for transferred product
+    this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+      type: AlertType.EDIT_SHOPPING_LIST,
+      userId: user.id,
+      metadata: {
+        itemName: existingProduct.name,
+        wantedSize: existingProduct.wantedSize,
+        inventoryId,
+        userName: user.userName,
+        action: 'transferred_to_shopping_list',
+      },
+      broadcastToUserInventory: true, // Notify all users in the kitchen
+    });
+
+    console.log(`[ShoppingListService] Emitted EDIT_SHOPPING_LIST event for transferred product: ${existingProduct.name}`);
   }
 
-  async clearShoppingList(inventoryId: string): Promise<void> {
+  async clearShoppingList(inventoryId: string, user: AuthenticatedUser): Promise<void> {
     const shoppingListProducts = await this.productRepository.find({
       where: {
         inventory: { id: inventoryId },
         isInShoppingList: true,
-      },
-    });
+      },    });
+
+    // Collect product names before clearing
+    const productNames = shoppingListProducts.map(p => p.name);
 
     for (const product of shoppingListProducts) {
       product.isInShoppingList = false;
@@ -310,8 +382,25 @@ export class ShoppingListService {
       product.isChecked = false;
       await this.productRepository.save(product);
     }
-  }
 
+    // Emit EDIT_SHOPPING_LIST event for clearing shopping list
+    if (shoppingListProducts.length > 0) {
+      this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+        type: AlertType.EDIT_SHOPPING_LIST,
+        userId: user.id,
+        metadata: {
+          action: 'cleared',
+          itemCount: shoppingListProducts.length,
+          itemNames: productNames.join(', '), // Add item names
+          inventoryId,
+          userName: user.userName,
+        },
+        broadcastToUserInventory: true, // Notify all users in the kitchen
+      });
+
+      console.log(`[ShoppingListService] Emitted EDIT_SHOPPING_LIST event for clearing ${shoppingListProducts.length} items`);
+    }
+  }
   async updateProductInShoppingList(
     productId: string,
     updates: Partial<{
@@ -320,6 +409,7 @@ export class ShoppingListService {
       name: string;
       measureUnit: string;
     }>,
+    user: AuthenticatedUser, // Add user parameter
   ): Promise<Product> {
     const product = await this.productRepository.findOne({
       where: { id: productId, isInShoppingList: true },
@@ -358,18 +448,42 @@ export class ShoppingListService {
         );
         delete updates.measureUnit;
       }
-    }
-
-    Object.assign(product, updates);
+    }    Object.assign(product, updates);
     product.latestUpdateDate = new Date();
 
-    return await this.productRepository.save(product);
-  }
+    const updatedProduct = await this.productRepository.save(product);
 
-  async removeProductFromShoppingList(productId: string): Promise<void> {
+    // Emit EDIT_SHOPPING_LIST event for product update
+    this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+      type: AlertType.EDIT_SHOPPING_LIST,
+      userId: user.id,
+      metadata: {
+        itemName: updatedProduct.name,
+        action: 'updated',
+        updates: Object.keys(updates),
+        inventoryId: updatedProduct.inventory?.id,
+        userName: user.userName,
+      },
+      broadcastToUserInventory: true, // Notify all users in the kitchen
+    });
+
+    console.log(`[ShoppingListService] Emitted EDIT_SHOPPING_LIST event for updated product: ${updatedProduct.name}`);
+
+    return updatedProduct;
+  }
+  async removeProductFromShoppingList(productId: string, user: AuthenticatedUser): Promise<void> {
     const product = await this.productRepository.findOne({
       where: { id: productId, isInShoppingList: true },
+      relations: ['inventory'], // Ensure inventory is loaded
     });
+
+    console.log(`[ShoppingListService] Attempting to remove product with ID: ${productId}`);
+    console.log(`[ShoppingListService] Product found:`, product ? {
+      id: product.id,
+      name: product.name,
+      isInShoppingList: product.isInShoppingList,
+      inventoryId: product.inventory?.id
+    } : null);
 
     if (!product) {
       throw new NotFoundException(
@@ -381,6 +495,23 @@ export class ShoppingListService {
     product.wantedSize = 0;
     product.isChecked = false;
     await this.productRepository.save(product);
+
+    console.log(`[ShoppingListService] About to emit EDIT_SHOPPING_LIST event for removed product: ${product.name}`);
+
+    // Emit EDIT_SHOPPING_LIST event for product removal
+    this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+      type: AlertType.EDIT_SHOPPING_LIST,
+      userId: user.id,
+      metadata: {
+        itemName: product.name,
+        action: 'removed-from-shopping-list',
+        inventoryId: product.inventory?.id,
+        userName: user.userName,
+      },
+      broadcastToUserInventory: true, // Notify all users in the kitchen
+    });
+
+    console.log(`[ShoppingListService] Emitted EDIT_SHOPPING_LIST event for removed product: ${product.name}`);
   }
 
   private mapStringToMeasureUnit(unit: string): MeasureUnit {
@@ -487,6 +618,5 @@ export class ShoppingListService {
 
     const commonWords = words1.filter((word) => words2.includes(word));
 
-    return commonWords.length >= Math.min(words1.length, words2.length) * 0.7;
-  }
+    return commonWords.length >= Math.min(words1.length, words2.length) * 0.7;  }
 }

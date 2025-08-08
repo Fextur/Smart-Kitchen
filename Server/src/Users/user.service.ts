@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import {
@@ -21,9 +22,11 @@ import {
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { JwtService } from '@nestjs/jwt';
 import { KitchenHashUtils } from 'src/utils/kitchenHashUtils';
+import { AlertType,EventTypes } from '../types';
+
 
 @Injectable()
-export class UserService {
+export class UserService {  
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -32,6 +35,8 @@ export class UserService {
     private inventoryRepository: Repository<Inventory>,
 
     private jwtService: JwtService,
+    
+    private eventEmitter: EventEmitter2, // Use EventEmitter2 directly
   ) {}
 
   async generateAccessToken(id: User['id'], userName: User['userName']) {
@@ -56,9 +61,10 @@ export class UserService {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const kitchenHash = await this.generateUniqueKitchenHash();
+      const kitchenName = `המטבח של ${name}`;
 
       const inventory = this.inventoryRepository.create({
-        name: `המטבח של ${name}`,
+        name: kitchenName,
         kitchenHash,
       });
 
@@ -70,13 +76,24 @@ export class UserService {
         email,
         password: hashedPassword,
         inventory: savedInventory,
-      });
+      }); 
 
       const savedUser = await this.userRepository.save(user);
       const accessToken = await this.generateAccessToken(
         savedUser.id,
         savedUser.userName,
-      );
+      );        
+      
+      // Emit event directly using EventEmitter2
+      this.eventEmitter.emit(EventTypes.ADD_KITCHEN, {
+        type: AlertType.ADD_KITCHEN,
+        userId: savedUser.id,
+        metadata: {
+          kitchenName,
+          kitchenHash: savedInventory.kitchenHash
+        },
+        // No need for broadcastToUserInventory here as this is the first user in the kitchen
+      });
 
       const { password: _, ...userWithoutPassword } = savedUser;
       return { ...userWithoutPassword, accessToken };
@@ -218,7 +235,6 @@ export class UserService {
       throw new InternalServerErrorException('Login failed');
     }
   }
-
   async createKitchen(dto: CreateKitchenDto): Promise<{
     inventory: Inventory;
     kitchenHash: string;
@@ -231,6 +247,9 @@ export class UserService {
     });
     if (!user) throw new NotFoundException(`User with id ${userId} not found`);
 
+    // Store previous inventory info before creating new one
+    const previousInventory = user.inventory;
+
     const kitchenHash = await this.generateUniqueKitchenHash();
 
     const newInventory = this.inventoryRepository.create({
@@ -238,10 +257,35 @@ export class UserService {
       kitchenHash,
       users: [user],
     });
-    const savedInventory = await this.inventoryRepository.save(newInventory);
+    const savedInventory = await this.inventoryRepository.save(newInventory);    // Emit USER_LEFT_KITCHEN event if user had a previous kitchen
+    if (previousInventory) {
+      this.eventEmitter.emit(EventTypes.USER_LEFT_KITCHEN, {
+        type: AlertType.USER_LEFT_KITCHEN,
+        userId,
+        metadata: {
+          kitchenName: previousInventory.name,
+          kitchenHash: previousInventory.kitchenHash,
+          userName: user.name,
+          previousInventoryId: previousInventory.id // Add previous inventory ID
+        },
+        broadcastToUserInventory: true // Notify users in the previous kitchen
+      });
+    }
 
+    // Update user's inventory to the new kitchen
     user.inventory = savedInventory;
     await this.userRepository.save(user);
+
+    // Emit ADD_KITCHEN event for the new kitchen creation
+    this.eventEmitter.emit(EventTypes.ADD_KITCHEN, {
+      type: AlertType.ADD_KITCHEN,
+      userId: user.id,
+      metadata: {
+        kitchenName: name,
+        kitchenHash: savedInventory.kitchenHash
+      },
+      broadcastToUserInventory: false // Only notify the creator (no other users in new kitchen yet)
+    });
 
     return {
       inventory: savedInventory,
@@ -278,10 +322,38 @@ export class UserService {
         success: false,
         message: 'Kitchen not found. Please check the code and try again.',
       };
+    }      // Store previous inventory info before updating
+    const previousInventory = user.inventory;
+      // Emit USER_LEFT_KITCHEN event if user had a previous kitchen
+    if (previousInventory && previousInventory.id !== targetInventory.id) {
+      this.eventEmitter.emit(EventTypes.USER_LEFT_KITCHEN, {
+        type: AlertType.USER_LEFT_KITCHEN,
+        userId, // Alert will be created for the user who left
+        metadata: {
+          kitchenName: previousInventory.name,
+          kitchenHash: previousInventory.kitchenHash,
+          userName: user.name,
+          previousInventoryId: previousInventory.id // Add previous inventory ID
+        },
+        broadcastToUserInventory: true // Notify users in the previous kitchen
+      });
     }
 
+    // Update user's inventory to the new kitchen
     user.inventory = targetInventory;
     await this.userRepository.save(user);
+
+    // Emit USER_ENTERED_KITCHEN event for the new kitchen
+    this.eventEmitter.emit(EventTypes.USER_ENTERED_KITCHEN, {
+      type: AlertType.USER_ENTERED_KITCHEN,
+      userId, // Alert will be created for the user who joined
+      metadata: {
+        kitchenName: targetInventory.name,
+        kitchenHash: targetInventory.kitchenHash,
+        userName: user.name // Put the user name in metadata instead
+      },
+      broadcastToUserInventory: true // Notify all users in the kitchen about the new user
+    });
 
     return {
       success: true,
@@ -355,6 +427,16 @@ export class UserService {
 
     const { password, ...rest } = user;
     return rest;
+  }
+
+  /**
+   * Get all users by inventory ID
+   */
+  async getUsersByInventoryId(inventoryId: string): Promise<User[]> {
+    return this.userRepository.find({
+      where: { inventory: { id: inventoryId } },
+      relations: ['inventory'],
+    });
   }
 
   private async generateUniqueKitchenHash(): Promise<string> {

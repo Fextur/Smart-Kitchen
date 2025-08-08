@@ -27,7 +27,6 @@ export const NameEditDialog: FC<NameEditDialogProps> = ({
   const handleSave = () => {
     if (name.trim()) {
       onSave(name.trim());
-      handleClose();
     }
   };
 

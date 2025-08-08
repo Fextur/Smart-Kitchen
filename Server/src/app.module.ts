@@ -15,9 +15,11 @@ import { InventoryModule } from './Inventory/inventory.module';
 import { AuthModule } from './Auth/auth.module';
 import { ProductMatchingModule } from 'src/ProductMatching/productMatching.module';
 import { ShoppingListModule } from './ShoppingList/shoppingList.module';
+import { AlertModule } from './Alerts/alert.module';
+import { Alert } from './Alerts/alert.entity';
+import { EventsModule } from './Events/events.module';
 
-@Module({
-  imports: [
+@Module({  imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -25,7 +27,7 @@ import { ShoppingListModule } from './ShoppingList/shoppingList.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DATABASE,
-      entities: [User, Product, Recipe], 
+      entities: [User, Product, Recipe, Alert], 
       synchronize: true,
       autoLoadEntities: true,
     }),
@@ -38,10 +40,12 @@ import { ShoppingListModule } from './ShoppingList/shoppingList.module';
     UserModule,
     InventoryModule,
     RecipeModule,
-    ReceiptScannerModule,
+    ReceiptScannerModule,    
     AuthModule,
     ProductMatchingModule,
     ShoppingListModule,
+    AlertModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

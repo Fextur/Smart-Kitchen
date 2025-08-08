@@ -11,13 +11,13 @@ import { ShoppingListItemCard } from "@/pages/ShoppingList/ShoppingListItemCard"
 import { FinishShoppingListDialog } from "@/pages/ShoppingList/FinishShoppingListDialog";
 
 const ShoppingList: FC = () => {
-  const { categorizedItems, isLoading, updateItemsMutation } =
-    useKitchenItems();
+  const { categorizedItems, isLoading } = useKitchenItems();
 
   const {
     items: shoppingListItems,
     isLoading: isShoppingListLoading,
     createItemsMutation: createShoppingItemsMutation,
+    updateItemMutation: updateShoppingItemMutation, // Use dedicated shopping list update
     deleteItemsMutation: deleteShoppingItemsMutation,
     clearItemsMutation: clearShoppingListMutation,
     transferIntoShoppingListMutation,
@@ -27,11 +27,9 @@ const ShoppingList: FC = () => {
 
   const handleEditItem = useCallback(
     (item: ShoppingListItem) => {
-      updateItemsMutation.mutate([
-        { ...item, wantedSize: item.size, size: undefined },
-      ] as any);
+      updateShoppingItemMutation.mutate(item);
     },
-    [updateItemsMutation]
+    [updateShoppingItemMutation]
   );
 
   const emptyKitchenItemsMissingFromShoppingList = useMemo(
@@ -122,12 +120,10 @@ const ShoppingList: FC = () => {
                     )
                   }
                   onLongPress={() => {
-                    updateItemsMutation.mutate([
-                      {
-                        ...shoppingListItems[itemIndex],
-                        isChecked: !shoppingListItems[itemIndex].isChecked,
-                      },
-                    ]);
+                    updateShoppingItemMutation.mutate({
+                      ...shoppingListItems[itemIndex],
+                      isChecked: !shoppingListItems[itemIndex].isChecked,
+                    });
                   }}
                 />
               )}

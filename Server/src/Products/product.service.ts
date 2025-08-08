@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Product } from './product.entity';
 import { CreateProductsDto, UpdateProductsDto } from './product.dto';
 import { Inventory } from 'src/Inventory/inventory.entity';
 import { ProductMatchingService } from 'src/ProductMatching/productMatching.service';
 import { UnitConverter } from 'src/utils/unitConversion';
+import { AlertType,EventTypes } from 'src/types';
+import { getEventNameFromType } from 'src/utils/eventUtils';
 
 export interface CreateProductsResult {
   createdProducts: Product[];
@@ -38,10 +41,11 @@ export class ProductService {
     private inventoryRepository: Repository<Inventory>,
 
     private productMatchingService: ProductMatchingService,
+    private eventEmitter: EventEmitter2,
   ) {}
-
   async create(
     createProductsDto: CreateProductsDto,
+    userId?: string,
   ): Promise<CreateProductsResult> {
     const { inventoryId, products } = createProductsDto;
 
@@ -98,9 +102,7 @@ export class ProductService {
             );
 
           const originalUnit = match.matchedProduct.measureUnit;
-          const originalSize = match.matchedProduct.size;
-
-          const updatedProduct =
+          const originalSize = match.matchedProduct.size;          const updatedProduct =
             await this.productMatchingService.mergeProductQuantities(
               match.matchedProduct,
               product.size,
@@ -127,13 +129,33 @@ export class ProductService {
             conversionDetails: `${originalSize} ${originalUnit} + ${product.size} ${product.measureUnit} = ${updatedProduct.size} ${updatedProduct.measureUnit}`,
           });
 
+          // Emit EDIT_KITCHEN event for product quantity update
+          if (userId) {
+            console.log(`[ProductService] Product "${updatedProduct.name}" quantity updated in kitchen, emitting EDIT_KITCHEN event for userId: ${userId}`);
+            const eventName = getEventNameFromType(AlertType.EDIT_KITCHEN);
+            this.eventEmitter.emit(EventTypes.EDIT_KITCHEN, {
+              type: AlertType.EDIT_KITCHEN,
+              userId,
+              metadata: {
+                action: 'product-quantity-updated',
+                itemName: [updatedProduct.name],
+                previousSize: originalSize,
+                previousUnit: originalUnit,
+                newSize: updatedProduct.size,
+                newUnit: updatedProduct.measureUnit,
+                addedSize: product.size,
+                addedUnit: product.measureUnit,
+              },
+              broadcastToUserInventory: true,
+            });
+          }
+
           const index = allProducts.findIndex(
             (p) => p.id === updatedProduct.id,
           );
           if (index !== -1) {
             allProducts[index] = updatedProduct;
-          }
-        } else {
+          }} else {
           const newProduct = await this.createNewProduct(product, inventory);
           createdProducts.push(newProduct);
           allProducts.push(newProduct);
@@ -146,11 +168,26 @@ export class ProductService {
             finalUnit: product.measureUnit,
             conversionDetails: `New product - no existing match found`,
           });
+
+          // Emit EDIT_KITCHEN event for new product creation
+          if (userId) {
+            console.log(`[ProductService] New product "${product.name}" created in kitchen, emitting EDIT_KITCHEN event for userId: ${userId}`);
+            const eventName = getEventNameFromType(AlertType.EDIT_KITCHEN);
+            this.eventEmitter.emit(EventTypes.EDIT_KITCHEN, {
+              type: AlertType.EDIT_KITCHEN,
+              userId,
+              metadata: {
+                action: 'product-created',
+                itemName: [product.name],
+                size: product.size,
+                measureUnit: product.measureUnit,
+              },
+              broadcastToUserInventory: true,
+            });
+          }
         }
       } catch (error) {
-        console.error(`Error processing product ${product.name}:`, error);
-
-        try {
+        console.error(`Error processing product ${product.name}:`, error);        try {
           const newProduct = await this.createNewProduct(product, inventory);
           createdProducts.push(newProduct);
 
@@ -162,6 +199,24 @@ export class ProductService {
             finalUnit: product.measureUnit,
             conversionDetails: `Created due to processing error: ${error.message}`,
           });
+
+          // Emit EDIT_KITCHEN event for fallback product creation
+          if (userId) {
+            console.log(`[ProductService] Fallback product "${product.name}" created in kitchen, emitting EDIT_KITCHEN event for userId: ${userId}`);
+            const eventName = getEventNameFromType(AlertType.EDIT_KITCHEN);
+            this.eventEmitter.emit(EventTypes.EDIT_KITCHEN, {
+              type: AlertType.EDIT_KITCHEN,
+              userId,
+              metadata: {
+                action: 'product-created-fallback',
+                itemName: [product.name],
+                size: product.size,
+                measureUnit: product.measureUnit,
+                reason: error.message,
+              },
+              broadcastToUserInventory: true,
+            });
+          }
         } catch (createError) {
           console.error(`Failed to create fallback product:`, createError);
           throw new InternalServerErrorException(
@@ -220,7 +275,10 @@ export class ProductService {
     }));
   }
 
-  async updateBulk(updateProductsDto: UpdateProductsDto): Promise<Product[]> {
+  async updateBulk(
+    updateProductsDto: UpdateProductsDto,
+    userId?: string,
+  ): Promise<Product[]> {
     const { products } = updateProductsDto;
     const updatedProducts: Product[] = [];
 
@@ -280,13 +338,29 @@ export class ProductService {
               productDto.expirationDate === ''
                 ? null
                 : productDto.expirationDate;
-          }
-
-          existingProduct.latestUpdateDate = new Date();
+          }          existingProduct.latestUpdateDate = new Date();
 
           const savedProduct =
             await this.productRepository.save(existingProduct);
           updatedProducts.push(savedProduct);
+
+          // Emit EDIT_KITCHEN event for product update (only if product is in inventory)
+          if (userId && savedProduct.isInInventory) {
+            console.log(`[ProductService] Product "${savedProduct.name}" updated in kitchen, emitting EDIT_KITCHEN event for userId: ${userId}`);
+            const eventName = getEventNameFromType(AlertType.EDIT_KITCHEN);
+            this.eventEmitter.emit(EventTypes.EDIT_KITCHEN, {
+              type: AlertType.EDIT_KITCHEN,
+              userId,
+              metadata: {
+                action: 'product-updated',
+                itemName: [savedProduct.name],
+                size: savedProduct.size,
+                measureUnit: savedProduct.measureUnit,
+                expirationDate: savedProduct.expirationDate,
+              },
+              broadcastToUserInventory: true,
+            });
+          }
         } else {
           throw new BadRequestException('Product ID is required for update');
         }
@@ -300,12 +374,59 @@ export class ProductService {
 
     return updatedProducts;
   }
+  async delete(id: string, userId: string): Promise<void> {
+    try {      // First, find the product to check if it's in shopping list or kitchen inventory
+      const product = await this.productRepository.findOne({
+        where: { id },
+        relations: ['inventory']
+      });
 
-  async delete(id: string): Promise<void> {
-    try {
+      if (!product) {
+        throw new NotFoundException(`product with id ${id} not found`);
+      }
+
+      const wasInShoppingList = product.isInShoppingList;
+      const wasInKitchen = product.isInInventory;
+      const productName = product.name;
+      const productSize = product.size;
+      const productUnit = product.measureUnit;
+
+      // Delete the product
       const result = await this.productRepository.delete(id);
       if (result.affected === 0) {
         throw new NotFoundException(`product with id ${id} not found`);
+      }
+
+      // If the product was in the shopping list, emit shopping list event
+      if (wasInShoppingList) {
+        console.log(`[ProductService] Product "${productName}" was in shopping list, emitting EDIT_SHOPPING_LIST event for userId: ${userId}`);
+        const eventName = getEventNameFromType(AlertType.EDIT_SHOPPING_LIST);
+        this.eventEmitter.emit(EventTypes.EDIT_SHOPPING_LIST, {
+          type: AlertType.EDIT_SHOPPING_LIST,
+          userId,
+          metadata: {
+            action: 'product-deleted',
+            itemName: [productName]
+          },
+          broadcastToUserInventory: true,
+        });
+      }
+
+      // If the product was in the kitchen inventory, emit kitchen event
+      if (wasInKitchen) {
+        console.log(`[ProductService] Product "${productName}" was in kitchen inventory, emitting EDIT_KITCHEN event for userId: ${userId}`);
+        const eventName = getEventNameFromType(AlertType.EDIT_KITCHEN);
+        this.eventEmitter.emit(EventTypes.EDIT_KITCHEN, {
+          type: AlertType.EDIT_KITCHEN,
+          userId,
+          metadata: {
+            action: 'product-deleted',
+            itemName: [productName],
+            size: productSize,
+            measureUnit: productUnit,
+          },
+          broadcastToUserInventory: true,
+        });
       }
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
