@@ -399,7 +399,7 @@ const RecipeFlow: FC = () => {
               display: "flex",
               flexDirection: "column",
               p: 2,
-              overflow: "hidden",
+              overflow: "auto",
             }}
           >
             <Box
