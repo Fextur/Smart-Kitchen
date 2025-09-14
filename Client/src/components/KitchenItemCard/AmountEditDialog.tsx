@@ -5,6 +5,7 @@ import { SizeUnit } from "@/types";
 import { Dialog } from "@/components/Dialog";
 import { DeleteConfirmDialog } from "@/components/KitchenItemCard/DeleteConfirmDialog";
 import { QuantityInput } from "@/components/KitchenItemCard/QuantityInput";
+import { MathUtils } from "@/utils/mathUtils";
 
 interface AmountEditDialogProps {
   isOpen: boolean;
@@ -37,12 +38,13 @@ export const AmountEditDialog: FC<AmountEditDialogProps> = ({
   }, [isOpen]); // Remove currentSize and currentUnit from dependencies
 
   const handleSave = () => {
-    if (size === 0) {
+    const roundedSize = MathUtils.smartRound(size);
+    if (roundedSize === 0) {
       setShowDeleteConfirm(true);
       return;
     }
 
-    onSave(size, unit);
+    onSave(roundedSize, unit);
     handleClose();
   };
 
