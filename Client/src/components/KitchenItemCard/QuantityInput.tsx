@@ -8,6 +8,7 @@ import {
   InputLabel,
 } from "@mui/material";
 import { KitchenItem, SizeUnit } from "@/types";
+import { MathUtils } from "@/utils/mathUtils";
 
 interface QuantityInputProps {
   size: KitchenItem["size"];
@@ -33,7 +34,9 @@ export const QuantityInput: FC<QuantityInputProps> = ({
         label="כמות"
         type="number"
         value={size}
-        onChange={(e) => setSize(parseFloat(e.target.value) || 0)}
+        onChange={(e) =>
+          setSize(MathUtils.smartRound(parseFloat(e.target.value) || 0))
+        }
         slotProps={{
           htmlInput: {
             inputMode: "numeric",

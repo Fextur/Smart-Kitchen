@@ -1,10 +1,11 @@
-import { FC, useRef, useState } from "react";
+import { FC, useRef, useState, useEffect } from "react";
 import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import { Camera, Image, ScanLine } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog } from "@/components/Dialog";
 import { useCameraCapture } from "@/hooks/useCameraCapture";
 import { useReceiptScanner } from "@/hooks/useReceiptScanner";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { CameraCaptureDialog } from "@/pages/AddProducts/AddProductsDialog/CameraCaptureDialog";
 
 interface ImageSelectionDialogProps {
@@ -23,6 +24,17 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
   const [showCamera, setShowCamera] = useState(false);
   const { isCameraSupported } = useCameraCapture();
   const { scanReceiptMutation, isScanning } = useReceiptScanner();
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (isOpen && isMobile && fileInputRef.current) {
+      const timeout = setTimeout(() => {
+        handleSelectFile();
+      }, 100);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen, isMobile]);
 
   const handleTakePhoto = () => {
     if (isCameraSupported) {
@@ -133,7 +145,7 @@ export const ImageSelectionDialog: FC<ImageSelectionDialogProps> = ({
       />
 
       <Dialog
-        isOpen={isOpen && !showCamera}
+        isOpen={isOpen && !showCamera && !isMobile}
         onClose={onClose}
         icon={<ScanLine size={24} />}
         color="#E49A61"

@@ -34,10 +34,7 @@ const AddProducts: FC = () => {
       const prevItemState = prevItems.find(
         (item) => item.id === updatedItem.id
       );
-      const isDeleted =
-        prevItemState &&
-        updatedItem.size === 0 &&
-        prevItemState.size !== updatedItem.size;
+      const isDeleted = prevItemState && updatedItem.size === 0;
       return isDeleted
         ? prevItems.filter((item) => item.id !== updatedItem.id)
         : prevItems.map((item) =>
